@@ -1,4 +1,5 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { TrendingUp } from 'lucide-react';
 
 const EarningsChart = () => {
   const data = [
@@ -33,9 +34,12 @@ const EarningsChart = () => {
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-block mb-4">
+          <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+            <div className="p-2 rounded-lg bg-primary/20">
+              <TrendingUp className="h-5 w-5 text-primary" />
+            </div>
             <span className="text-sm font-semibold text-primary uppercase tracking-wider">
-              📈 Рост дохода моделей
+              Рост дохода моделей
             </span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
