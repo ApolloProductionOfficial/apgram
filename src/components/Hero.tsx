@@ -63,7 +63,7 @@ const Hero = () => {
                       alt="CF Logo" 
                       className="w-36 h-36 z-10"
                       style={{
-                        filter: 'brightness(0) saturate(100%) invert(100%) contrast(1.3) drop-shadow(0 0 35px hsl(var(--primary))) drop-shadow(0 0 15px rgba(255,255,255,0.9))',
+                        filter: 'drop-shadow(0 0 40px hsl(var(--primary))) drop-shadow(0 0 20px hsl(var(--primary))) drop-shadow(0 0 10px rgba(0,255,255,0.8))',
                         imageRendering: 'crisp-edges'
                       }}
                     />
