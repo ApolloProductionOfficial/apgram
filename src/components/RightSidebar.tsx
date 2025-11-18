@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
+import { useButtonSound } from "@/hooks/useButtonSound";
 
 const RightSidebar = () => {
+  const { playClickSound } = useButtonSound();
   const quickLinks = [
     { text: "Разблокировка крипты (Fansly)", url: "/#/onlyfans", highlight: true },
     { text: "Telegram", url: "https://t.me/Apollo_Production" },
@@ -26,6 +28,7 @@ const RightSidebar = () => {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={playClickSound}
               className={`block text-sm transition-colors ${
                 link.highlight 
                   ? 'text-primary hover:text-primary/80 font-medium' 
@@ -44,7 +47,10 @@ const RightSidebar = () => {
           </p>
           <Button
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-            onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform', '_blank')}
+            onClick={() => {
+              playClickSound();
+              window.open('https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform', '_blank');
+            }}
           >
             Заполнить анкету
           </Button>

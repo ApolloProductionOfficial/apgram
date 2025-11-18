@@ -1,45 +1,47 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useButtonSound } from "@/hooks/useButtonSound";
 
 const Sidebar = () => {
+  const { playClickSound } = useButtonSound();
   const [activeTheme, setActiveTheme] = useState(0);
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
 
   const themes = [
     {
-      title: "5 лет на рынке",
-      subtitle: "О нас",
-      description: "Помогали открывать агентства, собрали лучший опыт и ошибки — строим своё OnlyFans‑агентство полного цикла. Вы — создаёте, мы — масштабируем.",
+      title: "TikTok & Instagram",
+      subtitle: "Социальные сети",
+      description: "UGC-сетки, Spark Ads, фермы для Instagram. Мобильные фермы, рилсы, прогрев, автоворонки и безопасные сетапы для масштабирования вашего присутствия.",
       links: [
-        { text: "Связаться в Telegram", url: "https://t.me/Apollo_Production" },
-        { text: "Анкета для моделей", url: "https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform" }
+        { text: "Консультация по TikTok", url: "https://t.me/Apollo_Production" },
+        { text: "Настройка Instagram", url: "https://t.me/Apollo_Production" }
       ]
     },
     {
-      title: "5 лет на рынке",
-      subtitle: "О нас",
-      description: "Помогали открывать агентства, собрали лучший опыт и ошибки — строим своё OnlyFans‑агентство полного цикла. Вы — создаёте, мы — масштабируем.",
+      title: "X (Twitter) & Telegram",
+      subtitle: "Мессенджеры и микроблоги",
+      description: "NSFW-friendly треды, медиа контент, рост аудитории. Telegram: лиды в чат, быстрые продажи, SFS и рекламные сетки для моментальной монетизации.",
       links: [
-        { text: "Связаться в Telegram", url: "https://t.me/Apollo_Production" },
-        { text: "Анкета для моделей", url: "https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform" }
+        { text: "Telegram стратегия", url: "https://t.me/Apollo_Production" },
+        { text: "X (Twitter) настройка", url: "https://t.me/Apollo_Production" }
       ]
     },
     {
-      title: "5 лет на рынке",
-      subtitle: "О нас",
-      description: "Помогали открывать агентства, собрали лучший опыт и ошибки — строим своё OnlyFans‑агентство полного цикла. Вы — создаёте, мы — масштабируем.",
+      title: "Dating & PPC",
+      subtitle: "Платный трафик",
+      description: "Дейтинговые конверсии в офферы (Tinder и др.) с тёплыми диалогами. Google/Meta реклама (где возможно), pre-landing, ретаргет и детальная атрибуция.",
       links: [
-        { text: "Связаться в Telegram", url: "https://t.me/Apollo_Production" },
-        { text: "Анкета для моделей", url: "https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform" }
+        { text: "Настройка Dating", url: "https://t.me/Apollo_Production" },
+        { text: "Запуск PPC кампаний", url: "https://t.me/Apollo_Production" }
       ]
     },
     {
-      title: "5 лет на рынке",
-      subtitle: "О нас",
-      description: "Помогали открывать агентства, собрали лучший опыт и ошибки — строим своё OnlyFans‑агентство полного цикла. Вы — создаёте, мы — масштабируем.",
+      title: "SEO & Коллаборации",
+      subtitle: "Органический рост",
+      description: "Microsites, индексация, трафик из поиска и контент-кластеры. Коллаборации с инфлюенсерами, взаимные прогревы и перекрёстный трафик для максимального охвата.",
       links: [
-        { text: "Связаться в Telegram", url: "https://t.me/Apollo_Production" },
-        { text: "Анкета для моделей", url: "https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform" }
+        { text: "SEO оптимизация", url: "https://t.me/Apollo_Production" },
+        { text: "Поиск коллабораций", url: "https://t.me/Apollo_Production" }
       ]
     }
   ];
@@ -54,16 +56,19 @@ const Sidebar = () => {
   ];
 
   const handleThemeChange = (newTheme: number) => {
+    playClickSound();
     setDirection(newTheme > activeTheme ? 'next' : 'prev');
     setActiveTheme(newTheme);
   };
 
   const handlePrev = () => {
+    playClickSound();
     setDirection('prev');
     setActiveTheme((prev) => (prev === 0 ? themes.length - 1 : prev - 1));
   };
 
   const handleNext = () => {
+    playClickSound();
     setDirection('next');
     setActiveTheme((prev) => (prev === themes.length - 1 ? 0 : prev + 1));
   };
@@ -120,7 +125,10 @@ const Sidebar = () => {
               {themes[activeTheme].links.map((link, i) => (
                 <Button
                   key={i}
-                  onClick={() => window.open(link.url, '_blank')}
+                  onClick={() => {
+                    playClickSound();
+                    window.open(link.url, '_blank');
+                  }}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   {link.text}
@@ -156,7 +164,10 @@ const Sidebar = () => {
           </p>
           <Button
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-            onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform', '_blank')}
+            onClick={() => {
+              playClickSound();
+              window.open('https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform', '_blank');
+            }}
           >
             Заполнить анкету
           </Button>

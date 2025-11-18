@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
+import { useButtonSound } from "@/hooks/useButtonSound";
 
 const CTA = () => {
+  const { playClickSound } = useButtonSound();
+  
   return (
     <section className="py-20 px-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-primary opacity-10" />
@@ -15,21 +18,30 @@ const CTA = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow px-8 py-6 text-lg animate-pulse-glow"
-              onClick={() => window.open('https://t.me/Apollo_Production', '_blank')}
+              onClick={() => {
+                playClickSound();
+                window.open('https://t.me/Apollo_Production', '_blank');
+              }}
             >
               Связаться в Telegram
             </Button>
             <Button 
               variant="outline" 
               className="border-primary text-primary hover:bg-primary/10 px-8 py-6 text-lg"
-              onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform', '_blank')}
+              onClick={() => {
+                playClickSound();
+                window.open('https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform', '_blank');
+              }}
             >
               Заполнить анкету
             </Button>
             <Button 
               variant="outline" 
               className="border-primary text-primary hover:bg-primary/10 px-8 py-6 text-lg"
-              onClick={() => window.open('https://t.me/MenuOnly4Friends', '_blank')}
+              onClick={() => {
+                playClickSound();
+                window.open('https://t.me/MenuOnly4Friends', '_blank');
+              }}
             >
               Присоединиться к группе
             </Button>

@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
+import { useButtonSound } from "@/hooks/useButtonSound";
 
 const Hero = () => {
+  const { playClickSound } = useButtonSound();
+  
   return (
     <section id="about" className="min-h-screen flex items-center justify-center px-4 pt-32 relative overflow-hidden">
       <div className="container mx-auto max-w-6xl relative z-10">
@@ -19,7 +22,10 @@ const Hero = () => {
               <Button 
                 size="lg"
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={() => window.open('https://t.me/Apollo_Production', '_blank')}
+                onClick={() => {
+                  playClickSound();
+                  window.open('https://t.me/Apollo_Production', '_blank');
+                }}
               >
                 Начать работу
               </Button>
@@ -27,7 +33,10 @@ const Hero = () => {
                 size="lg"
                 variant="outline" 
                 className="border-border hover:bg-accent/10"
-                onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform', '_blank')}
+                onClick={() => {
+                  playClickSound();
+                  window.open('https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform', '_blank');
+                }}
               >
                 Заполнить анкету
               </Button>
