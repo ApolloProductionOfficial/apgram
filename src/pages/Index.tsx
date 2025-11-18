@@ -1,6 +1,7 @@
 import TopBanner from "@/components/TopBanner";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
+import RightSidebar from "@/components/RightSidebar";
 import Hero from "@/components/Hero";
 import TrafficSources from "@/components/TrafficSources";
 import CTA from "@/components/CTA";
@@ -13,7 +14,8 @@ const Index = () => {
       <TopBanner />
       <Header />
       <Sidebar />
-      <div className="lg:pl-80 pt-[92px]">
+      <RightSidebar />
+      <div className="lg:pl-80 xl:pr-80 pt-[92px]">
         <Hero />
         <TrafficSources />
         <CTA />
