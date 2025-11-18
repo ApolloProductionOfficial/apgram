@@ -53,17 +53,33 @@ const Hero = () => {
               
               {/* Logo */}
               <div className="absolute inset-0 flex items-center justify-center" style={{ perspective: '1000px' }}>
-                <img 
-                  src={cfLogo} 
-                  alt="CF Logo" 
-                  className="w-56 h-56 z-20 object-contain"
-                  style={{
-                    filter: 'drop-shadow(0 0 50px hsl(var(--primary))) drop-shadow(0 0 30px hsl(var(--primary))) drop-shadow(0 0 15px rgba(0,255,255,0.9))',
-                    imageRendering: 'crisp-edges',
-                    animation: 'float 8s ease-in-out infinite, rotate3d 20s linear infinite',
-                    transformStyle: 'preserve-3d'
-                  }}
-                />
+                <div className="relative" style={{ transformStyle: 'preserve-3d' }}>
+                  {/* Logo depth layers for 3D effect */}
+                  {[...Array(8)].map((_, i) => (
+                    <img 
+                      key={i}
+                      src={cfLogo} 
+                      alt="" 
+                      className="w-56 h-56 object-contain absolute top-0 left-0"
+                      style={{
+                        transform: `translateZ(-${i * 2}px)`,
+                        opacity: 0.8 - (i * 0.08),
+                        filter: `blur(${i * 0.2}px)`,
+                      }}
+                    />
+                  ))}
+                  {/* Main logo on top */}
+                  <img 
+                    src={cfLogo} 
+                    alt="CF Logo" 
+                    className="w-56 h-56 z-20 object-contain relative"
+                    style={{
+                      filter: 'drop-shadow(0 0 50px hsl(var(--primary))) drop-shadow(0 0 30px hsl(var(--primary))) drop-shadow(0 0 15px rgba(0,255,255,0.9)) drop-shadow(0 4px 8px rgba(0,0,0,0.5))',
+                      imageRendering: 'crisp-edges',
+                      animation: 'rotate3d 20s linear infinite',
+                    }}
+                  />
+                </div>
               </div>
               
               {/* Orbital rings */}
