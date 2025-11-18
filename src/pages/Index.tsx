@@ -4,7 +4,7 @@ import VideoBanner from "@/components/VideoBanner";
 import Sidebar from "@/components/Sidebar";
 import RightSidebar from "@/components/RightSidebar";
 import Hero from "@/components/Hero";
-import VideoPromo from "@/components/VideoPromo";
+import EarningsChart from "@/components/EarningsChart";
 import TrafficSources from "@/components/TrafficSources";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
@@ -23,7 +23,7 @@ const Index = () => {
       <div className="lg:pl-80 xl:pr-80 pt-[92px]">
         <VideoBanner />
         <Hero />
-        <VideoPromo />
+        <EarningsChart />
         <TrafficSources />
         <CTA />
         <Footer />
