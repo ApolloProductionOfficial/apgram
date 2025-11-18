@@ -53,8 +53,13 @@ const Hero = () => {
               
               {/* Static glow that doesn't rotate */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-72 h-72 rounded-full blur-3xl" style={{ background: 'radial-gradient(circle, hsl(var(--primary)) 0%, hsla(var(--primary),0.4) 40%, transparent 70%)' }} />
-                <div className="absolute w-80 h-80 bg-primary/20 rounded-full blur-3xl" />
+                <div className="w-72 h-72 rounded-full blur-3xl animate-pulse-glow" style={{ background: 'radial-gradient(circle, hsl(var(--primary)) 0%, hsla(var(--primary),0.5) 40%, transparent 70%)' }} />
+                <div className="absolute w-80 h-80 bg-primary/30 rounded-full blur-2xl animate-pulse-glow" style={{ animationDelay: '1s' }} />
+              </div>
+              
+              {/* Logo with additional backlight */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-64 h-64 bg-primary/40 rounded-full blur-xl" />
               </div>
               
               {/* Logo */}
@@ -76,12 +81,13 @@ const Hero = () => {
               {[1, 2, 3, 4].map((ring) => (
                 <div
                   key={ring}
-                  className="absolute inset-0 border border-primary/20 rounded-full"
+                  className="absolute inset-0 border-2 border-primary/40 rounded-full"
                   style={{
                     animation: `spin ${20 + ring * 8}s linear infinite`,
                     animationDirection: ring % 2 === 0 ? 'reverse' : 'normal',
                     margin: `${ring * 25}px`,
-                    borderStyle: ring % 2 === 0 ? 'dashed' : 'solid'
+                    borderStyle: ring % 2 === 0 ? 'dashed' : 'solid',
+                    boxShadow: `0 0 10px hsl(var(--primary) / 0.3)`
                   }}
                 />
               ))}
@@ -98,8 +104,8 @@ const Hero = () => {
                       left: `${Math.random() * 100}%`,
                       animation: `float ${4 + Math.random() * 6}s ease-in-out infinite, pulse-glow ${1.5 + Math.random() * 3}s ease-in-out infinite`,
                       animationDelay: `${Math.random() * 4}s`,
-                      opacity: 0.3 + Math.random() * 0.7,
-                      boxShadow: '0 0 4px hsl(var(--primary))'
+                      opacity: 0.5 + Math.random() * 0.5,
+                      boxShadow: '0 0 6px hsl(var(--primary))'
                     }}
                   />
                 );
@@ -107,10 +113,10 @@ const Hero = () => {
               
               {/* Cosmic rays */}
               {['top-0 left-0', 'top-0 right-0', 'bottom-0 left-0', 'bottom-0 right-0'].map((pos, i) => (
-                <div key={i} className={`absolute ${pos} w-32 h-32 opacity-40`}>
-                  <div className="w-full h-px bg-gradient-to-r from-primary/60 via-primary/30 to-transparent" 
+                <div key={i} className={`absolute ${pos} w-32 h-32 opacity-60`}>
+                  <div className="w-full h-px bg-gradient-to-r from-primary/80 via-primary/40 to-transparent" 
                        style={{ animation: 'pulse-glow 4s ease-in-out infinite', animationDelay: `${i * 0.5}s` }} />
-                  <div className="w-px h-full bg-gradient-to-b from-primary/60 via-primary/30 to-transparent"
+                  <div className="w-px h-full bg-gradient-to-b from-primary/80 via-primary/40 to-transparent"
                        style={{ animation: 'pulse-glow 4s ease-in-out infinite', animationDelay: `${i * 0.5}s` }} />
                 </div>
               ))}
@@ -119,14 +125,15 @@ const Hero = () => {
               {[...Array(6)].map((_, i) => (
                 <div
                   key={`wave-${i}`}
-                  className="absolute h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"
+                  className="absolute h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
                   style={{
                     top: `${15 + i * 15}%`,
                     left: '-10%',
                     right: '-10%',
                     animation: `slide-in-right ${3 + i * 0.5}s ease-in-out infinite`,
                     animationDelay: `${i * 0.6}s`,
-                    opacity: 0.6
+                    opacity: 0.7,
+                    boxShadow: '0 0 4px hsl(var(--primary))'
                   }}
                 />
               ))}
