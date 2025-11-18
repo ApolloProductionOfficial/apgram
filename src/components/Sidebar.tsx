@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const Sidebar = () => {
   const [activeTheme, setActiveTheme] = useState(0);
@@ -25,7 +26,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="fixed left-0 top-[52px] bottom-0 w-80 bg-card border-r border-border overflow-y-auto p-6 hidden lg:block">
+    <aside className="fixed left-0 top-[92px] bottom-0 w-80 bg-card border-r border-border overflow-y-auto p-6 hidden lg:block">
       <div className="space-y-6">
         {/* Theme Selector */}
         <div>
@@ -59,15 +60,13 @@ const Sidebar = () => {
             </p>
             <div className="flex flex-col gap-2">
               {themes[activeTheme].links.map((link, i) => (
-                <a
+                <Button
                   key={i}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+                  onClick={() => window.open(link.url, '_blank')}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   {link.text}
-                </a>
+                </Button>
               ))}
             </div>
           </div>
@@ -93,18 +92,16 @@ const Sidebar = () => {
         </div>
 
         {/* Recruitment CTA */}
-        <div className="bg-card border border-border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground mb-3">
+        <div className="bg-card/50 border border-border rounded-lg p-4">
+          <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
             Рекрут моделей открыт — заполните анкету и получите стартовый план.
           </p>
-          <a
-            href="https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center w-full px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+          <Button
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+            onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform', '_blank')}
           >
             Заполнить анкету
-          </a>
+          </Button>
         </div>
       </div>
     </aside>
