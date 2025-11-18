@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useButtonSound } from "@/hooks/useButtonSound";
-import cfLogo from "@/assets/cf-logo-new.png";
+import cfLogo from "@/assets/cf-logo-transparent.png";
 
 const Hero = () => {
   const { playClickSound } = useButtonSound();
