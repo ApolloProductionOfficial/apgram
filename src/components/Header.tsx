@@ -76,23 +76,23 @@ const Header = () => {
           <nav className="hidden lg:flex items-center gap-6">
             <a 
               href="#about" 
-              className="text-sm text-foreground/80 hover:text-primary transition-all relative group"
+              className="text-sm text-foreground/80 hover:text-primary transition-all relative group px-3 py-1.5 rounded-md hover:bg-primary/5 hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.15)]"
               onClick={(e) => handleNavigate(e, 'about')}
             >
               {t.header.about}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+              <span className="absolute -bottom-0.5 left-3 w-0 h-0.5 bg-primary transition-all group-hover:w-[calc(100%-24px)]"></span>
             </a>
             <a 
               href="#traffic" 
-              className="text-sm text-foreground/80 hover:text-primary transition-all relative group"
+              className="text-sm text-foreground/80 hover:text-primary transition-all relative group px-3 py-1.5 rounded-md hover:bg-primary/5 hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.15)]"
               onClick={(e) => handleNavigate(e, 'traffic')}
             >
               {t.header.traffic}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+              <span className="absolute -bottom-0.5 left-3 w-0 h-0.5 bg-primary transition-all group-hover:w-[calc(100%-24px)]"></span>
             </a>
             <a 
               href="/services" 
-              className="text-sm text-foreground/80 hover:text-primary transition-all relative group"
+              className="text-sm text-foreground/80 hover:text-primary transition-all relative group px-3 py-1.5 rounded-md hover:bg-primary/5 hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.15)]"
               onClick={(e) => {
                 e.preventDefault();
                 playClickSound();
@@ -100,7 +100,7 @@ const Header = () => {
               }}
             >
               {t.header.services}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+              <span className="absolute -bottom-0.5 left-3 w-0 h-0.5 bg-primary transition-all group-hover:w-[calc(100%-24px)]"></span>
             </a>
             <Button
               size="sm"
