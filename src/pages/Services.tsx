@@ -4,11 +4,14 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft, Unlock, MapPin, Video, Instagram, HandshakeIcon, Shield } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useButtonSound } from "@/hooks/useButtonSound";
+import { useState, useEffect, useRef } from "react";
 
 const Services = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { playClickSound } = useButtonSound();
+  const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set());
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const handleBack = () => {
     playClickSound();
@@ -19,6 +22,32 @@ const Services = () => {
     playClickSound();
     navigate(path);
   };
+
+  useEffect(() => {
+    const observers = cardRefs.current.map((ref, index) => {
+      if (!ref) return null;
+
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setVisibleCards(prev => new Set(prev).add(index));
+          }
+        },
+        { threshold: 0.1 }
+      );
+
+      observer.observe(ref);
+      return observer;
+    });
+
+    return () => {
+      observers.forEach((observer, index) => {
+        if (observer && cardRefs.current[index]) {
+          observer.disconnect();
+        }
+      });
+    };
+  }, []);
 
   const services = [
     {
@@ -95,12 +124,21 @@ const Services = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map((service) => {
+            {services.map((service, index) => {
               const Icon = service.icon;
+              const isVisible = visibleCards.has(index);
               return (
                 <Card
                   key={service.id}
-                  className="p-6 cursor-pointer border-2 border-primary/20 bg-card/60 backdrop-blur hover:border-primary/60 hover:shadow-lg transition-all duration-300"
+                  ref={el => cardRefs.current[index] = el}
+                  className={`p-6 cursor-pointer border-2 border-primary/20 bg-card/60 backdrop-blur hover:border-primary/60 hover:shadow-lg transition-all duration-500 ${
+                    isVisible 
+                      ? 'opacity-100 translate-y-0' 
+                      : 'opacity-0 translate-y-8'
+                  }`}
+                  style={{
+                    transitionDelay: `${index * 100}ms`
+                  }}
                   onClick={() => handleServiceClick(service.path)}
                 >
                   <div className="flex flex-col items-center text-center space-y-4">
