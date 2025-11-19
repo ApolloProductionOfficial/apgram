@@ -142,8 +142,13 @@ const AIChatBot = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Sync with music player visibility on mobile
+  // Sync with music player visibility on mobile only
   useEffect(() => {
+    if (window.innerWidth >= 768) {
+      setIsVisible(true);
+      return;
+    }
+
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       if (currentScrollY < lastScrollY && currentScrollY > 100) {

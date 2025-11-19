@@ -54,8 +54,14 @@ const MusicPlayer = () => {
     };
   }, []);
 
-  // Hide player on scroll up (mobile)
+  // Hide player on scroll up (mobile only)
   useEffect(() => {
+    if (window.innerWidth >= 768) {
+      // Desktop: всегда показываем плеер
+      setIsVisible(true);
+      return;
+    }
+
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       if (currentScrollY < lastScrollY && currentScrollY > 100) {
@@ -95,9 +101,17 @@ const MusicPlayer = () => {
   };
 
   const handleVolumeChange = (value: number[]) => {
-    setVolume(value[0]);
+    const newVolume = value[0];
+    setVolume(newVolume);
     if (audioRef.current) {
-      audioRef.current.volume = value[0] / 100;
+      audioRef.current.volume = newVolume / 100;
+      if (newVolume === 0) {
+        audioRef.current.muted = true;
+        setIsMuted(true);
+      } else if (isMuted) {
+        audioRef.current.muted = false;
+        setIsMuted(false);
+      }
     }
   };
 

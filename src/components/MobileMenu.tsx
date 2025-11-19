@@ -12,8 +12,13 @@ const MobileMenu = () => {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
 
-  // Sync with music player visibility
+  // Sync with music player visibility (mobile only)
   useEffect(() => {
+    if (window.innerWidth >= 768) {
+      setIsVisible(true);
+      return;
+    }
+
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       if (currentScrollY < lastScrollY && currentScrollY > 100) {
