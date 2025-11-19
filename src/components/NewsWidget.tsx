@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Calendar } from "lucide-react";
+import { Calendar, Newspaper } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ManualNewsFetch from "./ManualNewsFetch";

@@ -25,7 +25,6 @@ const Index = () => {
         <VideoBanner />
         <Hero />
         <EarningsChart />
-        <Stats />
         <TrafficSources />
         <CTA />
         <Footer />
