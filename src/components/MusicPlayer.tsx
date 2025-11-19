@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 const MusicPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(50);
+  const [volume, setVolume] = useState(20);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
