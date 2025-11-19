@@ -91,55 +91,16 @@ serve(async (req) => {
       }
     }
 
-    // Fallback news if API fails or no results found
+    // Skip if no news found - only save real news with valid URLs
     if (newsItems.length === 0) {
-      console.log('Using fallback news');
-      const fallbackNewsByLang: Record<string, any[]> = {
-        ru: [
-          {
-            title: 'Экономика создателей контента продолжает рост',
-            description: 'Индустрия создателей контента показывает сильный рост с увеличением доходов на всех основных платформах. Эксперты отмечают растущий интерес к независимым платформам.',
-            source: 'xbiz.com',
-            url: 'https://xbiz.com'
-          },
-          {
-            title: 'Новые тренды в индустрии контента для взрослых',
-            description: 'Аналитики прогнозируют продолжение роста рынка платформ для создателей контента в ближайшие годы.',
-            source: 'avn.com',
-            url: 'https://avn.com'
-          }
-        ],
-        en: [
-          {
-            title: 'Content Creator Economy Continues Growth',
-            description: 'The creator economy shows strong momentum with increased earnings across major platforms. Industry experts note growing interest in independent platforms.',
-            source: 'xbiz.com',
-            url: 'https://xbiz.com'
-          },
-          {
-            title: 'New Trends in Adult Content Industry',
-            description: 'Analysts predict continued growth in the creator platform market over the coming years.',
-            source: 'avn.com',
-            url: 'https://avn.com'
-          }
-        ],
-        uk: [
-          {
-            title: 'Економіка творців контенту продовжує зростання',
-            description: 'Індустрія творців контенту показує сильне зростання зі збільшенням доходів на всіх основних платформах. Експерти відзначають зростаючий інтерес до незалежних платформ.',
-            source: 'xbiz.com',
-            url: 'https://xbiz.com'
-          },
-          {
-            title: 'Нові тренди в індустрії контенту для дорослих',
-            description: 'Аналітики прогнозують продовження зростання ринку платформ для творців контенту в найближчі роки.',
-            source: 'avn.com',
-            url: 'https://avn.com'
-          }
-        ]
-      };
-      const fallbackNews = fallbackNewsByLang[language] || fallbackNewsByLang.en;
-      newsItems = [fallbackNews[Math.floor(Math.random() * fallbackNews.length)]];
+      console.log('No news found from search, skipping save');
+      return new Response(JSON.stringify({ 
+        success: true, 
+        count: 0,
+        message: 'No news found'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Save news to database
