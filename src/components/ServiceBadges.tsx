@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
+import { TrendingUp } from "lucide-react";
 
 const ServiceBadges = () => {
   const navigate = useNavigate();
@@ -14,20 +15,27 @@ const ServiceBadges = () => {
 
   return (
     <div className="w-full px-3 lg:px-0 py-4 lg:py-8 hidden lg:block">
-      <div className="flex flex-wrap gap-1.5 justify-center">
-        {topServices.map((service, index) => (
-          <button
-            key={index}
-            onClick={() => navigate(service.path)}
-            className={`px-2 py-1 lg:px-4 lg:py-2 rounded-full text-[10px] lg:text-sm font-medium transition-all duration-300 ${
-              service.highlight
-                ? 'bg-primary/20 text-primary border border-primary/50 hover:bg-primary/30'
-                : 'bg-card/50 text-foreground border border-border/50 hover:bg-card'
-            }`}
-          >
-            {service.title}
-          </button>
-        ))}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 justify-center">
+          <TrendingUp className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Топ предложений</h3>
+        </div>
+        <div className="flex flex-wrap gap-2 justify-center">
+          {topServices.map((service, index) => (
+            <button
+              key={index}
+              onClick={() => navigate(service.path)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-1.5 ${
+                service.highlight
+                  ? 'bg-primary/20 text-primary border border-primary/50 hover:bg-primary/30'
+                  : 'bg-card/50 text-foreground border border-border/50 hover:bg-card'
+              }`}
+            >
+              <span className="text-primary">•</span>
+              {service.title}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
