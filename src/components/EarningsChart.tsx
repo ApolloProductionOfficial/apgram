@@ -14,15 +14,15 @@ const EarningsChart = () => {
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
-          // Animate the chart line growth
+          // Animate the chart line growth - slower for better viewing
           let progress = 0;
           const interval = setInterval(() => {
-            progress += 2;
+            progress += 1;
             setAnimationProgress(progress);
             if (progress >= 100) {
               clearInterval(interval);
             }
-          }, 20);
+          }, 50); // Slower: 50ms interval, 1% increment = 5 seconds total
         }
       },
       { threshold: 0.2 }
