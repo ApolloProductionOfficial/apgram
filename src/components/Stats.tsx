@@ -16,6 +16,7 @@ const Stats = () => {
     },
     {
       value: 100,
+      prefix: "",
       suffix: "%",
       label: "ROI",
     },
@@ -105,7 +106,7 @@ const StatCard = ({
     >
       <div className="text-center">
         <div className="text-5xl font-bold text-primary mb-2 transition-all group-hover:scale-110">
-          {stat.prefix}{count.toLocaleString()}{stat.suffix}
+          {stat.prefix || ""}{count.toLocaleString()}{stat.suffix}
         </div>
         <div className="text-muted-foreground group-hover:text-foreground transition-colors">
           {stat.label}

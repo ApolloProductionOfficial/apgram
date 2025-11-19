@@ -43,6 +43,13 @@ const Services = () => {
       path: "/model-verification",
     },
     {
+      id: "recruitment",
+      title: "Набор моделей",
+      description: "Ищем моделей для работы на всех платформах",
+      icon: HandshakeIcon,
+      path: "/model-recruitment",
+    },
+    {
       id: "dubai",
       title: t.services.dubai.title,
       description: t.services.dubai.description,

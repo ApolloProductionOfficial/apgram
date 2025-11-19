@@ -33,6 +33,11 @@ const Sidebar = () => {
       route: "/model-verification"
     },
     {
+      title: "Набор моделей",
+      description: "Ищем моделей для работы на всех платформах: OnlyFans, Fansly, MYM, 4based и других",
+      route: "/model-recruitment"
+    },
+    {
       title: t.sidebar.partnership.title,
       description: t.sidebar.partnership.description,
       route: "/partnership"
