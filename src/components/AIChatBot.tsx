@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, X, Send } from "lucide-react";
+import { MessageCircle, X, Send, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
-import onlyFansLogo from "@/assets/onlyfans-logo.png";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -112,12 +111,7 @@ const AIChatBot = () => {
         <div className="fixed bottom-24 right-6 z-50 animate-fade-in">
           <div className="bg-primary text-primary-foreground px-4 py-3 rounded-lg shadow-xl relative animate-bounce flex items-center gap-2">
             <div className="absolute -bottom-2 right-6 w-4 h-4 bg-primary transform rotate-45"></div>
-            <img 
-              src={onlyFansLogo} 
-              alt="OnlyFans" 
-              className="w-6 h-6"
-              style={{ filter: 'brightness(0) saturate(100%) invert(100%)' }}
-            />
+            <Bot className="w-6 h-6" />
             <p className="text-sm font-medium whitespace-nowrap">{hintText}</p>
           </div>
         </div>
@@ -129,18 +123,16 @@ const AIChatBot = () => {
           setIsOpen(!isOpen);
           setShowHint(false);
         }}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg shadow-primary/50 transition-transform hover:scale-110 p-3 overflow-hidden bg-primary/20 backdrop-blur-sm border-2 border-primary/40"
+        className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-lg shadow-primary/50 transition-transform hover:scale-110 overflow-hidden bg-gradient-to-br from-primary/30 to-primary/10 backdrop-blur-sm border-2 border-primary/40 flex items-center justify-center"
         size="icon"
       >
         {isOpen ? (
           <X className="h-6 w-6 text-primary" />
         ) : (
-          <img 
-            src={onlyFansLogo} 
-            alt="OnlyFans" 
-            className="w-full h-full object-contain"
-            style={{ filter: 'brightness(0) saturate(100%) invert(61%) sepia(98%) saturate(4658%) hue-rotate(162deg) brightness(101%) contrast(101%)' }}
-          />
+          <div className="flex flex-col items-center justify-center gap-0.5">
+            <Bot className="h-7 w-7 text-primary" />
+            <span className="text-[8px] font-bold text-primary tracking-tight">APOLLO</span>
+          </div>
         )}
       </Button>
 
