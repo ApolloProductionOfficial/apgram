@@ -85,85 +85,45 @@ const MusicPlayer = () => {
           preload="none"
         />
         
-        <div className="flex items-center gap-2 md:flex-col md:space-y-3">
-          {/* Mobile: compact horizontal layout */}
-          <div className="flex items-center gap-1.5 md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={togglePlay}
-            >
-              {isPlaying ? (
-                <Pause className="h-3 w-3" />
-              ) : (
-                <Play className="h-3 w-3" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={toggleMute}
-            >
-              {isMuted ? (
-                <VolumeX className="h-3 w-3" />
-              ) : (
-                <Volume2 className="h-3 w-3" />
-              )}
-            </Button>
-          </div>
-          
+        {/* Mobile: только один тонкий ползунок */}
+        <div className="flex items-center gap-2 w-full">
           <Slider
             value={[volume]}
             onValueChange={handleVolumeChange}
             max={100}
             step={1}
-            className="flex-1"
+            className="flex-1 h-1"
           />
-          
-          {/* Desktop layout */}
-          <div className="hidden md:flex md:flex-col md:space-y-3 md:w-full">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium">Music Player</span>
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={togglePlay}
-                >
-                  {isPlaying ? (
-                    <Pause className="h-4 w-4" />
-                  ) : (
-                    <Play className="h-4 w-4" />
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={toggleMute}
-                >
-                  {isMuted ? (
-                    <VolumeX className="h-4 w-4" />
-                  ) : (
-                    <Volume2 className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Volume2 className="h-3 w-3 text-muted-foreground" />
-              <Slider
-                value={[volume]}
-                onValueChange={handleVolumeChange}
-                max={100}
-                step={1}
-                className="flex-1"
-              />
-              <span className="text-xs text-muted-foreground w-8">{volume}%</span>
-            </div>
+
+          {/* Десктоп: маленький текст и кнопки справа */}
+          <div className="hidden md:flex items-center gap-2">
+            <span className="text-xs text-muted-foreground w-8 text-right">
+              {volume}%
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={togglePlay}
+            >
+              {isPlaying ? (
+                <Pause className="h-4 w-4" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={toggleMute}
+            >
+              {isMuted ? (
+                <VolumeX className="h-4 w-4" />
+              ) : (
+                <Volume2 className="h-4 w-4" />
+              )}
+            </Button>
           </div>
         </div>
       </div>
