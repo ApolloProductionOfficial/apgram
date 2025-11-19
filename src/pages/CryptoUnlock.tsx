@@ -2,54 +2,56 @@ import { Button } from "@/components/ui/button";
 import { useButtonSound } from "@/hooks/useButtonSound";
 import { ArrowLeft, CheckCircle, Clock, Shield, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const CryptoUnlock = () => {
   const { playClickSound } = useButtonSound();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const features = [
     {
       icon: Clock,
-      title: "24 часа",
-      description: "Разблокировка за 24 часа с момента обращения"
+      title: t.cryptoUnlock.features.timing.title,
+      description: t.cryptoUnlock.features.timing.description
     },
     {
       icon: CheckCircle,
-      title: "70+ кейсов",
-      description: "Более 70 успешных разблокировок криптовалютных платежей"
+      title: t.cryptoUnlock.features.cases.title,
+      description: t.cryptoUnlock.features.cases.description
     },
     {
       icon: Shield,
-      title: "Гарантия",
-      description: "100% гарантия разблокировки или возврат средств"
+      title: t.cryptoUnlock.features.guarantee.title,
+      description: t.cryptoUnlock.features.guarantee.description
     },
     {
       icon: Zap,
-      title: "Fansly",
-      description: "Специализация на платформе Fansly"
+      title: t.cryptoUnlock.features.fansly.title,
+      description: t.cryptoUnlock.features.fansly.description
     }
   ];
 
   const howItWorks = [
     {
-      step: "1",
-      title: "Обращение",
-      description: "Свяжитесь с нами через Telegram и опишите ситуацию"
+      step: t.cryptoUnlock.howItWorks.step1.number,
+      title: t.cryptoUnlock.howItWorks.step1.title,
+      description: t.cryptoUnlock.howItWorks.step1.description
     },
     {
-      step: "2",
-      title: "Анализ",
-      description: "Мы проанализируем вашу ситуацию и предложим решение"
+      step: t.cryptoUnlock.howItWorks.step2.number,
+      title: t.cryptoUnlock.howItWorks.step2.title,
+      description: t.cryptoUnlock.howItWorks.step2.description
     },
     {
-      step: "3",
-      title: "Разблокировка",
-      description: "Выполним разблокировку в течение 24 часов"
+      step: t.cryptoUnlock.howItWorks.step3.number,
+      title: t.cryptoUnlock.howItWorks.step3.title,
+      description: t.cryptoUnlock.howItWorks.step3.description
     },
     {
-      step: "4",
-      title: "Проверка",
-      description: "Убедимся, что всё работает корректно"
+      step: t.cryptoUnlock.howItWorks.step4.number,
+      title: t.cryptoUnlock.howItWorks.step4.title,
+      description: t.cryptoUnlock.howItWorks.step4.description
     }
   ];
 
@@ -65,13 +67,13 @@ const CryptoUnlock = () => {
           className="mb-6"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Назад
+          {t.cryptoUnlock.back}
         </Button>
 
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Разблокировка криптовалюты</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">{t.cryptoUnlock.title}</h1>
           <p className="text-lg text-muted-foreground">
-            Профессиональная разблокировка криптовалютных платежей на Fansly. Быстро, безопасно, с гарантией.
+            {t.cryptoUnlock.subtitle}
           </p>
         </div>
 
@@ -91,7 +93,7 @@ const CryptoUnlock = () => {
 
         {/* How It Works */}
         <div className="mb-12">
-          <h2 className="text-3xl font-bold mb-8 text-center">Как это работает</h2>
+          <h2 className="text-3xl font-bold mb-8 text-center">{t.cryptoUnlock.howItWorks.title}</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {howItWorks.map((item, index) => (
               <div key={index} className="relative">
@@ -110,46 +112,31 @@ const CryptoUnlock = () => {
           </div>
         </div>
 
-        {/* Benefits Section */}
-        <div className="bg-card/50 border border-border rounded-lg p-8 mb-12">
-          <h2 className="text-2xl font-bold mb-6">Что вы получаете</h2>
+        {/* Pricing */}
+        <div className="mb-12 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-8 text-center">
+          <h2 className="text-3xl font-bold mb-4">{t.cryptoUnlock.pricing.title}</h2>
+          <div className="text-5xl font-bold text-primary mb-4">{t.cryptoUnlock.pricing.price}</div>
+          <p className="text-lg text-muted-foreground">{t.cryptoUnlock.pricing.description}</p>
+        </div>
+
+        {/* Why Choose Us */}
+        <div className="mb-12 bg-card/50 border border-border rounded-lg p-8">
+          <h2 className="text-3xl font-bold mb-6 text-center">{t.cryptoUnlock.whyUs.title}</h2>
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold mb-1">Быстрая разблокировка</h4>
-                <p className="text-sm text-muted-foreground">Решаем проблему за 24 часа</p>
+            {t.cryptoUnlock.whyUs.items.map((item: string, index: number) => (
+              <div key={index} className="flex items-start gap-3">
+                <CheckCircle className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
+                <span className="text-muted-foreground">{item}</span>
               </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold mb-1">Опыт и экспертиза</h4>
-                <p className="text-sm text-muted-foreground">70+ успешных кейсов</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold mb-1">Безопасность</h4>
-                <p className="text-sm text-muted-foreground">Работаем строго в рамках правил платформы</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold mb-1">Гарантия результата</h4>
-                <p className="text-sm text-muted-foreground">Возврат средств при отсутствии результата</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
         {/* CTA Section */}
-        <div className="bg-card/50 border border-border rounded-lg p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Нужна разблокировка?</h2>
-          <p className="text-muted-foreground mb-6">
-            Свяжитесь с нами для консультации. Мы поможем решить вашу проблему быстро и безопасно.
+        <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-8 text-center">
+          <h2 className="text-3xl font-bold mb-4">{t.cryptoUnlock.cta.title}</h2>
+          <p className="text-lg text-muted-foreground mb-6">
+            {t.cryptoUnlock.cta.description}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
@@ -158,9 +145,9 @@ const CryptoUnlock = () => {
                 playClickSound();
                 window.open('https://t.me/Apollo_Production', '_blank');
               }}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="text-lg"
             >
-              Связаться в Telegram
+              {t.cryptoUnlock.cta.telegram}
             </Button>
             <Button
               size="lg"
@@ -169,9 +156,9 @@ const CryptoUnlock = () => {
                 playClickSound();
                 window.open('https://docs.google.com/forms/d/e/1FAIpQLSdImReNAMa_AQ74PYbBosGLMbm7FJnSaGkuq-QIJDlDNdnW5Q/viewform', '_blank');
               }}
-              className="border-border hover:bg-accent/10"
+              className="text-lg"
             >
-              Заполнить анкету
+              {t.cryptoUnlock.cta.form}
             </Button>
           </div>
         </div>

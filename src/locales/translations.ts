@@ -178,6 +178,75 @@ export const translations = {
       rights: "Все права защищены.",
       contactTitle: "Свяжитесь с нами"
     },
+    // Crypto Unlock
+    cryptoUnlock: {
+      back: "Назад",
+      title: "Разблокировка криптовалюты",
+      subtitle: "Профессиональная разблокировка криптовалютных платежей на Fansly. Быстро, безопасно, с гарантией.",
+      features: {
+        timing: {
+          title: "24 часа",
+          description: "Разблокировка за 24 часа с момента обращения"
+        },
+        cases: {
+          title: "70+ кейсов",
+          description: "Более 70 успешных разблокировок криптовалютных платежей"
+        },
+        guarantee: {
+          title: "Гарантия",
+          description: "100% гарантия разблокировки или возврат средств"
+        },
+        fansly: {
+          title: "Fansly",
+          description: "Специализация на платформе Fansly"
+        }
+      },
+      howItWorks: {
+        title: "Как это работает",
+        step1: {
+          number: "1",
+          title: "Обращение",
+          description: "Свяжитесь с нами через Telegram и опишите ситуацию"
+        },
+        step2: {
+          number: "2",
+          title: "Анализ",
+          description: "Мы проанализируем вашу ситуацию и предложим решение"
+        },
+        step3: {
+          number: "3",
+          title: "Разблокировка",
+          description: "Выполним разблокировку в течение 24 часов"
+        },
+        step4: {
+          number: "4",
+          title: "Проверка",
+          description: "Убедимся, что всё работает корректно"
+        }
+      },
+      pricing: {
+        title: "Стоимость услуги",
+        price: "$150",
+        description: "Фиксированная цена за разблокировку. Без скрытых платежей."
+      },
+      whyUs: {
+        title: "Почему выбирают нас",
+        items: [
+          "Более 70 успешных кейсов разблокировки",
+          "Средний срок решения — до 24 часов",
+          "100% гарантия или возврат средств",
+          "Конфиденциальность и безопасность данных",
+          "Поддержка 24/7 через Telegram",
+          "Опыт работы с Fansly и OnlyFans"
+        ]
+      },
+      cta: {
+        title: "Готовы разблокировать криптовалюту?",
+        description: "Свяжитесь с нами в Telegram и получите помощь в течение 24 часов",
+        telegram: "Написать в Telegram",
+        form: "Заполнить форму"
+      }
+    },
     // Model Verification
     modelVerification: {
       back: "Назад",
@@ -597,6 +666,75 @@ export const translations = {
     footer: {
       rights: "All rights reserved.",
       contactTitle: "Get in Touch"
+    },
+    // Crypto Unlock
+    cryptoUnlock: {
+      back: "Back",
+      title: "Cryptocurrency Unlock",
+      subtitle: "Professional cryptocurrency payment unlock on Fansly. Fast, secure, with guarantee.",
+      features: {
+        timing: {
+          title: "24 Hours",
+          description: "Unlock within 24 hours from request"
+        },
+        cases: {
+          title: "70+ Cases",
+          description: "Over 70 successful cryptocurrency payment unlocks"
+        },
+        guarantee: {
+          title: "Guarantee",
+          description: "100% unlock guarantee or money back"
+        },
+        fansly: {
+          title: "Fansly",
+          description: "Specialization in Fansly platform"
+        }
+      },
+      howItWorks: {
+        title: "How It Works",
+        step1: {
+          number: "1",
+          title: "Contact",
+          description: "Contact us via Telegram and describe your situation"
+        },
+        step2: {
+          number: "2",
+          title: "Analysis",
+          description: "We'll analyze your situation and offer a solution"
+        },
+        step3: {
+          number: "3",
+          title: "Unlock",
+          description: "We'll perform the unlock within 24 hours"
+        },
+        step4: {
+          number: "4",
+          title: "Verification",
+          description: "We'll make sure everything works correctly"
+        }
+      },
+      pricing: {
+        title: "Service Cost",
+        price: "$150",
+        description: "Fixed price for unlock. No hidden fees."
+      },
+      whyUs: {
+        title: "Why Choose Us",
+        items: [
+          "Over 70 successful unlock cases",
+          "Average solution time — up to 24 hours",
+          "100% guarantee or money back",
+          "Data confidentiality and security",
+          "24/7 support via Telegram",
+          "Experience with Fansly and OnlyFans"
+        ]
+      },
+      cta: {
+        title: "Ready to Unlock Cryptocurrency?",
+        description: "Contact us on Telegram and get help within 24 hours",
+        telegram: "Message on Telegram",
+        form: "Fill Form"
+      }
     },
     // Model Verification
     modelVerification: {
@@ -1063,6 +1201,75 @@ export const translations = {
     footer: {
       rights: "Всі права захищені.",
       contactTitle: "Зв'яжіться з нами"
+    },
+    // Crypto Unlock
+    cryptoUnlock: {
+      back: "Назад",
+      title: "Розблокування криптовалюти",
+      subtitle: "Професійне розблокування криптовалютних платежів на Fansly. Швидко, безпечно, з гарантією.",
+      features: {
+        timing: {
+          title: "24 години",
+          description: "Розблокування за 24 години з моменту звернення"
+        },
+        cases: {
+          title: "70+ кейсів",
+          description: "Понад 70 успішних розблокувань криптовалютних платежів"
+        },
+        guarantee: {
+          title: "Гарантія",
+          description: "100% гарантія розблокування або повернення коштів"
+        },
+        fansly: {
+          title: "Fansly",
+          description: "Спеціалізація на платформі Fansly"
+        }
+      },
+      howItWorks: {
+        title: "Як це працює",
+        step1: {
+          number: "1",
+          title: "Звернення",
+          description: "Зв'яжіться з нами через Telegram і опишіть ситуацію"
+        },
+        step2: {
+          number: "2",
+          title: "Аналіз",
+          description: "Ми проаналізуємо вашу ситуацію і запропонуємо рішення"
+        },
+        step3: {
+          number: "3",
+          title: "Розблокування",
+          description: "Виконаємо розблокування протягом 24 годин"
+        },
+        step4: {
+          number: "4",
+          title: "Перевірка",
+          description: "Переконаємося, що все працює коректно"
+        }
+      },
+      pricing: {
+        title: "Вартість послуги",
+        price: "$150",
+        description: "Фіксована ціна за розблокування. Без прихованих платежів."
+      },
+      whyUs: {
+        title: "Чому обирають нас",
+        items: [
+          "Понад 70 успішних кейсів розблокування",
+          "Середній термін вирішення — до 24 годин",
+          "100% гарантія або повернення коштів",
+          "Конфіденційність і безпека даних",
+          "Підтримка 24/7 через Telegram",
+          "Досвід роботи з Fansly та OnlyFans"
+        ]
+      },
+      cta: {
+        title: "Готові розблокувати криптовалюту?",
+        description: "Зв'яжіться з нами в Telegram і отримайте допомогу протягом 24 годин",
+        telegram: "Написати в Telegram",
+        form: "Заповнити форму"
+      }
     },
     // Model Verification
     modelVerification: {
