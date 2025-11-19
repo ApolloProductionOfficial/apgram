@@ -15,10 +15,10 @@ const Hero = () => {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               {t.hero.badge}
             </span>
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
               {t.hero.title}
             </h1>
-            <p className="text-sm md:text-base lg:text-lg text-muted-foreground leading-relaxed">
+            <p className="text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed">
               {t.hero.description}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
