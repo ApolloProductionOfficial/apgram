@@ -10,6 +10,7 @@ import CryptoUnlock from "./pages/CryptoUnlock";
 import ModelVerification from "./pages/ModelVerification";
 import PartnershipProgram from "./pages/PartnershipProgram";
 import DubaiResidency from "./pages/DubaiResidency";
+import WebcamServices from "./pages/WebcamServices";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/model-verification" element={<ModelVerification />} />
             <Route path="/partnership" element={<PartnershipProgram />} />
             <Route path="/dubai-residency" element={<DubaiResidency />} />
+            <Route path="/webcam-services" element={<WebcamServices />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
