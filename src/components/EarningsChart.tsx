@@ -6,6 +6,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 const EarningsChart = () => {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
+  const [animationProgress, setAnimationProgress] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -13,6 +14,15 @@ const EarningsChart = () => {
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
+          // Animate the chart line growth
+          let progress = 0;
+          const interval = setInterval(() => {
+            progress += 2;
+            setAnimationProgress(progress);
+            if (progress >= 100) {
+              clearInterval(interval);
+            }
+          }, 20);
         }
       },
       { threshold: 0.2 }
@@ -56,18 +66,15 @@ const EarningsChart = () => {
     return null;
   };
 
+  // Filter data based on animation progress
+  const visibleData = data.slice(0, Math.ceil((data.length * animationProgress) / 100));
+
   return (
     <section 
       ref={sectionRef}
       className="py-20 px-4 relative overflow-hidden"
     >
-      <div className="container mx-auto max-w-6xl"
-        style={{
-          opacity: isVisible ? 1 : 0,
-          transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
-          transition: 'all 0.8s ease-out'
-        }}
-      >
+      <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
@@ -93,8 +100,8 @@ const EarningsChart = () => {
           
           {/* Chart container */}
           <div className="relative bg-card/50 backdrop-blur-sm border-2 border-primary/20 rounded-2xl p-3 md:p-6 lg:p-8 shadow-2xl shadow-primary/10">
-            <ResponsiveContainer width="100%" height={250} className="md:!h-[400px]">
-              <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={400}>
+              <AreaChart data={visibleData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
