@@ -57,19 +57,23 @@ const CustomCursor = () => {
           <div className="absolute inset-0 rounded-full bg-primary animate-pulse" />
           
           {/* Inner glow */}
-          <div className="absolute -inset-0.5 rounded-full bg-primary/80 blur-[2px] animate-pulse" 
+          <div className="absolute -inset-1 rounded-full bg-primary blur-[3px] animate-pulse" 
                style={{ animationDuration: '1.5s' }} />
           
           {/* Outer glow */}
-          <div className="absolute -inset-1 rounded-full bg-primary/40 blur-[4px] animate-pulse" 
+          <div className="absolute -inset-2 rounded-full bg-primary/70 blur-[6px] animate-pulse" 
                style={{ animationDuration: '2s' }} />
+          
+          {/* Far glow */}
+          <div className="absolute -inset-3 rounded-full bg-primary/40 blur-[8px] animate-pulse" 
+               style={{ animationDuration: '2.5s' }} />
         </div>
       </div>
 
       {/* Trail with glow */}
       {trail.map((point, index) => {
-        const opacity = (index / trail.length) * 0.5;
-        const size = (index / trail.length) * 10 + 2;
+        const opacity = (index / trail.length) * 0.7;
+        const size = (index / trail.length) * 12 + 3;
         
         return (
           <div
@@ -83,10 +87,11 @@ const CustomCursor = () => {
             }}
           >
             <div
-              className="rounded-full bg-primary/60 blur-[2px]"
+              className="rounded-full bg-primary/80 blur-[3px]"
               style={{
                 width: `${size}px`,
                 height: `${size}px`,
+                boxShadow: `0 0 ${size * 2}px ${size}px hsl(var(--primary) / 0.5)`,
               }}
             />
           </div>
