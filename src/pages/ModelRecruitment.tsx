@@ -1,11 +1,18 @@
 import { useTranslation } from "@/hooks/useTranslation";
-import { Users, DollarSign, Shield, Zap, Globe } from "lucide-react";
+import { Users, DollarSign, Shield, Zap, Globe, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useButtonSound } from "@/hooks/useButtonSound";
+import { useNavigate } from "react-router-dom";
 
 const ModelRecruitment = () => {
   const { t } = useTranslation();
   const { playClickSound } = useButtonSound();
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    playClickSound();
+    navigate("/");
+  };
 
   const platforms = [
     "OnlyFans", "Fansly", "4based", "MYM", "Fancentro", 
@@ -16,6 +23,15 @@ const ModelRecruitment = () => {
   return (
     <div className="min-h-screen bg-background pt-24 pb-16 px-4">
       <div className="container mx-auto max-w-6xl">
+        <Button
+          variant="ghost"
+          onClick={handleBack}
+          className="mb-8 hover:bg-accent/50 transition-colors"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {t.common.back}
+        </Button>
+        
         {/* Hero Section */}
         <div className="text-center mb-16 animate-fade-in">
           <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
