@@ -85,15 +85,17 @@ const MusicPlayer = () => {
           preload="none"
         />
         
-        {/* Mobile: только один тонкий ползунок */}
+        {/* Mobile & Desktop: Slider with better mobile touch area */}
         <div className="flex items-center gap-2 w-full">
-          <Slider
-            value={[volume]}
-            onValueChange={handleVolumeChange}
-            max={100}
-            step={1}
-            className="flex-1 h-1"
-          />
+          <div className="flex-1 py-2 md:py-0">
+            <Slider
+              value={[volume]}
+              onValueChange={handleVolumeChange}
+              max={100}
+              step={1}
+              className="w-full"
+            />
+          </div>
 
           {/* Десктоп: маленький текст и кнопки справа */}
           <div className="hidden md:flex items-center gap-2">
