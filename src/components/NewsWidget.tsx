@@ -43,7 +43,7 @@ const NewsWidget = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [language]); // Added language dependency to refetch when language changes
+  }, [language]);
 
   const fetchNews = async () => {
     setIsLoading(true);
@@ -82,10 +82,10 @@ const NewsWidget = () => {
   };
 
   const newsTitle = language === 'ru' 
-    ? "525 Новости адалт индустрии" 
+    ? "Новости адалт индустрии" 
     : language === 'uk' 
-    ? "525 Новини адалт індустрії" 
-    : "525 Adult Industry News";
+    ? "Новини адалт індустрії" 
+    : "Adult Industry News";
   const loadingText = language === 'ru' ? "Загрузка новостей..." : language === 'uk' ? "Завантаження новин..." : "Loading news...";
   const noNewsText = language === 'ru' ? "Пока нет новостей" : language === 'uk' ? "Поки немає новин" : "No news yet";
  
@@ -94,8 +94,9 @@ const NewsWidget = () => {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-semibold text-foreground">{newsTitle}</h3>
+          <div className="flex items-center gap-2 mb-2">
+            <Newspaper className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground flex-1">{newsTitle}</h3>
             <ManualNewsFetch />
           </div>
           <p className="text-xs text-muted-foreground">
