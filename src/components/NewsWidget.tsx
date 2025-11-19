@@ -81,10 +81,14 @@ const NewsWidget = () => {
     }
   };
 
-  const newsTitle = language === 'ru' ? "Новости адалт индустрии" : language === 'uk' ? "Новини адалт індустрії" : "Adult Industry News";
+  const newsTitle = language === 'ru' 
+    ? "525 Новости адалт индустрии" 
+    : language === 'uk' 
+    ? "525 Новини адалт індустрії" 
+    : "525 Adult Industry News";
   const loadingText = language === 'ru' ? "Загрузка новостей..." : language === 'uk' ? "Завантаження новин..." : "Loading news...";
   const noNewsText = language === 'ru' ? "Пока нет новостей" : language === 'uk' ? "Поки немає новин" : "No news yet";
-
+ 
   return (
     <aside className="fixed right-0 top-[120px] bottom-0 w-80 bg-card/95 backdrop-blur-md border-l border-border overflow-y-auto p-6 hidden xl:block z-40">
       <div className="space-y-6">

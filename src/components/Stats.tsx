@@ -73,27 +73,6 @@ const StatCard = ({
   isVisible: boolean;
   delay: number;
 }) => {
-  const [count, setCount] = useState(0);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  useEffect(() => {
-    if (isVisible && !hasAnimated) {
-      setHasAnimated(true);
-      let currentCount = 0;
-      const increment = Math.ceil(stat.value / 50);
-      const timer = setInterval(() => {
-        currentCount += increment;
-        if (currentCount >= stat.value) {
-          setCount(stat.value);
-          clearInterval(timer);
-        } else {
-          setCount(currentCount);
-        }
-      }, 30);
-      return () => clearInterval(timer);
-    }
-  }, [isVisible, stat.value, hasAnimated]);
-
   return (
     <div
       className="bg-gradient-card backdrop-blur-xl rounded-2xl p-8 border border-border hover:shadow-glow transition-all duration-500 group hover:scale-105 animate-pulse-glow"
@@ -106,7 +85,7 @@ const StatCard = ({
     >
       <div className="text-center">
         <div className="text-5xl font-bold text-primary mb-2 transition-all group-hover:scale-110">
-          {stat.prefix || ""}{count.toLocaleString()}{stat.suffix}
+          {stat.prefix || ""}{stat.value.toLocaleString()}{stat.suffix}
         </div>
         <div className="text-muted-foreground group-hover:text-foreground transition-colors">
           {stat.label}
