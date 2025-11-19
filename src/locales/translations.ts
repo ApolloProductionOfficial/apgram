@@ -97,6 +97,10 @@ export const translations = {
       dubaiResidency: {
         title: "ВНЖ в Дубае",
         description: "Оформление ID Dubai за 10-14 дней. Полное сопровождение процесса от А до Я. Гарантия 100%."
+      },
+      webcamServices: {
+        title: "Вебкам услуги",
+        description: "Работа на 7 сайтах с персональным оператором. Релокация в Грузию. Выплаты 2 раза в месяц."
       }
     },
     // Right Sidebar
@@ -283,6 +287,45 @@ export const translations = {
         telegram: "Написать в Telegram",
         form: "Заполнить анкету"
       }
+    },
+    webcam: {
+      backButton: "Назад",
+      title: "Вебкам услуги",
+      subtitle: "Профессиональная поддержка и высокие доходы для вебкам-моделей",
+      conditionsTitle: "Условия работы",
+      conditions: {
+        baseRate: "Базовая ставка",
+        baseRateDesc: "30% от заработка",
+        totals: "Ежемесячные тоталы",
+        totalsDesc: "От 5к-15к$ ежемесячно",
+        payments: "Выплаты",
+        paymentsDesc: "2 раза в месяц на криптовалюту",
+        topModels: "Для топ-моделей",
+        topModelsDesc: "40/60 или 50/50 для моделей со своим оборудованием"
+      },
+      servicesTitle: "Что предлагаем",
+      services: {
+        multiSite: "Работа на 7 сайтах",
+        multiSiteDesc: "С персональным оператором на каждой платформе",
+        management: "Управление аккаунтами",
+        managementDesc: "Ведение ваших Fansly и OnlyFans под ключ",
+        support: "Техподдержка",
+        supportDesc: "Поддержка 24/7 для решения любых вопросов",
+        schedule: "Свободный график",
+        scheduleDesc: "Работайте в удобное для вас время"
+      },
+      relocationTitle: "Релокация в Грузию",
+      relocation: {
+        package: "Полный пакет",
+        packageDesc: "Жилье + оборудование для работы",
+        documents: "Документы",
+        documentsDesc: "Страховка, банковский счет, ВНЖ",
+        benefits: "Преимущества",
+        benefitsDesc: "Низкие налоги, высокое качество жизни"
+      },
+      ctaTitle: "Готовы начать зарабатывать?",
+      ctaDescription: "Свяжитесь с нами для консультации и начала сотрудничества",
+      contactButton: "Связаться с нами"
     }
   },
   en: {
@@ -383,6 +426,10 @@ export const translations = {
       dubaiResidency: {
         title: "Dubai Residency",
         description: "ID Dubai processing in 10-14 days. Full process support from A to Z. 100% guarantee."
+      },
+      webcamServices: {
+        title: "Webcam Services",
+        description: "Work on 7 sites with personal operator. Relocation to Georgia. Payments twice a month."
       }
     },
     // Right Sidebar
@@ -569,6 +616,45 @@ export const translations = {
         telegram: "Contact on Telegram",
         form: "Fill Application"
       }
+    },
+    webcam: {
+      backButton: "Back",
+      title: "Webcam Services",
+      subtitle: "Professional support and high income for webcam models",
+      conditionsTitle: "Work Conditions",
+      conditions: {
+        baseRate: "Base Rate",
+        baseRateDesc: "30% of earnings",
+        totals: "Monthly Totals",
+        totalsDesc: "From $5k-15k monthly",
+        payments: "Payments",
+        paymentsDesc: "Twice a month in cryptocurrency",
+        topModels: "For Top Models",
+        topModelsDesc: "40/60 or 50/50 for models with their own equipment"
+      },
+      servicesTitle: "What We Offer",
+      services: {
+        multiSite: "Work on 7 Sites",
+        multiSiteDesc: "With personal operator on each platform",
+        management: "Account Management",
+        managementDesc: "Full management of your Fansly and OnlyFans accounts",
+        support: "Technical Support",
+        supportDesc: "24/7 support for any questions",
+        schedule: "Flexible Schedule",
+        scheduleDesc: "Work at your convenient time"
+      },
+      relocationTitle: "Relocation to Georgia",
+      relocation: {
+        package: "Full Package",
+        packageDesc: "Housing + equipment for work",
+        documents: "Documents",
+        documentsDesc: "Insurance, bank account, residence permit",
+        benefits: "Benefits",
+        benefitsDesc: "Low taxes, high quality of life"
+      },
+      ctaTitle: "Ready to Start Earning?",
+      ctaDescription: "Contact us for consultation and to start cooperation",
+      contactButton: "Contact Us"
     }
   },
   uk: {
@@ -669,6 +755,10 @@ export const translations = {
       dubaiResidency: {
         title: "ВНЖ в Дубаї",
         description: "Оформлення ID Dubai за 10-14 днів. Повний супровід процесу від А до Я. Гарантія 100%."
+      },
+      webcamServices: {
+        title: "Вебкам послуги",
+        description: "Робота на 7 сайтах з персональним оператором. Релокація до Грузії. Виплати 2 рази на місяць."
       }
     },
     // Right Sidebar
@@ -855,6 +945,45 @@ export const translations = {
         telegram: "Написати в Telegram",
         form: "Заповнити анкету"
       }
+    },
+    webcam: {
+      backButton: "Назад",
+      title: "Вебкам послуги",
+      subtitle: "Професійна підтримка та високі доходи для вебкам-моделей",
+      conditionsTitle: "Умови роботи",
+      conditions: {
+        baseRate: "Базова ставка",
+        baseRateDesc: "30% від заробітку",
+        totals: "Щомісячні тотали",
+        totalsDesc: "Від 5к-15к$ щомісяця",
+        payments: "Виплати",
+        paymentsDesc: "2 рази на місяць на криптовалюту",
+        topModels: "Для топ-моделей",
+        topModelsDesc: "40/60 або 50/50 для моделей зі своїм обладнанням"
+      },
+      servicesTitle: "Що пропонуємо",
+      services: {
+        multiSite: "Робота на 7 сайтах",
+        multiSiteDesc: "З персональним оператором на кожній платформі",
+        management: "Управління акаунтами",
+        managementDesc: "Ведення ваших Fansly та OnlyFans під ключ",
+        support: "Техпідтримка",
+        supportDesc: "Підтримка 24/7 для вирішення будь-яких питань",
+        schedule: "Вільний графік",
+        scheduleDesc: "Працюйте у зручний для вас час"
+      },
+      relocationTitle: "Релокація до Грузії",
+      relocation: {
+        package: "Повний пакет",
+        packageDesc: "Житло + обладнання для роботи",
+        documents: "Документи",
+        documentsDesc: "Страховка, банківський рахунок, ВНЖ",
+        benefits: "Переваги",
+        benefitsDesc: "Низькі податки, висока якість життя"
+      },
+      ctaTitle: "Готові почати заробляти?",
+      ctaDescription: "Зв'яжіться з нами для консультації та початку співпраці",
+      contactButton: "Зв'язатися з нами"
     }
   }
 };
