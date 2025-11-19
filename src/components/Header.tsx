@@ -76,21 +76,23 @@ const Header = () => {
           <nav className="hidden lg:flex items-center gap-6">
             <a 
               href="#about" 
-              className="text-sm text-foreground/80 hover:text-primary transition-colors"
+              className="text-sm text-foreground/80 hover:text-primary transition-all relative group"
               onClick={(e) => handleNavigate(e, 'about')}
             >
               {t.header.about}
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
             </a>
             <a 
               href="#traffic" 
-              className="text-sm text-foreground/80 hover:text-primary transition-colors"
+              className="text-sm text-foreground/80 hover:text-primary transition-all relative group"
               onClick={(e) => handleNavigate(e, 'traffic')}
             >
               {t.header.traffic}
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
             </a>
             <a 
               href="/services" 
-              className="text-sm text-foreground/80 hover:text-primary transition-colors"
+              className="text-sm text-foreground/80 hover:text-primary transition-all relative group"
               onClick={(e) => {
                 e.preventDefault();
                 playClickSound();
@@ -98,6 +100,7 @@ const Header = () => {
               }}
             >
               {t.header.services}
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
             </a>
             <Button
               size="sm"
