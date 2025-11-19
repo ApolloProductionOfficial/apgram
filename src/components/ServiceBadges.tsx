@@ -13,7 +13,7 @@ const ServiceBadges = () => {
   ];
 
   return (
-    <div className="w-full px-3 lg:px-0 py-4 lg:py-8">
+    <div className="w-full px-3 lg:px-0 py-4 lg:py-8 hidden lg:block">
       <div className="flex flex-wrap gap-1.5 justify-center">
         {topServices.map((service, index) => (
           <button
