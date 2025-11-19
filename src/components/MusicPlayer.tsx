@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
 const MusicPlayer = () => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  // Load music state from localStorage
+  const [isPlaying, setIsPlaying] = useState(() => {
+    const saved = localStorage.getItem('musicPlaying');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(15);
   const [isVisible, setIsVisible] = useState(true);
@@ -12,36 +16,48 @@ const MusicPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const hasStartedRef = useRef(false);
 
-  // Start audio on first user interaction
+  // Restore music state on mount
   useEffect(() => {
     const startAudioOnInteraction = async () => {
       if (!hasStartedRef.current && audioRef.current) {
-        try {
-          await audioRef.current.play();
-          setIsPlaying(true);
-          hasStartedRef.current = true;
-          // Remove listeners after first interaction
-          document.removeEventListener('click', startAudioOnInteraction);
-          document.removeEventListener('touchstart', startAudioOnInteraction);
-        } catch (err) {
-          console.log("Play failed:", err);
+        const savedState = localStorage.getItem('musicPlaying');
+        const shouldPlay = savedState ? JSON.parse(savedState) : false;
+        
+        if (shouldPlay) {
+          try {
+            await audioRef.current.play();
+            setIsPlaying(true);
+            hasStartedRef.current = true;
+            localStorage.setItem('musicPlaying', 'true');
+          } catch (err) {
+            console.log("Play failed:", err);
+          }
         }
+        // Remove listeners after first interaction
+        document.removeEventListener('click', startAudioOnInteraction);
+        document.removeEventListener('touchstart', startAudioOnInteraction);
       }
     };
 
-    // Try autoplay first
+    // Try to restore state or autoplay
     const tryAutoplay = async () => {
       if (audioRef.current) {
         audioRef.current.volume = volume / 100;
-        try {
-          await audioRef.current.play();
-          setIsPlaying(true);
-          hasStartedRef.current = true;
-        } catch (err) {
-          console.log("Autoplay blocked, waiting for user interaction");
-          // Add event listeners for first user interaction
-          document.addEventListener('click', startAudioOnInteraction);
-          document.addEventListener('touchstart', startAudioOnInteraction);
+        const savedState = localStorage.getItem('musicPlaying');
+        const shouldPlay = savedState === null ? true : JSON.parse(savedState); // Autoplay only on first visit
+        
+        if (shouldPlay) {
+          try {
+            await audioRef.current.play();
+            setIsPlaying(true);
+            hasStartedRef.current = true;
+            localStorage.setItem('musicPlaying', 'true');
+          } catch (err) {
+            console.log("Autoplay blocked, waiting for user interaction");
+            // Add event listeners for first user interaction
+            document.addEventListener('click', startAudioOnInteraction);
+            document.addEventListener('touchstart', startAudioOnInteraction);
+          }
         }
       }
     };
@@ -91,12 +107,14 @@ const MusicPlayer = () => {
 
   const togglePlay = () => {
     if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
+      const newState = !isPlaying;
+      if (newState) {
         audioRef.current.play();
+      } else {
+        audioRef.current.pause();
       }
-      setIsPlaying(!isPlaying);
+      setIsPlaying(newState);
+      localStorage.setItem('musicPlaying', JSON.stringify(newState));
     }
   };
 
