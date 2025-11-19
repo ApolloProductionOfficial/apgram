@@ -32,25 +32,25 @@ serve(async (req) => {
     
     console.log('Fetching news for language:', language);
 
-    // Search queries based on language
+    // Search queries based on language - search on news sites, not OnlyFans
     const searchQueriesByLang: Record<string, string[]> = {
       ru: [
-        'OnlyFans новости',
-        'новости индустрии контента для взрослых',
-        'заработок создателей контента новости',
-        'OnlyFans обновления платформы'
+        'site:xbiz.com OR site:avn.com OR site:adultbusiness.com OnlyFans новости',
+        'site:xbiz.com OR site:avn.com создатели контента новости',
+        'site:adultbusiness.com OR site:xbiz.com индустрия контента',
+        'site:avn.com OR site:xbiz.com платформы для создателей'
       ],
       en: [
-        'OnlyFans news updates',
-        'adult content industry news',
-        'content creator earnings news',
-        'OnlyFans platform updates'
+        'site:xbiz.com OR site:avn.com OR site:adultbusiness.com OnlyFans news',
+        'site:xbiz.com OR site:avn.com content creator news',
+        'site:adultbusiness.com OR site:xbiz.com adult industry news',
+        'site:avn.com OR site:xbiz.com creator platform updates'
       ],
       uk: [
-        'OnlyFans новини',
-        'новини індустрії контенту для дорослих',
-        'заробіток創аторів контенту новини',
-        'OnlyFans оновлення платформи'
+        'site:xbiz.com OR site:avn.com OR site:adultbusiness.com OnlyFans новини',
+        'site:xbiz.com OR site:avn.com творці контенту новини',
+        'site:adultbusiness.com OR site:xbiz.com індустрія контенту',
+        'site:avn.com OR site:xbiz.com платформи для творців'
       ]
     };
 
@@ -58,74 +58,83 @@ serve(async (req) => {
     const randomQuery = queries[Math.floor(Math.random() * queries.length)];
     console.log('Searching for:', randomQuery);
 
-    // Using a simple news API approach
-    const newsResponse = await fetch(`https://api.search.brave.com/res/v1/news/search?q=${encodeURIComponent(randomQuery)}&count=2`, {
+    // Using Brave Search API for real news
+    const braveApiKey = Deno.env.get('BRAVE_API_KEY');
+    if (!braveApiKey) {
+      console.log('BRAVE_API_KEY not set, using fallback');
+    }
+
+    const newsResponse = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(randomQuery)}&count=5`, {
       headers: {
         'Accept': 'application/json',
-        'X-Subscription-Token': Deno.env.get('BRAVE_API_KEY') || 'demo'
+        'X-Subscription-Token': braveApiKey || ''
       }
     });
 
     let newsItems: NewsItem[] = [];
 
-    if (newsResponse.ok) {
+    if (newsResponse.ok && braveApiKey) {
       const newsData = await newsResponse.json();
-      console.log('News data received:', newsData);
+      console.log('Search results received');
 
-      if (newsData.results && newsData.results.length > 0) {
-        newsItems = newsData.results.slice(0, 2).map((item: any) => ({
-          title: item.title || 'Industry Update',
-          description: item.description || item.snippet || 'New developments in the adult content industry',
-          source: item.source || 'Industry News',
-          url: item.url
-        }));
+      if (newsData.web && newsData.web.results && newsData.web.results.length > 0) {
+        newsItems = newsData.web.results
+          .filter((item: any) => item.url && !item.url.includes('onlyfans.com'))
+          .slice(0, 2)
+          .map((item: any) => ({
+            title: item.title || 'Industry Update',
+            description: item.description || 'New developments in the creator economy',
+            source: new URL(item.url).hostname.replace('www.', ''),
+            url: item.url
+          }));
+        console.log(`Found ${newsItems.length} news items`);
       }
     }
 
-    // Fallback news if API fails or no key
+    // Fallback news if API fails or no results found
     if (newsItems.length === 0) {
       console.log('Using fallback news');
       const fallbackNewsByLang: Record<string, any[]> = {
         ru: [
           {
             title: 'Экономика создателей контента продолжает рост',
-            description: 'Индустрия создателей контента показывает сильный рост с увеличением доходов на всех основных платформах.',
-            source: 'Отраслевая аналитика',
-            url: 'https://onlyfans.com'
+            description: 'Индустрия создателей контента показывает сильный рост с увеличением доходов на всех основных платформах. Эксперты отмечают растущий интерес к независимым платформам.',
+            source: 'xbiz.com',
+            url: 'https://xbiz.com'
           },
           {
-            title: 'Новые функции для создателей контента',
-            description: 'Основные платформы анонсируют новые инструменты для монетизации контента.',
-            source: 'Новости платформ',
-            url: 'https://onlyfans.com'
+            title: 'Новые тренды в индустрии контента для взрослых',
+            description: 'Аналитики прогнозируют продолжение роста рынка платформ для создателей контента в ближайшие годы.',
+            source: 'avn.com',
+            url: 'https://avn.com'
           }
         ],
         en: [
           {
             title: 'Content Creator Economy Continues Growth',
-            description: 'The creator economy shows strong momentum with increased earnings across major platforms.',
-            source: 'Industry Insights',
-            url: 'https://onlyfans.com'
+            description: 'The creator economy shows strong momentum with increased earnings across major platforms. Industry experts note growing interest in independent platforms.',
+            source: 'xbiz.com',
+            url: 'https://xbiz.com'
           },
           {
-            title: 'New Platform Features for Content Creators',
-            description: 'Major platforms announce new tools and features to help creators monetize their content.',
-            source: 'Platform Updates',
-            url: 'https://onlyfans.com'
+            title: 'New Trends in Adult Content Industry',
+            description: 'Analysts predict continued growth in the creator platform market over the coming years.',
+            source: 'avn.com',
+            url: 'https://avn.com'
           }
         ],
         uk: [
           {
             title: 'Економіка творців контенту продовжує зростання',
-            description: 'Індустрія творців контенту показує сильне зростання зі збільшенням доходів на всіх основних платформах.',
-            source: 'Галузева аналітика',
-            url: 'https://onlyfans.com'
+            description: 'Індустрія творців контенту показує сильне зростання зі збільшенням доходів на всіх основних платформах. Експерти відзначають зростаючий інтерес до незалежних платформ.',
+            source: 'xbiz.com',
+            url: 'https://xbiz.com'
           },
           {
-            title: 'Нові функції для творців контенту',
-            description: 'Основні платформи анонсують нові інструменти для монетизації контенту.',
-            source: 'Новини платформ',
-            url: 'https://onlyfans.com'
+            title: 'Нові тренди в індустрії контенту для дорослих',
+            description: 'Аналітики прогнозують продовження зростання ринку платформ для творців контенту в найближчі роки.',
+            source: 'avn.com',
+            url: 'https://avn.com'
           }
         ]
       };
