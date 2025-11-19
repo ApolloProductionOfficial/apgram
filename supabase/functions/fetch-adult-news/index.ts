@@ -81,12 +81,24 @@ serve(async (req) => {
         newsItems = newsData.web.results
           .filter((item: any) => item.url && !item.url.includes('onlyfans.com'))
           .slice(0, 2)
-          .map((item: any) => ({
-            title: item.title || 'Industry Update',
-            description: item.description || 'New developments in the creator economy',
-            source: new URL(item.url).hostname.replace('www.', ''),
-            url: item.url
-          }));
+          .map((item: any) => {
+            // Remove HTML tags from description
+            const cleanDescription = (item.description || 'New developments in the creator economy')
+              .replace(/<[^>]*>/g, '')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&quot;/g, '"')
+              .trim();
+            
+            return {
+              title: item.title || 'Industry Update',
+              description: cleanDescription,
+              source: new URL(item.url).hostname.replace('www.', ''),
+              url: item.url
+            };
+          });
         console.log(`Found ${newsItems.length} news items`);
       }
     }
