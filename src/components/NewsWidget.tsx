@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Calendar, Newspaper } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Calendar, Newspaper, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { useButtonSound } from "@/hooks/useButtonSound";
 import ManualNewsFetch from "./ManualNewsFetch";
 
 interface NewsItem {
@@ -17,6 +20,8 @@ interface NewsItem {
 const NewsWidget = () => {
   const { t, language } = useTranslation();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { playClickSound } = useButtonSound();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -155,6 +160,25 @@ const NewsWidget = () => {
                 </NewsCard>
               );
             })}
+          </div>
+        )}
+
+        {/* View All Button */}
+        {!isLoading && news.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-border">
+            <Button
+              variant="outline"
+              className="w-full group hover:bg-primary/10 hover:border-primary/50 transition-all"
+              onClick={() => {
+                playClickSound();
+                navigate("/all-news");
+              }}
+            >
+              <span className="mr-2">
+                {language === 'ru' ? 'Все новости' : language === 'uk' ? 'Всі новини' : 'All News'}
+              </span>
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
           </div>
         )}
       </div>
