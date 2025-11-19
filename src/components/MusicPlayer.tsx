@@ -4,12 +4,55 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
 const MusicPlayer = () => {
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(50);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const hasStartedRef = useRef(false);
+
+  // Start audio on first user interaction
+  useEffect(() => {
+    const startAudioOnInteraction = async () => {
+      if (!hasStartedRef.current && audioRef.current) {
+        try {
+          await audioRef.current.play();
+          setIsPlaying(true);
+          hasStartedRef.current = true;
+          // Remove listeners after first interaction
+          document.removeEventListener('click', startAudioOnInteraction);
+          document.removeEventListener('touchstart', startAudioOnInteraction);
+        } catch (err) {
+          console.log("Play failed:", err);
+        }
+      }
+    };
+
+    // Try autoplay first
+    const tryAutoplay = async () => {
+      if (audioRef.current) {
+        audioRef.current.volume = volume / 100;
+        try {
+          await audioRef.current.play();
+          setIsPlaying(true);
+          hasStartedRef.current = true;
+        } catch (err) {
+          console.log("Autoplay blocked, waiting for user interaction");
+          // Add event listeners for first user interaction
+          document.addEventListener('click', startAudioOnInteraction);
+          document.addEventListener('touchstart', startAudioOnInteraction);
+        }
+      }
+    };
+
+    setTimeout(tryAutoplay, 100);
+
+    return () => {
+      document.removeEventListener('click', startAudioOnInteraction);
+      document.removeEventListener('touchstart', startAudioOnInteraction);
+    };
+  }, []);
 
   // Hide player on scroll up (mobile)
   useEffect(() => {
@@ -26,25 +69,6 @@ const MusicPlayer = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume / 100;
-      // Auto-play when component mounts with delay for better mobile support
-      const playAudio = async () => {
-        try {
-          await audioRef.current?.play();
-          setIsPlaying(true);
-        } catch (err) {
-          console.log("Autoplay blocked:", err);
-          setIsPlaying(false);
-        }
-      };
-      
-      // Small delay to ensure DOM is ready
-      setTimeout(playAudio, 100);
-    }
-  }, []);
 
   useEffect(() => {
     if (audioRef.current) {
