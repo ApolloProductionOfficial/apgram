@@ -60,6 +60,8 @@ serve(async (req) => {
 
     // Using Brave Search API for real news
     const braveApiKey = Deno.env.get('BRAVE_API_KEY');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    
     if (!braveApiKey) {
       console.log('BRAVE_API_KEY not set, using fallback');
     }
@@ -78,7 +80,7 @@ serve(async (req) => {
       console.log('Search results received');
 
       if (newsData.web && newsData.web.results && newsData.web.results.length > 0) {
-        newsItems = newsData.web.results
+        const rawItems = newsData.web.results
           .filter((item: any) => item.url && !item.url.includes('onlyfans.com'))
           .slice(0, 2)
           .map((item: any) => {
@@ -96,9 +98,67 @@ serve(async (req) => {
               title: item.title || 'Industry Update',
               description: cleanDescription,
               source: new URL(item.url).hostname.replace('www.', ''),
-              url: item.url
+              url: item.url,
+              language: 'en' // Original language is English
             };
           });
+        
+        // Translate if needed and LOVABLE_API_KEY is available
+        if (language !== 'en' && lovableApiKey && rawItems.length > 0) {
+          console.log('Translating news to', language);
+          
+          try {
+            const translationResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${lovableApiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'google/gemini-2.5-flash',
+                messages: [
+                  {
+                    role: 'system',
+                    content: `You are a professional translator. Translate news titles and descriptions from English to ${language === 'ru' ? 'Russian' : 'Ukrainian'}. Return ONLY a JSON array with translated items in format: [{"title": "...", "description": "..."}]. Do not add any other text.`
+                  },
+                  {
+                    role: 'user',
+                    content: JSON.stringify(rawItems.map((item: any) => ({ title: item.title, description: item.description })))
+                  }
+                ]
+              }),
+            });
+
+            if (translationResponse.ok) {
+              const translationData = await translationResponse.json();
+              const translatedText = translationData.choices[0].message.content;
+              
+              // Extract JSON from the response
+              const jsonMatch = translatedText.match(/\[[\s\S]*\]/);
+              if (jsonMatch) {
+                const translatedItems = JSON.parse(jsonMatch[0]);
+                newsItems = rawItems.map((item: any, index: number) => ({
+                  ...item,
+                  title: translatedItems[index]?.title || item.title,
+                  description: translatedItems[index]?.description || item.description
+                }));
+                console.log('Translation successful');
+              } else {
+                console.log('Could not extract JSON from translation, using original');
+                newsItems = rawItems;
+              }
+            } else {
+              console.log('Translation failed, using original');
+              newsItems = rawItems;
+            }
+          } catch (error) {
+            console.error('Translation error:', error);
+            newsItems = rawItems;
+          }
+        } else {
+          newsItems = rawItems;
+        }
+        
         console.log(`Found ${newsItems.length} news items`);
       }
     }
