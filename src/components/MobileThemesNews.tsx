@@ -3,12 +3,14 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Briefcase, Newspaper } from "lucide-react";
+import { Briefcase, Newspaper, ArrowRight } from "lucide-react";
+import { useButtonSound } from "@/hooks/useButtonSound";
 
 const MobileThemesNews = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const { playClickSound } = useButtonSound();
 
   const themes = [
     { title: t.sidebar.cryptoUnlock.title, path: '/crypto-unlock' },
@@ -95,6 +97,21 @@ const MobileThemesNews = () => {
               </div>
             )}
           </div>
+          {/* View All News Button */}
+          {news && news.length > 0 && (
+            <button
+              onClick={() => {
+                playClickSound();
+                navigate("/all-news");
+              }}
+              className="w-full px-2.5 py-2.5 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/30 transition-all duration-200 hover:border-primary/50 shadow-sm flex items-center justify-center gap-1.5"
+            >
+              <span className="text-[11px] font-semibold text-primary">
+                {language === 'ru' ? 'Все новости' : language === 'uk' ? 'Всі новини' : 'All News'}
+              </span>
+              <ArrowRight className="h-3 w-3 text-primary" />
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -17,6 +17,7 @@ import DubaiResidency from "./pages/DubaiResidency";
 import WebcamServices from "./pages/WebcamServices";
 import InstagramAutomation from "./pages/InstagramAutomation";
 import Services from "./pages/Services";
+import AllNews from "./pages/AllNews";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ function App() {
               <Route path="/webcam-services" element={<WebcamServices />} />
               <Route path="/instagram-automation" element={<InstagramAutomation />} />
               <Route path="/services" element={<Services />} />
+              <Route path="/all-news" element={<AllNews />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
