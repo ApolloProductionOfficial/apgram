@@ -20,6 +20,21 @@ const MusicPlayer = () => {
 
   // Restore music state on mount
   useEffect(() => {
+    const isMobile = window.innerWidth < 768;
+
+    // On mobile devices we completely disable autoplay so music never starts by itself
+    if (isMobile) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.volume = volume / 100;
+      }
+      setIsPlaying(false);
+      hasStartedRef.current = false;
+      localStorage.setItem('musicPlaying', 'false');
+      return;
+    }
+
     const startAudioOnInteraction = async () => {
       if (!hasStartedRef.current && audioRef.current) {
         const savedState = localStorage.getItem('musicPlaying');
@@ -41,7 +56,7 @@ const MusicPlayer = () => {
       }
     };
 
-    // Try to restore state or autoplay
+    // Try to restore state or autoplay (desktop only)
     const tryAutoplay = async () => {
       if (audioRef.current) {
         audioRef.current.volume = volume / 100;
