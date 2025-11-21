@@ -18,31 +18,25 @@ const OscarWelcome = ({ onComplete }: OscarWelcomeProps) => {
     }));
     setStars(newStars);
 
-    // Play Oscar's special music track (18-28 seconds = 10 seconds)
+    // Play Oscar's special music track snippet (32-36 seconds = 4 seconds)
     const audio = new Audio("/audio/oscar-welcome.mp3");
     audio.volume = 0.7;
-    audio.preload = "auto";
-    
-    // Wait for audio to load, then set start time
-    const playAudio = async () => {
-      try {
-        await audio.load();
-        audio.currentTime = 18;
-        await audio.play();
-      } catch (error) {
-        console.log("Audio play failed:", error);
-      }
-    };
-    
-    playAudio();
-    
-    // Close welcome after exactly 10 seconds (duration from 18 to 28 seconds)
+
+    // Start playback from 32s and let it play smoothly for 4 seconds
+    audio.currentTime = 32;
+    const playPromise = audio.play();
+
+    if (playPromise !== undefined) {
+      playPromise.catch((error) => console.log("Audio play failed:", error));
+    }
+
+    // Close welcome after exactly 4 seconds (duration from 32 to 36 seconds)
     const welcomeTimer = setTimeout(() => {
       audio.pause();
       audio.currentTime = 0;
       onComplete();
-    }, 10000);
-    
+    }, 4000);
+
     return () => {
       clearTimeout(welcomeTimer);
       audio.pause();
