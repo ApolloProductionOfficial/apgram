@@ -22,8 +22,8 @@ const AIChatBot = () => {
   const { toast } = useToast();
   const { t, language } = useTranslation();
   
-  // Use scroll visibility hook - hide during scroll, show when stopped
-  const isVisible = useScrollVisibility(false, 200);
+  // Use scroll visibility hook - mobile only, hide during scroll
+  const isVisible = useScrollVisibility(true, 200);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -175,7 +175,7 @@ const AIChatBot = () => {
       {showHint && !isOpen && (
         <div
           className={`fixed bottom-20 right-4 z-50 animate-fade-in transition-all duration-300 ${
-            isVisible ? 'translate-x-0 opacity-100' : 'translate-x-32 opacity-0'
+            isVisible ? 'translate-x-0 opacity-100' : 'md:translate-x-0 md:opacity-100 translate-x-full opacity-0'
           }`}
         >
           <div className="bg-primary text-primary-foreground px-2 py-1.5 md:px-4 md:py-3 rounded-lg shadow-xl relative animate-bounce flex items-center gap-1.5 max-w-[140px] md:max-w-none">
@@ -193,7 +193,7 @@ const AIChatBot = () => {
           setShowHint(false);
         }}
         className={`fixed bottom-4 right-4 z-50 h-14 w-14 rounded-full shadow-lg shadow-primary/50 transition-all duration-300 bg-primary backdrop-blur-sm border-2 border-primary flex flex-col items-center justify-center gap-0.5 p-2 ${
-          isVisible ? 'translate-x-0 opacity-100' : 'translate-x-32 opacity-0'
+          isVisible ? 'translate-x-0 opacity-100' : 'md:translate-x-0 md:opacity-100 translate-x-full opacity-0'
         }`}
         size="icon"
       >

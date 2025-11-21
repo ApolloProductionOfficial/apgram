@@ -42,17 +42,22 @@ const MobileMenu = () => {
 
   return (
     <>
-      {/* Кнопка меню в виде вертикальной линии справа */}
+      {/* Кнопка меню в виде вертикальной линии справа с текстом */}
       <div className={`md:hidden fixed top-1/2 -translate-y-1/2 right-0 z-40 transition-all duration-300 ${
         isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
       }`}>
-        <Button
-          size="icon"
-          className="h-20 w-2 rounded-l-full shadow-lg bg-gradient-to-b from-primary via-primary/80 to-primary hover:w-3 transition-all duration-200"
-          onClick={() => setOpen(true)}
-        >
-          <span className="sr-only">Открыть меню</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-primary animate-pulse">
+            {servicesTitle}
+          </span>
+          <Button
+            size="icon"
+            className="h-20 w-2 rounded-l-full shadow-lg bg-gradient-to-b from-primary via-primary/80 to-primary hover:w-3 transition-all duration-200 animate-pulse"
+            onClick={() => setOpen(true)}
+          >
+            <span className="sr-only">Открыть меню</span>
+          </Button>
+        </div>
       </div>
 
       {/* Само мобильное меню с анимациями */}
