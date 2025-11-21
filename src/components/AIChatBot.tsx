@@ -304,35 +304,46 @@ const AIChatBot = () => {
           setIsOpen(!isOpen);
           setShowHint(false);
         }}
-        className={`opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto fixed bottom-4 right-4 z-50 h-16 w-16 rounded-full transition-all duration-300 backdrop-blur-sm flex flex-col items-center justify-center gap-0.5 p-2 relative group ${
-          isOpen 
-            ? 'bg-gradient-to-br from-primary via-primary to-primary/90 border-2 border-primary shadow-2xl shadow-primary/60' 
-            : 'bg-gradient-to-br from-primary/90 via-primary to-primary/80 border-2 border-primary shadow-2xl shadow-primary/60 hover:shadow-primary/80 hover:scale-110'
-        }`}
+        className="opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto fixed bottom-6 right-6 z-50 h-16 w-16 p-0"
         size="icon"
       >
-        {/* Cosmic glow effect - always visible */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/40 via-primary/60 to-primary/40 blur-xl opacity-60 group-hover:opacity-100 animate-pulse-glow" />
-        
-        {/* Animated shimmer ring */}
-        <div className="absolute inset-0 rounded-full border-2 border-primary/0 group-hover:border-primary/40 animate-shimmer" />
-        
-        {/* Rotating cosmic particles */}
-        <div className="absolute inset-0 rounded-full overflow-hidden">
-          <div className="absolute top-0 left-1/2 w-1 h-1 bg-primary/60 rounded-full animate-spin" style={{ animationDuration: '3s' }} />
-          <div className="absolute bottom-0 right-1/2 w-1 h-1 bg-primary/60 rounded-full animate-spin" style={{ animationDuration: '4s', animationDirection: 'reverse' }} />
-        </div>
-        
-        {/* Content */}
-        <div className="relative z-10">
-          {isOpen ? (
-            <X className="h-7 w-7 text-primary-foreground drop-shadow-lg" />
-          ) : (
-            <>
-              <Bot className="h-7 w-7 text-primary-foreground drop-shadow-lg" />
-              <span className="text-[8px] font-bold text-primary-foreground tracking-tight leading-none drop-shadow-md">APOLLO AI</span>
-            </>
-          )}
+        <div className={`relative w-full h-full rounded-full transition-all duration-500 group ${
+          isOpen 
+            ? 'bg-gradient-to-br from-primary via-primary to-primary/90 scale-95' 
+            : 'bg-gradient-to-br from-primary/90 via-primary to-primary/80 hover:scale-110'
+        }`}>
+          {/* Liquid drop effect - multiple layers */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/60 via-primary/40 to-transparent blur-2xl opacity-70 group-hover:opacity-100 animate-pulse-glow" />
+          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-primary/50 to-transparent blur-xl opacity-60 animate-pulse" style={{ animationDuration: '3s' }} />
+          
+          {/* Ripple rings */}
+          <div className="absolute inset-0 rounded-full border-2 border-primary/40 animate-ping opacity-30" style={{ animationDuration: '2s' }} />
+          <div className="absolute inset-0 rounded-full border border-primary/30 animate-ping opacity-20" style={{ animationDuration: '3s', animationDelay: '0.5s' }} />
+          
+          {/* Shimmer wave effect */}
+          <div className="absolute inset-0 rounded-full overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+          </div>
+          
+          {/* Floating particles */}
+          <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary-foreground/60 animate-float" style={{ animationDuration: '2s' }} />
+          <div className="absolute bottom-3 left-3 w-1 h-1 rounded-full bg-primary-foreground/40 animate-float" style={{ animationDuration: '3s', animationDelay: '0.5s' }} />
+          <div className="absolute top-4 left-2 w-0.5 h-0.5 rounded-full bg-primary-foreground/50 animate-float" style={{ animationDuration: '2.5s', animationDelay: '1s' }} />
+          
+          {/* Content */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+            {isOpen ? (
+              <X className="h-7 w-7 text-primary-foreground drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+            ) : (
+              <>
+                <Bot className="h-7 w-7 text-primary-foreground drop-shadow-[0_0_12px_rgba(255,255,255,0.6)] animate-pulse" style={{ animationDuration: '2s' }} />
+                <span className="text-[8px] font-bold text-primary-foreground tracking-tight leading-none drop-shadow-[0_0_6px_rgba(255,255,255,0.4)] mt-0.5">APOLLO AI</span>
+              </>
+            )}
+          </div>
+          
+          {/* Glow border */}
+          <div className="absolute inset-0 rounded-full border-2 border-primary-foreground/20 group-hover:border-primary-foreground/40 transition-all duration-300" />
         </div>
       </Button>
 
