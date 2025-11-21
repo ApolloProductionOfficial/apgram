@@ -363,11 +363,11 @@ const AIChatBot = () => {
           {/* Content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
             {isOpen ? (
-              <X className="h-7 w-7 text-primary-foreground drop-shadow-[0_0_12px_rgba(255,255,255,0.8)]" />
+              <X className="h-7 w-7 text-primary-foreground drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]" />
             ) : (
               <>
-                <Bot className="h-7 w-7 text-primary-foreground drop-shadow-[0_0_16px_rgba(255,255,255,0.9)] animate-pulse" style={{ animationDuration: '2s' }} />
-                <span className="text-[8px] font-bold text-primary-foreground tracking-tight leading-none drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] mt-0.5">APOLLO AI</span>
+                <Bot className="h-7 w-7 text-primary-foreground drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)] animate-pulse" style={{ animationDuration: '2s' }} />
+                <span className="text-[8px] font-bold text-primary-foreground tracking-tight leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)] mt-0.5">APOLLO AI</span>
               </>
             )}
           </div>
