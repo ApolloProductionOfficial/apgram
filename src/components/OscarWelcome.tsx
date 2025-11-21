@@ -22,10 +22,20 @@ const OscarWelcome = ({ onComplete }: OscarWelcomeProps) => {
     const audio = new Audio("/audio/oscar-welcome.mp3");
     audio.volume = 0.7;
     
-    // Set start time to 18 seconds
+    // Set start time to 18 seconds when metadata is loaded
     audio.addEventListener('loadedmetadata', () => {
       audio.currentTime = 18;
     });
+    
+    // Monitor playback and close when reaching 37 seconds
+    const handleTimeUpdate = () => {
+      if (audio.currentTime >= 37) {
+        audio.pause();
+        onComplete();
+      }
+    };
+    
+    audio.addEventListener('timeupdate', handleTimeUpdate);
     
     const playPromise = audio.play();
     
@@ -33,18 +43,8 @@ const OscarWelcome = ({ onComplete }: OscarWelcomeProps) => {
       playPromise.catch(() => console.log("Audio play failed"));
     }
     
-    // Stop audio at 37 seconds (19 seconds duration)
-    const stopAudioTimer = setTimeout(() => {
-      audio.pause();
-      audio.currentTime = 0;
-    }, 19000); // 19 seconds (37 - 18 = 19)
-
-    // Auto complete after 19 seconds (same as track duration)
-    const timer = setTimeout(onComplete, 19000);
-    
     return () => {
-      clearTimeout(timer);
-      clearTimeout(stopAudioTimer);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.pause();
       audio.currentTime = 0;
     };
