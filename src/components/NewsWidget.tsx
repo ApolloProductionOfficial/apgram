@@ -146,26 +146,39 @@ const NewsWidget = () => {
                 <NewsCard
                   key={item.id}
                   {...linkProps}
-                  className="bg-card/50 border border-border rounded-lg p-4 hover:border-primary/30 transition-all duration-300 group cursor-pointer block no-underline"
+                  className="relative bg-gradient-to-br from-card/80 via-card/60 to-card/80 border border-primary/20 rounded-xl p-5 hover:border-primary/50 transition-all duration-500 group cursor-pointer block no-underline overflow-hidden hover:scale-[1.02] hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/30"
+                  style={{
+                    transformStyle: 'preserve-3d',
+                    perspective: '1000px'
+                  }}
                 >
-                  {/* Date */}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                    <Calendar className="h-3 w-3" />
-                    <span>{new Date(item.published_at).toLocaleDateString(language)}</span>
-                    {item.source && (
-                      <span className="ml-auto text-primary/70">{item.source}</span>
-                    )}
+                  {/* Cosmic glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-shimmer" />
+                  <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
+                  
+                  <div className="relative z-10">
+                    {/* Date */}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2 group-hover:text-primary/80 transition-colors">
+                      <Calendar className="h-3 w-3 animate-pulse-glow" />
+                      <span>{new Date(item.published_at).toLocaleDateString(language)}</span>
+                      {item.source && (
+                        <span className="ml-auto text-primary/70 font-semibold group-hover:text-primary transition-colors">{item.source}</span>
+                      )}
+                    </div>
+
+                    {/* Title */}
+                    <h4 className="font-bold text-sm mb-2 group-hover:text-primary transition-colors leading-snug drop-shadow-[0_0_8px_rgba(6,182,212,0.3)]">
+                      {item.title}
+                    </h4>
+
+                    {/* Description */}
+                    <p className="text-xs text-muted-foreground leading-relaxed group-hover:text-foreground/90 transition-colors">
+                      {item.description}
+                    </p>
                   </div>
-
-                  {/* Title */}
-                  <h4 className="font-semibold text-sm mb-2 group-hover:text-primary transition-colors">
-                    {item.title}
-                  </h4>
-
-                  {/* Description */}
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {item.description}
-                  </p>
+                  
+                  {/* Corner accent */}
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-bl-full" />
                 </NewsCard>
               );
             })}
