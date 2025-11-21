@@ -149,7 +149,9 @@ const Services = () => {
       <Card
         ref={(el) => {
           cardRefs.current[index] = el;
-          (tiltRef as any).current = el;
+          if (tiltRef && 'current' in tiltRef) {
+            tiltRef.current = el;
+          }
         }}
         className={`group relative overflow-hidden cursor-pointer border-2 border-primary/30 bg-gradient-to-br from-card/90 to-card/50 backdrop-blur hover:border-primary hover:shadow-2xl hover:shadow-primary/30 transition-all duration-500 hover:-translate-y-1 ${
           isVisible 
