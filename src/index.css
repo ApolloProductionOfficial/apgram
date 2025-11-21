@@ -305,6 +305,26 @@ All colors MUST be HSL.
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -100% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(var(--primary-rgb), 0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
 @layer base {
   * {
     @apply border-border;
