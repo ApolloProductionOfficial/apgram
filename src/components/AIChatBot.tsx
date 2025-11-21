@@ -202,7 +202,7 @@ const AIChatBot = () => {
         ) : (
           <>
             <Bot className="h-6 w-6 text-primary-foreground" />
-            <span className="text-[8px] font-bold text-primary-foreground tracking-wider leading-none">APOLLO AI</span>
+            <span className="text-[7px] font-bold text-primary-foreground tracking-tight leading-none">APOLLO AI</span>
           </>
         )}
       </Button>
