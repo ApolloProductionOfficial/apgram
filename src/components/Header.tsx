@@ -94,16 +94,16 @@ const Header = () => {
             </a>
             <a 
               href="/services" 
-              className="text-sm text-foreground/80 hover:text-primary transition-all relative group px-3 py-1.5 rounded-md bg-primary/[0.02] shadow-[0_0_8px_rgba(var(--primary-rgb),0.08)] hover:bg-primary/5 hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.15)] animate-text-shine"
-              style={{ animationDelay: '2s' }}
+              className="text-sm font-bold text-primary hover:text-primary/80 transition-all relative group px-4 py-2 rounded-lg bg-primary/10 shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] border border-primary/30 animate-pulse-glow"
               onClick={(e) => {
                 e.preventDefault();
                 playClickSound();
                 window.location.href = '/services';
               }}
             >
-              {t.header.services}
-              <span className="absolute -bottom-0.5 left-3 w-0 h-0.5 bg-primary transition-all group-hover:w-[calc(100%-24px)]"></span>
+              <span className="relative z-10">{t.header.services}</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20 rounded-lg animate-shimmer"></span>
+              <span className="absolute -bottom-0.5 left-4 w-0 h-0.5 bg-primary transition-all group-hover:w-[calc(100%-32px)]"></span>
             </a>
             <Button
               size="sm"
