@@ -291,8 +291,8 @@ const AIChatBot = () => {
             <div className="absolute -inset-4 rounded-2xl bg-primary/15 blur-3xl opacity-50 animate-pulse-glow" />
             
             <div className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground px-4 py-2.5 rounded-2xl shadow-2xl shadow-primary/60 backdrop-blur-2xl overflow-hidden flex items-center gap-2 border-2 border-primary-foreground/40">
-              {/* Dark overlay for better text contrast */}
-              <div className="absolute inset-0 bg-black/20 rounded-2xl" />
+              {/* Very subtle dark overlay for minimal contrast */}
+              <div className="absolute inset-0 bg-black/5 rounded-2xl" />
               
               {/* Cosmic glow inside - subtle */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-foreground/10 to-transparent animate-shimmer opacity-50" />
@@ -304,13 +304,13 @@ const AIChatBot = () => {
               <div className="absolute top-1 left-3 w-0.5 h-0.5 rounded-full bg-primary-foreground/30 animate-float" style={{ animationDuration: '2s' }} />
               <div className="absolute bottom-1.5 right-4 w-0.5 h-0.5 rounded-full bg-primary-foreground/25 animate-float" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }} />
               
-              <Bot className="w-5 h-5 flex-shrink-0 relative z-10 drop-shadow-[0_0_4px_rgba(0,0,0,0.8)]" />
-              <p className="text-sm font-bold whitespace-nowrap leading-tight relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] tracking-wide" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5)' }}>
+              <Bot className="w-5 h-5 flex-shrink-0 relative z-10 drop-shadow-lg" />
+              <p className="text-sm font-semibold whitespace-nowrap leading-tight relative z-10 drop-shadow-md">
                 {hintText}
               </p>
               
-              {/* Arrow pointing to bot with stronger shadow */}
-              <div className="absolute -bottom-2 right-8 w-4 h-4 bg-gradient-to-br from-primary to-primary/95 transform rotate-45 shadow-xl shadow-primary/60 border-r border-b border-primary-foreground/30" />
+              {/* Arrow pointing to bot */}
+              <div className="absolute -bottom-2 right-8 w-4 h-4 bg-gradient-to-br from-primary to-primary/95 transform rotate-45 shadow-xl shadow-primary/60 border-r border-b border-primary-foreground/20" />
             </div>
           </div>
         </div>
