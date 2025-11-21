@@ -135,13 +135,13 @@ const AIChatBot = () => {
     return () => clearInterval(rotateHints);
   }, [hintMessages.length]);
 
-  // Function to format text with markdown-like syntax including links
+  // Function to format text with markdown-like syntax including links and telegram mentions
   const formatMessage = (text: string) => {
     const parts: (string | JSX.Element)[] = [];
     let lastIndex = 0;
     
-    // Regex to match **[text](link)** (bold links), **bold**, and [text](link)
-    const regex = /(\*\*\[.*?\]\(.*?\)\*\*|\*\*.*?\*\*|\[.*?\]\(.*?\))/g;
+    // Regex to match **[text](link)** (bold links), **bold**, [text](link), and @username
+    const regex = /(\*\*\[.*?\]\(.*?\)\*\*|\*\*.*?\*\*|\[.*?\]\(.*?\)|@[a-zA-Z0-9_]+)/g;
     let match;
     
     while ((match = regex.exec(text)) !== null) {
@@ -152,8 +152,23 @@ const AIChatBot = () => {
       
       const matched = match[0];
       
+      // Handle telegram mentions @username
+      if (matched.startsWith('@')) {
+        const username = matched.slice(1);
+        parts.push(
+          <a
+            key={match.index}
+            href={`https://t.me/${username}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline font-bold cursor-pointer inline-flex items-center gap-1"
+          >
+            {matched}
+          </a>
+        );
+      }
       // Handle bold links **[text](url)**
-      if (matched.startsWith('**[') && matched.endsWith(')**')) {
+      else if (matched.startsWith('**[') && matched.endsWith(')**')) {
         const linkMatch = matched.match(/\*\*\[(.*?)\]\((.*?)\)\*\*/);
         if (linkMatch) {
           const [, linkText, linkUrl] = linkMatch;
@@ -271,15 +286,19 @@ const AIChatBot = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div ref={chatWindowRef} className="fixed bottom-20 right-4 z-50 w-96 max-w-[calc(100vw-2rem)] h-[500px] bg-card border-2 border-primary/30 rounded-2xl shadow-2xl shadow-primary/20 flex flex-col">
+        <div ref={chatWindowRef} className="fixed bottom-20 right-4 z-50 w-96 max-w-[calc(100vw-2rem)] h-[500px] backdrop-blur-xl bg-gradient-to-br from-card/95 via-card/90 to-card/95 border-2 border-primary/30 rounded-2xl shadow-2xl shadow-primary/30 flex flex-col overflow-hidden">
+          {/* Cosmic background effects */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 animate-pulse-glow pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent animate-shimmer" />
+          
           {/* Header */}
-          <div className="p-4 border-b border-border">
-            <h3 className="font-semibold text-lg">{t.chatbot.title}</h3>
+          <div className="relative p-4 border-b border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10">
+            <h3 className="font-semibold text-lg bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">{t.chatbot.title}</h3>
             <p className="text-xs text-muted-foreground">{t.chatbot.subtitle}</p>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="relative flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
             {messages.length === 0 && (
               <div className="text-center text-muted-foreground text-sm pt-8">
                 <MessageCircle className="h-12 w-12 mx-auto mb-4 text-primary/50" />
@@ -291,27 +310,27 @@ const AIChatBot = () => {
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
               >
                 <div
-                  className={`max-w-[80%] p-3 rounded-lg ${
+                  className={`max-w-[80%] p-3 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] ${
                     msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
+                      ? 'bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/30'
+                      : 'bg-gradient-to-br from-muted/80 to-muted/60 border border-primary/10 shadow-md'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{formatMessage(msg.content)}</p>
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{formatMessage(msg.content)}</p>
                 </div>
               </div>
             ))}
             
             {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-muted p-3 rounded-lg">
+              <div className="flex justify-start animate-fade-in">
+                <div className="bg-gradient-to-br from-muted/80 to-muted/60 p-3 rounded-xl border border-primary/10 shadow-md backdrop-blur-sm">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce shadow-sm shadow-primary/50" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce shadow-sm shadow-primary/50" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce shadow-sm shadow-primary/50" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               </div>
@@ -321,7 +340,7 @@ const AIChatBot = () => {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-border">
+          <div className="relative p-4 border-t border-primary/20 bg-gradient-to-r from-primary/5 via-transparent to-primary/5">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -329,14 +348,14 @@ const AIChatBot = () => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={t.chatbot.placeholder}
-                className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex-1 px-4 py-2.5 bg-background/50 backdrop-blur-sm border border-primary/20 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary/40 transition-all duration-300 placeholder:text-muted-foreground/60"
                 disabled={isLoading}
               />
               <Button
                 onClick={sendMessage}
                 disabled={isLoading || !input.trim()}
                 size="icon"
-                className="bg-primary hover:bg-primary/90"
+                className="bg-gradient-to-br from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary/80 hover:to-primary/70 shadow-lg shadow-primary/30 transition-all duration-300 hover:scale-105"
               >
                 <Send className="h-4 w-4" />
               </Button>
@@ -347,7 +366,7 @@ const AIChatBot = () => {
                 href="https://t.me/Apollo_Production" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-primary hover:underline"
+                className="text-primary hover:underline font-semibold"
               >
                 Telegram
               </a>
