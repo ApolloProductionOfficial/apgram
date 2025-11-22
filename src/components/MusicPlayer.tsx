@@ -139,10 +139,21 @@ const MusicPlayer = () => {
   return (
     <div className="hidden md:block fixed bottom-6 left-6 right-auto z-50">
       <div
-        className={`relative group bg-gradient-to-br from-card/95 to-card/80 backdrop-blur-xl border-2 ${
+        className={`relative group overflow-hidden bg-gradient-to-br from-card/95 to-card/80 backdrop-blur-xl border-2 ${
           isPlaying ? 'border-primary/60 shadow-2xl shadow-primary/30' : 'border-border/50'
         } rounded-2xl md:w-72 md:p-5 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary/40`}
       >
+        {/* Animated cosmic background */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className={`absolute inset-0 bg-gradient-to-br from-primary/30 via-purple-500/20 to-cyan-500/30 ${
+            isPlaying ? 'animate-pulse' : ''
+          }`} style={{ animationDuration: '3s' }} />
+          <div className={`absolute inset-0 bg-gradient-to-tr from-cyan-500/20 via-transparent to-primary/20 ${
+            isPlaying ? 'animate-shimmer' : ''
+          }`} />
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-radial from-primary/10 via-transparent to-transparent opacity-50" />
+        </div>
+        
         {/* Cosmic glow effect */}
         <div className={`absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent rounded-2xl blur-xl opacity-0 ${
           isPlaying ? 'opacity-100 animate-shimmer' : 'group-hover:opacity-60'

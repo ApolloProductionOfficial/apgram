@@ -17,8 +17,8 @@ export const useButtonSound = () => {
     oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
     oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.01);
     
-    // Volume envelope
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    // Volume envelope - quieter sound
+    gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
     
     // Play sound
