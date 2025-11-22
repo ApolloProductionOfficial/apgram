@@ -138,6 +138,18 @@ const MusicPlayer = () => {
  
   return (
     <div className="hidden md:block fixed bottom-6 left-6 right-auto z-50">
+      {/* Cosmic glow around player - outside */}
+      <div className="absolute inset-0 -m-20 pointer-events-none">
+        {/* Green glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-green-500/40 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '3s' }} />
+        {/* Purple glow */}
+        <div className="absolute bottom-0 right-0 w-56 h-56 bg-purple-500/40 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s', animationDelay: '0.5s' }} />
+        {/* Cyan glow */}
+        <div className="absolute top-1/2 left-0 w-48 h-48 bg-cyan-500/40 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '3.5s', animationDelay: '1s' }} />
+        {/* Pink glow */}
+        <div className="absolute bottom-1/4 left-1/4 w-40 h-40 bg-pink-500/30 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4.5s', animationDelay: '1.5s' }} />
+      </div>
+      
       <div
         className={`relative group overflow-hidden bg-gradient-to-br from-card/95 to-card/80 backdrop-blur-xl border-2 ${
           isPlaying ? 'border-primary/60 shadow-2xl shadow-primary/30' : 'border-border/50'
