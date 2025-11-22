@@ -16,6 +16,10 @@ const MusicPlayer = () => {
   const [volume, setVolume] = useState(5);
   const audioRef = useRef<HTMLAudioElement>(null);
   const hasStartedRef = useRef(false);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const [frequencyData, setFrequencyData] = useState<number[]>(new Array(32).fill(0));
 
   // Restore music state on mount
   useEffect(() => {
@@ -93,6 +97,46 @@ const MusicPlayer = () => {
     }
   }, [volume]);
 
+  // Setup audio analyzer
+  useEffect(() => {
+    if (audioRef.current && !analyserRef.current) {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaElementSource(audioRef.current);
+      
+      analyser.fftSize = 64;
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength) as Uint8Array;
+      
+      source.connect(analyser);
+      analyser.connect(audioContext.destination);
+      
+      analyserRef.current = analyser;
+      dataArrayRef.current = dataArray;
+      
+      const updateFrequencyData = () => {
+        if (analyserRef.current && dataArrayRef.current) {
+          // @ts-ignore - TypeScript issue with Uint8Array types
+          analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+          const arr: number[] = [];
+          for (let i = 0; i < dataArrayRef.current.length; i++) {
+            arr.push(dataArrayRef.current[i]);
+          }
+          setFrequencyData(arr);
+        }
+        animationFrameRef.current = requestAnimationFrame(updateFrequencyData);
+      };
+      
+      updateFrequencyData();
+    }
+    
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
   const togglePlay = () => {
     if (audioRef.current) {
       const newState = !isPlaying;
@@ -148,6 +192,34 @@ const MusicPlayer = () => {
         <div className="absolute top-1/2 left-0 w-48 h-48 bg-cyan-500/40 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '3.5s', animationDelay: '1s' }} />
         {/* Pink glow */}
         <div className="absolute bottom-1/4 left-1/4 w-40 h-40 bg-pink-500/30 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4.5s', animationDelay: '1.5s' }} />
+      </div>
+
+      {/* Equalizer visualization - Left side */}
+      <div className="absolute -left-16 top-1/2 -translate-y-1/2 flex gap-1 h-20 items-end">
+        {frequencyData.slice(0, 8).map((value, i) => {
+          const height = Math.max(10, (value / 255) * 80);
+          return (
+            <div
+              key={i}
+              className="w-1.5 bg-gradient-to-t from-primary via-cyan-500 to-purple-500 rounded-full transition-all duration-75"
+              style={{ height: `${height}px` }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Equalizer visualization - Right side */}
+      <div className="absolute -right-16 top-1/2 -translate-y-1/2 flex gap-1 h-20 items-end">
+        {frequencyData.slice(8, 16).map((value, i) => {
+          const height = Math.max(10, (value / 255) * 80);
+          return (
+            <div
+              key={i}
+              className="w-1.5 bg-gradient-to-t from-purple-500 via-pink-500 to-cyan-500 rounded-full transition-all duration-75"
+              style={{ height: `${height}px` }}
+            />
+          );
+        })}
       </div>
       
       <div
