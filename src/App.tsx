@@ -16,6 +16,7 @@ import PartnershipProgram from "./pages/PartnershipProgram";
 import DubaiResidency from "./pages/DubaiResidency";
 import WebcamServices from "./pages/WebcamServices";
 import InstagramAutomation from "./pages/InstagramAutomation";
+import Marketplace from "./pages/Marketplace";
 import Services from "./pages/Services";
 import AllNews from "./pages/AllNews";
 import NotFound from "./pages/NotFound";
@@ -43,6 +44,7 @@ function App() {
               <Route path="/dubai-residency" element={<DubaiResidency />} />
               <Route path="/webcam-services" element={<WebcamServices />} />
               <Route path="/instagram-automation" element={<InstagramAutomation />} />
+              <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/services" element={<Services />} />
               <Route path="/all-news" element={<AllNews />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
