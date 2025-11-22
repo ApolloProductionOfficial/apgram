@@ -6,6 +6,7 @@ import AIChatBot from "@/components/AIChatBot";
 import MobileMenu from "@/components/MobileMenu";
 import MobileThemesNews from "@/components/MobileThemesNews";
 import Hero from "@/components/Hero";
+import FeaturedServices from "@/components/FeaturedServices";
 import EarningsChart from "@/components/EarningsChart";
 import Stats from "@/components/Stats";
 import TrafficSources from "@/components/TrafficSources";
@@ -36,6 +37,7 @@ const Index = () => {
         <VideoBanner />
         <Hero />
         <MobileThemesNews />
+        <FeaturedServices />
         <div
           ref={earningsChartAnim.elementRef}
           className={`transition-all duration-700 ${
