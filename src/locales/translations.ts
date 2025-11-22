@@ -120,6 +120,10 @@ export const translations = {
       instagramAutomation: {
         title: "Автоматизация и Софты",
         description: "Instagram ферм для трафика на OnlyFans. 200-400+ аккаунтов / устройство. ИИ в лайве 24/7."
+      },
+      marketplace: {
+        title: "Marketplace | Only4riend",
+        description: "Площадка покупки и продажи контактов моделей. Гарантия 14 дней. Статусы моделей. Защищённые сделки."
       }
     },
     // Services Page
@@ -570,6 +574,64 @@ export const translations = {
       ctaTitle: "Готовы начать зарабатывать?",
       ctaDescription: "Свяжитесь с нами для консультации и начала сотрудничества",
       contactButton: "Связаться с нами"
+    },
+    // Marketplace
+    marketplace: {
+      back: "Назад",
+      title: "Marketplace | Only4riend",
+      subtitle: "Официальная площадка покупки и продажи контактов моделей. Гарантия до 14 дней. Безопасные сделки.",
+      statusesTitle: "Статусы моделей",
+      statuses: {
+        active: "Свободна, ожидает агентство",
+        reserve: "Зарезервирована, ожидание решения",
+        auction: "Торги между несколькими агентствами",
+        sold: "Продана, страница передана"
+      },
+      purchaseTitle: "Покупка",
+      purchase: {
+        steps: [
+          "Полная оплата (гарант приветствуется) → создаём чат → выдаём ключи, контакты, старт-контент",
+          "14 дней вы проверяете OF-страницу, почту, платёжки",
+          "По истечении 14 дней гарантия закрывается"
+        ],
+        guaranteeNote: "Гарантия 14 дней актуальна для модельных контактов стоимостью более 1.000$ USD. Гарантия 10 дней актуальна для контрактов стоимостью менее 1.000$ USD"
+      },
+      obligationsTitle: "Обязательства агентства",
+      obligations: {
+        items: [
+          "Связаться с моделью в течение 24 часов",
+          "Общаться корректно, без давления и оскорблений",
+          "При жалобах модели доступ к маркету может быть ограничён"
+        ]
+      },
+      guaranteeTitle: "Гарантия 14 дней",
+      guarantee: {
+        coverageTitle: "Возврат или замена если:",
+        coverage: [
+          "Модель пропала (не отвечает более 3 суток)",
+          "Даёт крайне вялую реакцию, тормозит запуск",
+          "Предоставленные данные оказались недостоверны",
+          "Модель отказывается подписать договор (если он нужен)"
+        ],
+        requirementsTitle: "Для обращения к гарантии нужны:",
+        requirements: "Полный чат-лог и запись видео-созвона (если был). Нет записи → минус 50% к сумме возврата.",
+        exclusionsTitle: "Гарантия не действует если:",
+        exclusions: [
+          "Агентство проявило некомпетентность или непрофессионализм",
+          "Нарушило договорённости или оказывало давление",
+          "Модель ушла из-за слабого оффера или отсутствия заработка",
+          "Модель увидела, что агентство 'не умеет'"
+        ]
+      },
+      afterSaleTitle: "После продажи",
+      afterSale: {
+        description: "Страница модели отправляется в статус #Sold"
+      },
+      payment: {
+        title: "Оплата",
+        method: "Криптовалюта USDT TRC-20"
+      },
+      telegramGroup: "Перейти в группу маркетплейса"
     }
   },
   en: {
@@ -693,6 +755,10 @@ export const translations = {
       instagramAutomation: {
         title: "Automation and Software",
         description: "Instagram farms for OnlyFans traffic. 200-400+ accounts / device. AI live 24/7."
+      },
+      marketplace: {
+        title: "Marketplace | Only4riend",
+        description: "Platform for buying and selling model contacts. 14-day guarantee. Model statuses. Secure transactions."
       }
     },
     // Right Sidebar
@@ -1143,6 +1209,64 @@ export const translations = {
     footer: {
       rights: "All rights reserved.",
       contactTitle: "Get in Touch"
+    },
+    // Marketplace
+    marketplace: {
+      back: "Back",
+      title: "Marketplace | Only4riend",
+      subtitle: "Official platform for buying and selling model contacts. Guarantee up to 14 days. Secure transactions.",
+      statusesTitle: "Model Statuses",
+      statuses: {
+        active: "Available, waiting for agency",
+        reserve: "Reserved, awaiting decision",
+        auction: "Bidding between multiple agencies",
+        sold: "Sold, page transferred"
+      },
+      purchaseTitle: "Purchase",
+      purchase: {
+        steps: [
+          "Full payment (guarantor welcomed) → create chat → provide keys, contacts, starter content",
+          "14 days to check OF page, email, payment methods",
+          "After 14 days guarantee closes"
+        ],
+        guaranteeNote: "14-day guarantee applies to model contacts worth more than $1,000 USD. 10-day guarantee applies to contracts worth less than $1,000 USD"
+      },
+      obligationsTitle: "Agency Obligations",
+      obligations: {
+        items: [
+          "Contact model within 24 hours",
+          "Communicate correctly, without pressure or insults",
+          "Upon model complaints, market access may be restricted"
+        ]
+      },
+      guaranteeTitle: "14-Day Guarantee",
+      guarantee: {
+        coverageTitle: "Refund or replacement if:",
+        coverage: [
+          "Model disappeared (no response for more than 3 days)",
+          "Gives extremely sluggish response, delays launch",
+          "Provided data turned out to be inaccurate",
+          "Model refuses to sign contract (if needed)"
+        ],
+        requirementsTitle: "To claim guarantee you need:",
+        requirements: "Full chat log and video call recording (if there was one). No recording → minus 50% from refund amount.",
+        exclusionsTitle: "Guarantee does not apply if:",
+        exclusions: [
+          "Agency showed incompetence or unprofessionalism",
+          "Violated agreements or applied pressure",
+          "Model left due to weak offer or lack of earnings",
+          "Model saw that agency 'doesn't know how'"
+        ]
+      },
+      afterSaleTitle: "After Sale",
+      afterSale: {
+        description: "Model's page is sent to #Sold status"
+      },
+      payment: {
+        title: "Payment",
+        method: "Cryptocurrency USDT TRC-20"
+      },
+      telegramGroup: "Join marketplace group"
     }
   },
   uk: {
@@ -1266,6 +1390,10 @@ export const translations = {
       instagramAutomation: {
         title: "Автоматизація та Софти",
         description: "Instagram ферм для трафіку на OnlyFans. 200-400+ акаунтів / пристрій. ШІ в лайві 24/7."
+      },
+      marketplace: {
+        title: "Marketplace | Only4riend",
+        description: "Площадка купівлі та продажу контактів моделей. Гарантія 14 днів. Статуси моделей. Захищені угоди."
       }
     },
     // Right Sidebar
@@ -1716,6 +1844,64 @@ export const translations = {
     footer: {
       rights: "Всі права захищені.",
       contactTitle: "Зв'яжіться з нами"
+    },
+    // Marketplace
+    marketplace: {
+      back: "Назад",
+      title: "Marketplace | Only4riend",
+      subtitle: "Офіційна площадка купівлі та продажу контактів моделей. Гарантія до 14 днів. Захищені угоди.",
+      statusesTitle: "Статуси моделей",
+      statuses: {
+        active: "Вільна, чекає агентство",
+        reserve: "Зарезервована, очікування рішення",
+        auction: "Торги між кількома агентствами",
+        sold: "Продана, сторінка передана"
+      },
+      purchaseTitle: "Купівля",
+      purchase: {
+        steps: [
+          "Повна оплата (гарант вітається) → створюємо чат → видаємо ключі, контакти, старт-контент",
+          "14 днів ви перевіряєте OF-сторінку, пошту, платіжки",
+          "Після закінчення 14 днів гарантія закривається"
+        ],
+        guaranteeNote: "Гарантія 14 днів актуальна для модельних контактів вартістю понад 1.000$ USD. Гарантія 10 днів актуальна для контрактів вартістю менше 1.000$ USD"
+      },
+      obligationsTitle: "Зобов'язання агентства",
+      obligations: {
+        items: [
+          "Зв'язатися з моделлю протягом 24 годин",
+          "Спілкуватися коректно, без тиску та образ",
+          "При скаргах моделі доступ до маркету може бути обмежений"
+        ]
+      },
+      guaranteeTitle: "Гарантія 14 днів",
+      guarantee: {
+        coverageTitle: "Повернення або заміна якщо:",
+        coverage: [
+          "Модель зникла (не відповідає більше 3 доби)",
+          "Дає вкрай млявуреакцію, гальмує запуск",
+          "Надані дані виявилися недостовірними",
+          "Модель відмовляється підписати договір (якщо він потрібен)"
+        ],
+        requirementsTitle: "Для звернення до гарантії потрібні:",
+        requirements: "Повний чат-лог та запис відео-дзвінка (якщо був). Немає запису → мінус 50% до суми повернення.",
+        exclusionsTitle: "Гарантія не діє якщо:",
+        exclusions: [
+          "Агентство проявило некомпетентність або непрофесіоналізм",
+          "Порушило домовленості або здійснювало тиск",
+          "Модель пішла через слабкий оффер або відсутність заробітку",
+          "Модель побачила, що агентство 'не вміє'"
+        ]
+      },
+      afterSaleTitle: "Після продажу",
+      afterSale: {
+        description: "Сторінка моделі відправляється в статус #Sold"
+      },
+      payment: {
+        title: "Оплата",
+        method: "Криптовалюта USDT TRC-20"
+      },
+      telegramGroup: "Перейти до групи маркетплейсу"
     }
   }
 };

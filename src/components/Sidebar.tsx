@@ -52,6 +52,11 @@ const Sidebar = () => {
       title: t.sidebar.webcamServices.title,
       description: t.sidebar.webcamServices.description,
       route: "/webcam-services"
+    },
+    {
+      title: t.sidebar.marketplace?.title || "Marketplace | Only4riend",
+      description: t.sidebar.marketplace?.description || "Площадка покупки и продажи контактов моделей",
+      route: "/marketplace"
     }
   ];
 
