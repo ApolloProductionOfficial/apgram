@@ -172,21 +172,21 @@ const MusicPlayer = () => {
   return (
     <div className="hidden md:block fixed bottom-6 left-4 right-auto z-50">
       {/* Cosmic glow around player - outside */}
-      <div className="absolute inset-0 -m-20 pointer-events-none">
+      <div className="absolute inset-0 -m-12 pointer-events-none">
         {/* Green glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-green-500/15 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '3s' }} />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-green-500/15 rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '3s' }} />
         {/* Purple glow */}
-        <div className="absolute bottom-0 right-0 w-56 h-56 bg-purple-500/15 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s', animationDelay: '0.5s' }} />
+        <div className="absolute bottom-0 right-0 w-36 h-36 bg-purple-500/15 rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '4s', animationDelay: '0.5s' }} />
         {/* Cyan glow */}
-        <div className="absolute top-1/2 left-0 w-48 h-48 bg-cyan-500/15 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '3.5s', animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-0 w-32 h-32 bg-cyan-500/15 rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '3.5s', animationDelay: '1s' }} />
         {/* Pink glow */}
-        <div className="absolute bottom-1/4 left-1/4 w-40 h-40 bg-pink-500/12 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4.5s', animationDelay: '1.5s' }} />
+        <div className="absolute bottom-1/4 left-1/4 w-28 h-28 bg-pink-500/12 rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '4.5s', animationDelay: '1.5s' }} />
       </div>
       
       <div
         className={`relative group bg-gradient-to-br from-card/95 to-card/80 backdrop-blur-xl border-2 ${
           isPlaying ? 'border-primary/40 shadow-xl shadow-primary/15' : 'border-border/50'
-        } rounded-2xl md:w-72 md:p-5 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/20`}
+        } rounded-2xl md:w-56 md:p-3 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/20`}
       >
         {/* Cosmic glow effect */}
         <div className={`absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl blur-xl opacity-0 ${
@@ -204,13 +204,13 @@ const MusicPlayer = () => {
         <div className="relative z-10 flex items-center gap-3 w-full">
           {/* Music icon with glow and equalizer - desktop only */}
           <div className="hidden md:flex flex-col items-center gap-1 flex-shrink-0">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/25 to-primary/12 flex items-center justify-center border-2 border-primary/30 shadow-lg shadow-primary/15">
-              <Music className={`h-5 w-5 text-primary ${isPlaying ? 'animate-pulse' : ''}`} />
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/25 to-primary/12 flex items-center justify-center border-2 border-primary/30 shadow-lg shadow-primary/15">
+              <Music className={`h-4 w-4 text-primary ${isPlaying ? 'animate-pulse' : ''}`} />
             </div>
             {/* Equalizer below icon */}
-            <div className="flex gap-1 h-4 items-end">
-              {frequencyData.slice(0, 10).map((value, i) => {
-                const height = Math.max(2, value);
+            <div className="flex gap-0.5 h-3 items-end">
+              {frequencyData.slice(0, 8).map((value, i) => {
+                const height = Math.max(2, value * 0.8);
                 return (
                   <div
                     key={i}
@@ -246,14 +246,14 @@ const MusicPlayer = () => {
           </div>
 
           {/* Десктоп: маленький текст и кнопки справа */}
-          <div className="hidden md:flex items-center gap-2">
-            <span className="text-xs font-medium text-primary/80 w-10 text-right bg-primary/10 rounded-full px-2 py-1">
+          <div className="hidden md:flex items-center gap-1.5">
+            <span className="text-xs font-medium text-primary/80 w-9 text-right bg-primary/10 rounded-full px-1.5 py-0.5">
               {volume}%
             </span>
             <Button
               variant="ghost"
               size="icon"
-              className={`h-9 w-9 rounded-full transition-all duration-300 ${
+              className={`h-7 w-7 rounded-full transition-all duration-300 ${
                 isPlaying 
                   ? 'bg-primary/20 text-primary hover:bg-primary/30 shadow-lg shadow-primary/20' 
                   : 'hover:bg-primary/10 hover:text-primary'
@@ -261,15 +261,15 @@ const MusicPlayer = () => {
               onClick={togglePlay}
             >
               {isPlaying ? (
-                <Pause className="h-4 w-4" />
+                <Pause className="h-3.5 w-3.5" />
               ) : (
-                <Play className="h-4 w-4" />
+                <Play className="h-3.5 w-3.5" />
               )}
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className={`h-9 w-9 rounded-full transition-all duration-300 ${
+              className={`h-7 w-7 rounded-full transition-all duration-300 ${
                 isMuted 
                   ? 'bg-destructive/20 text-destructive hover:bg-destructive/30' 
                   : 'hover:bg-primary/10 hover:text-primary'
@@ -277,9 +277,9 @@ const MusicPlayer = () => {
               onClick={toggleMute}
             >
               {isMuted ? (
-                <VolumeX className="h-4 w-4" />
+                <VolumeX className="h-3.5 w-3.5" />
               ) : (
-                <Volume2 className="h-4 w-4" />
+                <Volume2 className="h-3.5 w-3.5" />
               )}
             </Button>
           </div>
