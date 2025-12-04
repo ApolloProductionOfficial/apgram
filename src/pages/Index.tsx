@@ -11,7 +11,8 @@ import promoVideo from "@/assets/promo-video.mp4";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
-  const roomFromUrl = searchParams.get("room") || "";
+  // Convert dashes back to spaces for room name from URL
+  const roomFromUrl = (searchParams.get("room") || "").replace(/-/g, ' ');
   const [roomName, setRoomName] = useState(roomFromUrl);
   const [userName, setUserName] = useState("");
   const navigate = useNavigate();
@@ -25,7 +26,9 @@ const Index = () => {
 
   const handleJoinRoom = () => {
     if (roomName.trim() && userName.trim()) {
-      navigate(`/room/${encodeURIComponent(roomName.trim())}?name=${encodeURIComponent(userName.trim())}`);
+      // Use dashes in URL for cleaner look
+      const cleanRoomName = roomName.trim().replace(/ /g, '-');
+      navigate(`/room/${encodeURIComponent(cleanRoomName)}?name=${encodeURIComponent(userName.trim())}`);
     }
   };
 
