@@ -4,6 +4,7 @@ import { ArrowLeft, Copy, Check, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import logoVideo from "@/assets/logo-video.mov";
+import CustomCursor from "@/components/CustomCursor";
 
 declare global {
   interface Window {
@@ -22,14 +23,19 @@ const MeetingRoom = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
+  // Convert dashes to spaces for display, keep original for URL
+  const roomDisplayName = roomId?.replace(/-/g, ' ') || '';
+  const roomSlug = roomId || '';
+
   // Redirect to home page if no name provided - user must introduce themselves
   useEffect(() => {
     if (!userName) {
-      navigate(`/?room=${encodeURIComponent(roomId || "")}`);
+      navigate(`/?room=${encodeURIComponent(roomSlug)}`);
     }
-  }, [userName, roomId, navigate]);
+  }, [userName, roomSlug, navigate]);
 
-  const roomLink = `${window.location.origin}/room/${roomId}`;
+  // Clean room link
+  const roomLink = `${window.location.origin}/room/${roomSlug}`;
 
   const copyLink = async () => {
     try {
@@ -60,7 +66,7 @@ const MeetingRoom = () => {
       try {
         const domain = "8x8.vc";
         const options = {
-          roomName: `vpaas-magic-cookie-0dd6b184ec7a4883bb89cbfc8c186c8a/${roomId}`,
+          roomName: `vpaas-magic-cookie-0dd6b184ec7a4883bb89cbfc8c186c8a/${roomDisplayName.replace(/ /g, '_')}`,
           parentNode: containerRef.current,
           width: "100%",
           height: "100%",
@@ -184,18 +190,10 @@ const MeetingRoom = () => {
   }
 
   return (
-    <div className="h-screen w-screen bg-background flex flex-col overflow-hidden">
-      {/* Custom cursor style for header */}
-      <style>{`
-        .meeting-header, .meeting-header * {
-          cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='white' stroke='black' stroke-width='1' d='M5.5 3.21V20.8l6.3-5.6h7.7L5.5 3.21z'/%3E%3C/svg%3E") 4 4, auto !important;
-        }
-        .meeting-header a:hover, .meeting-header button:hover {
-          cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='white' stroke='black' stroke-width='1' d='M11 1L5 7l3.5 0L8.5 14l5 0L13.5 7l3.5 0L11 1z'/%3E%3C/svg%3E") 11 1, pointer !important;
-        }
-      `}</style>
+    <div className="h-screen w-screen bg-background flex flex-col overflow-hidden cursor-none">
+      <CustomCursor />
       {/* Header */}
-      <header className="meeting-header flex items-center justify-between px-4 py-3 bg-card/80 backdrop-blur-xl border-b border-border/50 z-50 relative">
+      <header className="flex items-center justify-between px-4 py-3 bg-card/80 backdrop-blur-xl border-b border-border/50 z-50 relative">
         <div className="flex items-center gap-4">
           <a
             href="/"
@@ -215,7 +213,7 @@ const MeetingRoom = () => {
           <div className="h-6 w-px bg-border/50" />
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium truncate max-w-[200px]">{roomId}</span>
+            <span className="text-sm font-medium truncate max-w-[200px]">{roomDisplayName}</span>
           </div>
         </div>
         
