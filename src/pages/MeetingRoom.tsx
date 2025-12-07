@@ -23,8 +23,9 @@ const MeetingRoom = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Convert dashes to spaces for display, keep original for URL
-  const roomDisplayName = roomId?.replace(/-/g, ' ') || '';
+  // Use room ID as-is for Jitsi (consistent room name)
+  // Display with proper formatting (dashes to spaces)
+  const roomDisplayName = decodeURIComponent(roomId || '').replace(/-/g, ' ');
   const roomSlug = roomId || '';
 
   // Redirect to home page if no name provided - user must introduce themselves
@@ -34,7 +35,7 @@ const MeetingRoom = () => {
     }
   }, [userName, roomSlug, navigate]);
 
-  // Clean room link
+  // Clean room link for sharing
   const roomLink = `${window.location.origin}/room/${roomSlug}`;
 
   const copyLink = async () => {
@@ -66,7 +67,7 @@ const MeetingRoom = () => {
       try {
         const domain = "8x8.vc";
         const options = {
-          roomName: `vpaas-magic-cookie-0dd6b184ec7a4883bb89cbfc8c186c8a/${roomDisplayName.replace(/ /g, '_')}`,
+          roomName: `vpaas-magic-cookie-0dd6b184ec7a4883bb89cbfc8c186c8a/${roomSlug}`,
           parentNode: containerRef.current,
           width: "100%",
           height: "100%",
