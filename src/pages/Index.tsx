@@ -26,6 +26,7 @@ const Index = () => {
 
   const handleJoinRoom = () => {
     if (roomName.trim() && userName.trim()) {
+      // Use dashes in URL for cleaner look
       const cleanRoomName = roomName.trim().replace(/ /g, '-');
       navigate(`/room/${encodeURIComponent(cleanRoomName)}?name=${encodeURIComponent(userName.trim())}`);
     }
@@ -175,13 +176,10 @@ const Index = () => {
                       className="flex-1 h-12 text-lg border-primary/50 hover:bg-primary/10 transition-all duration-300 hover:scale-105"
                     >
                       <ArrowRight className="w-5 h-5 mr-2" />
-                      Присоединиться
+                      Войти
                     </Button>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  Создайте новую комнату или введите название существующей
-                </p>
               </div>
             </div>
           </div>
