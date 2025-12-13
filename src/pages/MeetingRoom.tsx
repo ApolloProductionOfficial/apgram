@@ -194,8 +194,30 @@ const MeetingRoom = () => {
     <div className="h-screen w-screen bg-background flex flex-col overflow-hidden cursor-none">
       <CustomCursor />
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-card/80 backdrop-blur-xl border-b border-border/50 z-50 relative">
-        <div className="flex items-center gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 sm:py-3 bg-card/80 backdrop-blur-xl border-b border-border/50 z-50 relative gap-2">
+        {/* Mobile: Copy button on top */}
+        <div className="flex sm:hidden w-full justify-center">
+          <Button
+            onClick={copyLink}
+            variant="outline"
+            size="sm"
+            className="border-primary/50 hover:bg-primary/10 w-full"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4 mr-2 text-green-500" />
+                Скопировано
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4 mr-2" />
+                Скопировать ссылку
+              </>
+            )}
+          </Button>
+        </div>
+        
+        <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-4">
           <a
             href="/"
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -211,18 +233,19 @@ const MeetingRoom = () => {
             />
             <span className="hidden sm:inline font-semibold">APLink</span>
           </a>
-          <div className="h-6 w-px bg-border/50" />
+          <div className="h-6 w-px bg-border/50 hidden sm:block" />
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium truncate max-w-[200px]">{roomDisplayName}</span>
+            <span className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px]">{roomDisplayName}</span>
           </div>
         </div>
         
+        {/* Desktop: Copy button on right */}
         <Button
           onClick={copyLink}
           variant="outline"
           size="sm"
-          className="border-primary/50 hover:bg-primary/10"
+          className="hidden sm:flex border-primary/50 hover:bg-primary/10"
         >
           {copied ? (
             <>
