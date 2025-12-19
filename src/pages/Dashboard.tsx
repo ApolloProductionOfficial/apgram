@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Users, Calendar, User, Pencil, Check, X, Camera, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, Users, Calendar, User, Camera, Loader2, Check, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -32,9 +32,21 @@ interface MeetingTranscript {
   participants: string[] | null;
 }
 
+interface ParticipantWithIP {
+  id: string;
+  room_id: string;
+  user_name: string;
+  ip_address: string | null;
+  city: string | null;
+  country: string | null;
+  region: string | null;
+  joined_at: string;
+  left_at: string | null;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, isLoading, signOut } = useAuth();
+  const { user, isLoading, signOut, isAdmin } = useAuth();
   const { toast } = useToast();
   const [transcripts, setTranscripts] = useState<MeetingTranscript[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +58,8 @@ const Dashboard = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [activeTab, setActiveTab] = useState('calls');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [participants, setParticipants] = useState<ParticipantWithIP[]>([]);
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -88,6 +102,27 @@ const Dashboard = () => {
     
     fetchData();
   }, [user]);
+
+  // Fetch participants for IP checker (admin only)
+  useEffect(() => {
+    if (!user || !isAdmin || activeTab !== 'ip-checker') return;
+    
+    const fetchParticipants = async () => {
+      setLoadingParticipants(true);
+      const { data } = await supabase
+        .from('meeting_participants')
+        .select('*')
+        .order('joined_at', { ascending: false })
+        .limit(100);
+      
+      if (data) {
+        setParticipants(data as ParticipantWithIP[]);
+      }
+      setLoadingParticipants(false);
+    };
+    
+    fetchParticipants();
+  }, [user, isAdmin, activeTab]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -288,6 +323,17 @@ const Dashboard = () => {
               <User className="w-4 h-4" />
               Профиль
             </Button>
+            {isAdmin && (
+              <Button
+                variant={activeTab === 'ip-checker' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('ip-checker')}
+                className="gap-2"
+              >
+                <Globe className="w-4 h-4" />
+                IP-чекер
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -421,12 +467,12 @@ const Dashboard = () => {
 
           {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
+            <h1 className="text-2xl font-bold flex items-center gap-2 justify-center">
               <User className="w-6 h-6 text-primary" />
               Мой профиль
             </h1>
 
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50 max-w-md">
+            <Card className="bg-card/50 backdrop-blur-sm border-border/50 max-w-md mx-auto">
               <CardContent className="pt-6 space-y-6">
                 {/* Avatar */}
                 <div className="flex flex-col items-center">
@@ -533,6 +579,60 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* IP Checker Tab (Admin Only) */}
+          {isAdmin && (
+            <TabsContent value="ip-checker" className="space-y-6">
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <Globe className="w-6 h-6 text-primary" />
+                IP-чекер участников
+              </h1>
+
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50 overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-lg">Данные участников ({participants.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loadingParticipants ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                  ) : participants.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">Нет данных об участниках</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-border">
+                            <th className="text-left p-3 font-medium">Имя</th>
+                            <th className="text-left p-3 font-medium">Комната</th>
+                            <th className="text-left p-3 font-medium">IP</th>
+                            <th className="text-left p-3 font-medium">Локация</th>
+                            <th className="text-left p-3 font-medium">Время входа</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {participants.map((p) => (
+                            <tr key={p.id} className="border-b border-border/50 hover:bg-muted/20">
+                              <td className="p-3">{p.user_name}</td>
+                              <td className="p-3 text-muted-foreground">{p.room_id}</td>
+                              <td className="p-3 font-mono text-xs">{p.ip_address || '—'}</td>
+                              <td className="p-3 text-muted-foreground">
+                                {p.city && p.country ? `${p.city}, ${p.country}` : p.country || '—'}
+                              </td>
+                              <td className="p-3 text-muted-foreground">
+                                {new Date(p.joined_at).toLocaleString('ru-RU')}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </main>
     </div>
