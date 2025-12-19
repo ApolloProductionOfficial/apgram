@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      contacts: {
+        Row: {
+          contact_user_id: string
+          created_at: string
+          id: string
+          nickname: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_user_id: string
+          created_at?: string
+          id?: string
+          nickname?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_user_id?: string
+          created_at?: string
+          id?: string
+          nickname?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       meeting_participants: {
         Row: {
           city: string | null
@@ -154,6 +178,30 @@ export type Database = {
           email?: string | null
           id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_presence: {
+        Row: {
+          current_room: string | null
+          id: string
+          is_online: boolean
+          last_seen: string
+          user_id: string
+        }
+        Insert: {
+          current_room?: string | null
+          id?: string
+          is_online?: boolean
+          last_seen?: string
+          user_id: string
+        }
+        Update: {
+          current_room?: string | null
+          id?: string
+          is_online?: boolean
+          last_seen?: string
           user_id?: string
         }
         Relationships: []
