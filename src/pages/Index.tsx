@@ -150,17 +150,20 @@ const Index = () => {
       
       
       {/* Video Background */}
-      <div className="fixed inset-0 z-0 flex items-center justify-center overflow-hidden">
+      <div className="fixed inset-0 z-0 flex items-center justify-center overflow-hidden bg-background">
+        {/* Fallback gradient while video loads */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-primary/5" />
         <video
           autoPlay
           muted
           loop
           playsInline
-          className="min-w-full min-h-full object-cover opacity-45"
+          preload="auto"
+          className="min-w-full min-h-full object-cover opacity-45 relative z-10"
         >
           <source src={backgroundVideo} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/60" />
+        <div className="absolute inset-0 z-20 bg-gradient-to-t from-background via-background/80 to-background/60" />
       </div>
 
       {/* Header */}
