@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePresence } from "@/hooks/usePresence";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import logoVideo from "@/assets/logo-video.mov";
 import CustomCursor from "@/components/CustomCursor";
 
@@ -31,11 +33,15 @@ const MeetingRoom = () => {
   const hasRedirectedRef = useRef(false); // Prevent multiple redirects
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
+  const { sendNotification } = usePushNotifications();
 
   // Use room ID as-is for Jitsi (consistent room name)
   // Display with proper formatting (dashes to spaces)
   const roomDisplayName = decodeURIComponent(roomId || '').replace(/-/g, ' ');
   const roomSlug = roomId || '';
+  
+  // Track presence in this room
+  usePresence(roomDisplayName);
 
   // Check if user is admin and fetch IP
   useEffect(() => {
@@ -264,6 +270,17 @@ const MeetingRoom = () => {
           console.log('Participant joined:', participant);
           if (participant.displayName) {
             participantsRef.current.add(participant.displayName);
+            
+            // Send push notification when someone joins
+            sendNotification(`${participant.displayName} присоединился`, {
+              body: `К комнате "${roomDisplayName}"`,
+              tag: 'participant-joined',
+            });
+            
+            toast({
+              title: `${participant.displayName} присоединился`,
+              description: 'Новый участник в комнате',
+            });
           }
         });
 

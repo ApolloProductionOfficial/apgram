@@ -8,9 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTranslation } from "@/hooks/useTranslation";
+import { usePresence } from "@/hooks/usePresence";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import StarField from "@/components/StarField";
 import CustomCursor from "@/components/CustomCursor";
+import ParticleEffect from "@/components/ParticleEffect";
+import NeonGlow from "@/components/NeonGlow";
+import FloatingOrbs from "@/components/FloatingOrbs";
+import FavoriteContacts from "@/components/FavoriteContacts";
 import logoVideo from "@/assets/logo-video.mov";
 import {
   DropdownMenu,
@@ -39,6 +44,9 @@ const Index = () => {
   const navigate = useNavigate();
   const { user, isAdmin, isLoading, signOut, signInWithGoogle } = useAuth();
   const { toast } = useToast();
+  
+  // Track user presence
+  usePresence();
 
   // Update room name if URL param changes
   useEffect(() => {
@@ -135,6 +143,15 @@ const Index = () => {
       <StarField />
       <CustomCursor />
       
+      {/* Floating Orbs Background */}
+      <FloatingOrbs />
+      
+      {/* Neon Glow Effect */}
+      <NeonGlow />
+      
+      {/* Particle Effect */}
+      <ParticleEffect />
+      
       {/* Video Background */}
       <div className="fixed inset-0 z-0 flex items-center justify-center overflow-hidden">
         <video
@@ -142,7 +159,7 @@ const Index = () => {
           muted
           loop
           playsInline
-          className="min-w-full min-h-full object-cover opacity-30"
+          className="min-w-full min-h-full object-cover opacity-20"
         >
           <source src={promoVideo} type="video/mp4" />
         </video>
@@ -372,6 +389,11 @@ const Index = () => {
                     </div>
                   </div>
                 </div>
+              )}
+              
+              {/* Favorite Contacts for authenticated users */}
+              {!isLoading && user && (
+                <FavoriteContacts />
               )}
             </div>
           </div>
