@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import CustomCursor from '@/components/CustomCursor';
 
 const Profile = () => {
   const { user, isLoading: authLoading } = useAuth();
@@ -206,7 +207,8 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background cursor-none">
+      <CustomCursor />
       {/* Header */}
       <header className="sticky top-0 z-40 glass border-b border-border/50">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">

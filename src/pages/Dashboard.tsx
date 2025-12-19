@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Users, Calendar, Clock, LogOut, User, Pencil, Check, X } from 'lucide-react';
+import { ArrowLeft, FileText, Users, Calendar, User, Pencil, Check, X, Camera, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useToast } from '@/hooks/use-toast';
 import CustomCursor from '@/components/CustomCursor';
@@ -36,11 +38,14 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [transcripts, setTranscripts] = useState<MeetingTranscript[]>([]);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<{ display_name: string | null; username: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null } | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [editedUsername, setEditedUsername] = useState('');
   const [savingName, setSavingName] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [activeTab, setActiveTab] = useState('calls');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -58,7 +63,7 @@ const Dashboard = () => {
       // Fetch user profile
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('display_name, username')
+        .select('display_name, username, avatar_url')
         .eq('user_id', user.id)
         .maybeSingle();
       
@@ -148,6 +153,76 @@ const Dashboard = () => {
     setIsEditingName(false);
   };
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Ошибка',
+        description: 'Пожалуйста, выберите изображение',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: 'Ошибка',
+        description: 'Максимальный размер файла 2MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUploadingAvatar(true);
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/avatar.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, file, { upsert: true });
+
+    if (uploadError) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить аватар',
+        variant: 'destructive',
+      });
+      setUploadingAvatar(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName);
+
+    const newAvatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: newAvatarUrl })
+      .eq('user_id', user.id);
+
+    if (updateError) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить профиль',
+        variant: 'destructive',
+      });
+    } else {
+      setProfile(prev => prev ? { ...prev, avatar_url: newAvatarUrl } : null);
+      toast({ title: 'Аватар обновлён' });
+    }
+
+    setUploadingAvatar(false);
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('ru-RU', {
       day: '2-digit',
@@ -196,64 +271,17 @@ const Dashboard = () => {
           
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm">
-              <User className="w-4 h-4 text-primary" />
-              {isEditingName ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
-                    className="h-8 w-32"
-                    placeholder="Ваше имя"
-                    disabled={savingName}
-                  />
-                  <div className="relative">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
-                    <Input
-                      value={editedUsername}
-                      onChange={(e) => setEditedUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                      className="h-8 w-28 pl-6"
-                      placeholder="username"
-                      disabled={savingName}
-                      maxLength={20}
-                    />
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 w-8 p-0"
-                    onClick={handleSaveName}
-                    disabled={savingName || !editedName.trim()}
-                  >
-                    <Check className="w-4 h-4 text-green-500" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 w-8 p-0"
-                    onClick={handleCancelEdit}
-                    disabled={savingName}
-                  >
-                    <X className="w-4 h-4 text-destructive" />
-                  </Button>
-                </div>
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
               ) : (
-                <div className="flex items-center gap-2">
-                  <div className="flex flex-col">
-                    <span>{profile?.display_name || user.email}</span>
-                    {profile?.username && (
-                      <span className="text-xs text-primary">@{profile.username}</span>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 w-6 p-0"
-                    onClick={() => setIsEditingName(true)}
-                  >
-                    <Pencil className="w-3 h-3 text-muted-foreground hover:text-primary" />
-                  </Button>
-                </div>
+                <User className="w-4 h-4 text-primary" />
               )}
+              <div className="flex flex-col">
+                <span>{profile?.display_name || user.email}</span>
+                {profile?.username && (
+                  <span className="text-xs text-primary">@{profile.username}</span>
+                )}
+              </div>
             </div>
             <Button
               variant="outline"
@@ -269,128 +297,257 @@ const Dashboard = () => {
       </header>
       
       <main className="container mx-auto px-4 py-8 relative z-10">
-        <div className="space-y-6">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FileText className="w-6 h-6 text-primary" />
-            Мои созвоны
-          </h1>
-          
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-12 h-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
-            </div>
-          ) : transcripts.length === 0 ? (
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Пока нет записей созвонов</p>
-                <p className="text-sm mt-2">После завершения созвона здесь появится его конспект</p>
-                <Button
-                  onClick={() => navigate('/')}
-                  className="mt-4"
-                >
-                  Начать созвон
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {transcripts.map((transcript) => (
-                <Card key={transcript.id} className="bg-card/50 backdrop-blur-sm border-border/50">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Users className="w-5 h-5 text-primary" />
-                          {transcript.room_name}
-                        </CardTitle>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {formatDate(transcript.started_at)}
-                          </span>
-                          {transcript.participants && (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="calls" className="gap-2">
+              <FileText className="w-4 h-4" />
+              Созвоны
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="gap-2">
+              <User className="w-4 h-4" />
+              Профиль
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Calls Tab */}
+          <TabsContent value="calls" className="space-y-6">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <FileText className="w-6 h-6 text-primary" />
+              Мои созвоны
+            </h1>
+            
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="w-12 h-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+              </div>
+            ) : transcripts.length === 0 ? (
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Пока нет записей созвонов</p>
+                  <p className="text-sm mt-2">После завершения созвона здесь появится его конспект</p>
+                  <Button
+                    onClick={() => navigate('/')}
+                    className="mt-4"
+                  >
+                    Начать созвон
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {transcripts.map((transcript) => (
+                  <Card key={transcript.id} className="bg-card/50 backdrop-blur-sm border-border/50">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Users className="w-5 h-5 text-primary" />
+                            {transcript.room_name}
+                          </CardTitle>
+                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
-                              <Users className="w-4 h-4" />
-                              {transcript.participants.length} участников
+                              <Calendar className="w-4 h-4" />
+                              {formatDate(transcript.started_at)}
                             </span>
-                          )}
+                            {transcript.participants && (
+                              <span className="flex items-center gap-1">
+                                <Users className="w-4 h-4" />
+                                {transcript.participants.length} участников
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        {transcript.ended_at && (
+                          <Badge variant="secondary">Завершён</Badge>
+                        )}
                       </div>
-                      {transcript.ended_at && (
-                        <Badge variant="secondary">Завершён</Badge>
+                    </CardHeader>
+                    <CardContent>
+                      {transcript.summary && (
+                        <div className="mb-4">
+                          <h4 className="font-medium mb-2">Краткое содержание</h4>
+                          <p className="text-muted-foreground">{transcript.summary}</p>
+                        </div>
+                      )}
+                      
+                      {transcript.key_points && (
+                        <Accordion type="single" collapsible className="w-full">
+                          {transcript.key_points.keyPoints && transcript.key_points.keyPoints.length > 0 && (
+                            <AccordionItem value="key-points">
+                              <AccordionTrigger>Ключевые моменты</AccordionTrigger>
+                              <AccordionContent>
+                                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                  {transcript.key_points.keyPoints.map((point, i) => (
+                                    <li key={i}>{point}</li>
+                                  ))}
+                                </ul>
+                              </AccordionContent>
+                            </AccordionItem>
+                          )}
+                          
+                          {transcript.key_points.actionItems && transcript.key_points.actionItems.length > 0 && (
+                            <AccordionItem value="actions">
+                              <AccordionTrigger>Задачи к выполнению</AccordionTrigger>
+                              <AccordionContent>
+                                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                  {transcript.key_points.actionItems.map((item, i) => (
+                                    <li key={i}>{item}</li>
+                                  ))}
+                                </ul>
+                              </AccordionContent>
+                            </AccordionItem>
+                          )}
+                          
+                          {transcript.key_points.decisions && transcript.key_points.decisions.length > 0 && (
+                            <AccordionItem value="decisions">
+                              <AccordionTrigger>Принятые решения</AccordionTrigger>
+                              <AccordionContent>
+                                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                  {transcript.key_points.decisions.map((decision, i) => (
+                                    <li key={i}>{decision}</li>
+                                  ))}
+                                </ul>
+                              </AccordionContent>
+                            </AccordionItem>
+                          )}
+                          
+                          {transcript.transcript && (
+                            <AccordionItem value="transcript">
+                              <AccordionTrigger>Полная транскрипция</AccordionTrigger>
+                              <AccordionContent>
+                                <div className="bg-muted/30 rounded-lg p-4 max-h-96 overflow-y-auto">
+                                  <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-mono">
+                                    {transcript.transcript}
+                                  </pre>
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          )}
+                        </Accordion>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <User className="w-6 h-6 text-primary" />
+              Мой профиль
+            </h1>
+
+            <Card className="bg-card/50 backdrop-blur-sm border-border/50 max-w-md">
+              <CardContent className="pt-6 space-y-6">
+                {/* Avatar */}
+                <div className="flex flex-col items-center">
+                  <div
+                    onClick={handleAvatarClick}
+                    className="relative w-28 h-28 rounded-full overflow-hidden cursor-pointer group"
+                  >
+                    {profile?.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-primary/20 flex items-center justify-center">
+                        <User className="w-12 h-12 text-primary" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      {uploadingAvatar ? (
+                        <Loader2 className="w-6 h-6 animate-spin text-white" />
+                      ) : (
+                        <Camera className="w-6 h-6 text-white" />
                       )}
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    {transcript.summary && (
-                      <div className="mb-4">
-                        <h4 className="font-medium mb-2">Краткое содержание</h4>
-                        <p className="text-muted-foreground">{transcript.summary}</p>
-                      </div>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Нажмите, чтобы изменить аватар
+                  </p>
+                </div>
+
+                {/* Form */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="displayName">Отображаемое имя</Label>
+                    <Input
+                      id="displayName"
+                      placeholder="Ваше имя"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      className="bg-background/50"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="username">@username</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
+                      <Input
+                        id="username"
+                        placeholder="username"
+                        value={editedUsername}
+                        onChange={(e) =>
+                          setEditedUsername(
+                            e.target.value
+                              .toLowerCase()
+                              .replace(/[^a-z0-9_]/g, '')
+                              .slice(0, 20)
+                          )
+                        }
+                        className="bg-background/50 pl-8"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      3–20 символов: латиница, цифры, подчёркивание
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input
+                      value={user?.email || ''}
+                      disabled
+                      className="bg-muted/50 text-muted-foreground"
+                    />
+                    <p className="text-xs text-muted-foreground">Email нельзя изменить</p>
+                  </div>
+
+                  <Button
+                    onClick={handleSaveName}
+                    disabled={savingName}
+                    className="w-full"
+                  >
+                    {savingName ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Сохранение...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        Сохранить
+                      </>
                     )}
-                    
-                    {transcript.key_points && (
-                      <Accordion type="single" collapsible className="w-full">
-                        {transcript.key_points.keyPoints && transcript.key_points.keyPoints.length > 0 && (
-                          <AccordionItem value="key-points">
-                            <AccordionTrigger>Ключевые моменты</AccordionTrigger>
-                            <AccordionContent>
-                              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                {transcript.key_points.keyPoints.map((point, i) => (
-                                  <li key={i}>{point}</li>
-                                ))}
-                              </ul>
-                            </AccordionContent>
-                          </AccordionItem>
-                        )}
-                        
-                        {transcript.key_points.actionItems && transcript.key_points.actionItems.length > 0 && (
-                          <AccordionItem value="actions">
-                            <AccordionTrigger>Задачи к выполнению</AccordionTrigger>
-                            <AccordionContent>
-                              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                {transcript.key_points.actionItems.map((item, i) => (
-                                  <li key={i}>{item}</li>
-                                ))}
-                              </ul>
-                            </AccordionContent>
-                          </AccordionItem>
-                        )}
-                        
-                        {transcript.key_points.decisions && transcript.key_points.decisions.length > 0 && (
-                          <AccordionItem value="decisions">
-                            <AccordionTrigger>Принятые решения</AccordionTrigger>
-                            <AccordionContent>
-                              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                {transcript.key_points.decisions.map((decision, i) => (
-                                  <li key={i}>{decision}</li>
-                                ))}
-                              </ul>
-                            </AccordionContent>
-                          </AccordionItem>
-                        )}
-                        
-                        {transcript.transcript && (
-                          <AccordionItem value="transcript">
-                            <AccordionTrigger>Полная транскрипция</AccordionTrigger>
-                            <AccordionContent>
-                              <div className="bg-muted/30 rounded-lg p-4 max-h-96 overflow-y-auto">
-                                <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-mono">
-                                  {transcript.transcript}
-                                </pre>
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        )}
-                      </Accordion>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
