@@ -15,6 +15,7 @@ import CustomCursor from "@/components/CustomCursor";
 import NeonGlow from "@/components/NeonGlow";
 import FloatingOrbs from "@/components/FloatingOrbs";
 import FavoriteContacts from "@/components/FavoriteContacts";
+import APLinkBottomNav from "@/components/APLinkBottomNav";
 import logoVideo from "@/assets/logo-video.mov";
 import {
   DropdownMenu,
@@ -578,7 +579,9 @@ const Index = () => {
                     </div>
                   )}
                   
-                  <FavoriteContacts />
+                  <div id="favorites-section">
+                    <FavoriteContacts />
+                  </div>
                 </div>
               )}
             </div>
@@ -619,6 +622,8 @@ const Index = () => {
           </p>
         </div>
       </footer>
+      {/* Mobile Bottom Navigation */}
+      <APLinkBottomNav />
     </div>
   );
 };
