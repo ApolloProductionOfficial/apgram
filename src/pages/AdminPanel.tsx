@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Users, Calendar, Clock, MapPin, Globe, Home, Shield } from 'lucide-react';
+import { ArrowLeft, FileText, Users, Calendar, Clock, MapPin, Globe, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -108,9 +108,6 @@ const AdminPanel = () => {
     };
   }, [user, isAdmin]);
 
-  const handleGoHome = () => {
-    navigate('/');
-  };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('ru-RU', {
@@ -189,15 +186,6 @@ const AdminPanel = () => {
             >
               <Users className="w-4 h-4" />
               IP-чекер
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleGoHome}
-              className="gap-2"
-            >
-              <Home className="w-4 h-4" />
-              На главную
             </Button>
           </div>
         </div>
