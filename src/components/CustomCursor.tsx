@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 const CustomCursor = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isPointer, setIsPointer] = useState(false);
+  const [isText, setIsText] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -11,7 +12,10 @@ const CustomCursor = () => {
       // Check if hovering over clickable element
       const target = e.target as HTMLElement;
       const isClickable = target.closest('button, a, [role="button"]');
+      const isTextInput = target.closest('input, textarea, [contenteditable="true"]');
+      
       setIsPointer(!!isClickable);
+      setIsText(!!isTextInput);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -20,6 +24,17 @@ const CustomCursor = () => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
+
+  // Don't show custom cursor over text inputs - let browser handle it
+  if (isText) {
+    return (
+      <style>{`
+        body { cursor: auto !important; }
+        * { cursor: inherit; }
+        input, textarea { cursor: text !important; }
+      `}</style>
+    );
+  }
 
   return (
     <div className="hidden md:block">
