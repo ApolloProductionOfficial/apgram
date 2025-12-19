@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Video, Users, Globe, Shield, ArrowRight, Sparkles, MessageCircle, ExternalLink, User, LogOut, UserPlus, Chrome, Copy, Check } from "lucide-react";
+import { Video, Users, Globe, Shield, ArrowRight, Sparkles, MessageCircle, ExternalLink, User, LogOut, UserPlus, Chrome, Copy, Check, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -309,6 +309,15 @@ const Index = () => {
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => navigate('/profile')}
+                  className="h-8 w-8 p-0"
+                  title="Редактировать профиль"
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={handleSignOut}
                   className="h-8 w-8 p-0"
                 >
@@ -481,12 +490,12 @@ const Index = () => {
                 <div className="space-y-4">
                   {/* Username Card */}
                   {userUsername ? (
-                    <div 
-                      onClick={handleCopyUsername}
-                      className="glass rounded-2xl p-4 border border-primary/20 cursor-pointer hover:border-primary/40 transition-colors group"
-                    >
+                    <div className="glass rounded-2xl p-4 border border-primary/20">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                        <div 
+                          onClick={handleCopyUsername}
+                          className="flex items-center gap-3 cursor-pointer group flex-1"
+                        >
                           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                             <User className="w-5 h-5 text-primary" />
                           </div>
@@ -495,16 +504,32 @@ const Index = () => {
                             <p className="font-semibold text-primary text-lg">@{userUsername}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
-                          {copied ? (
-                            <Check className="w-5 h-5 text-green-500" />
-                          ) : (
-                            <Copy className="w-5 h-5" />
-                          )}
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCopyUsername}
+                            className="h-8 w-8 p-0"
+                          >
+                            {copied ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate('/profile')}
+                            className="h-8 w-8 p-0"
+                            title="Редактировать профиль"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Нажмите, чтобы скопировать и поделиться
+                        Нажмите, чтобы скопировать
                       </p>
                     </div>
                   ) : (
