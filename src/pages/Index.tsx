@@ -4,6 +4,7 @@ import { Video, Users, Globe, Shield, ArrowRight, Sparkles, MessageCircle, Exter
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -46,13 +47,29 @@ const Index = () => {
     }
   }, [roomFromUrl]);
 
-  // Pre-fill username from profile
+  // Pre-fill username from profile (from database, not metadata)
   useEffect(() => {
-    if (user && !userName) {
-      const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '';
-      setUserName(displayName);
-    }
-  }, [user, userName]);
+    const loadUserName = async () => {
+      if (user && !userName) {
+        // First try to get from profiles table
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (profileData?.display_name) {
+          setUserName(profileData.display_name);
+        } else {
+          // Fallback to metadata or email
+          const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '';
+          setUserName(displayName);
+        }
+      }
+    };
+    
+    loadUserName();
+  }, [user]);
 
   const handleJoinRoom = () => {
     if (roomName.trim() && userName.trim()) {
