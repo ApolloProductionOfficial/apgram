@@ -396,16 +396,25 @@ const Index = () => {
 
             {/* Join Form */}
             <div id="create-room-form" className="max-w-md mx-auto space-y-4 animate-slide-up" style={{ animationDelay: '200ms' }}>
-              <div className={`glass rounded-2xl p-6 space-y-4 relative overflow-hidden transition-all duration-500 ${
-                formHighlight ? 'ring-2 ring-primary shadow-[0_0_30px_rgba(6,182,212,0.4)]' : ''
+              <div className={`glass rounded-2xl p-6 space-y-4 relative overflow-hidden transition-all duration-1000 ease-in-out ${
+                formHighlight 
+                  ? 'ring-2 ring-primary/80 shadow-[0_0_40px_rgba(6,182,212,0.5)]' 
+                  : 'ring-0 ring-transparent shadow-none'
               }`}>
-                {/* Animated border glow */}
-                {formHighlight && (
-                  <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute inset-0 rounded-2xl border-2 border-primary animate-pulse" />
-                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/0 via-primary/30 to-primary/0 rounded-2xl animate-shimmer" />
-                  </div>
-                )}
+                {/* Animated gradient border - smooth flowing effect */}
+                <div className={`absolute inset-0 pointer-events-none transition-opacity duration-1000 ease-in-out ${
+                  formHighlight ? 'opacity-100' : 'opacity-0'
+                }`}>
+                  <div className="absolute inset-0 rounded-2xl border border-primary/50" />
+                  <div 
+                    className="absolute inset-0 rounded-2xl"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent, rgba(6,182,212,0.3), transparent)',
+                      backgroundSize: '200% 100%',
+                      animation: formHighlight ? 'shimmer 2s ease-in-out infinite' : 'none'
+                    }}
+                  />
+                </div>
                 <Input
                   type="text"
                   placeholder={t.aplink?.yourName || 'Ваше имя'}
@@ -425,8 +434,8 @@ const Index = () => {
                   <Button
                     onClick={handleCreateRoom}
                     disabled={!userName.trim()}
-                    className={`flex-1 h-12 text-lg bg-primary hover:bg-primary/90 transition-all duration-300 hover:scale-105 ${
-                      formHighlight ? 'animate-pulse shadow-lg shadow-primary/50' : ''
+                    className={`flex-1 h-12 text-lg bg-primary hover:bg-primary/90 transition-all duration-500 hover:scale-105 ${
+                      formHighlight ? 'shadow-lg shadow-primary/40' : ''
                     }`}
                   >
                     <Video className="w-5 h-5 mr-2" />
@@ -643,7 +652,7 @@ const Index = () => {
             formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
           setFormHighlight(true);
-          setTimeout(() => setFormHighlight(false), 3000);
+          setTimeout(() => setFormHighlight(false), 4000);
         }}
       />
       
