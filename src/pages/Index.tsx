@@ -63,9 +63,12 @@ const Index = () => {
   };
 
   const handleCreateRoom = () => {
-    const randomRoom = `APLink-${Math.random().toString(36).substring(2, 8)}`;
+    // Use user's room name if provided, otherwise generate random
+    const finalRoomName = roomName.trim() 
+      ? roomName.trim().replace(/ /g, '-')
+      : `APLink-${Math.random().toString(36).substring(2, 8)}`;
     if (userName.trim()) {
-      navigate(`/room/${randomRoom}?name=${encodeURIComponent(userName.trim())}`);
+      navigate(`/room/${encodeURIComponent(finalRoomName)}?name=${encodeURIComponent(userName.trim())}`);
     }
   };
 

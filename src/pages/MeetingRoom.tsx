@@ -28,6 +28,7 @@ const MeetingRoom = () => {
   const headerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const transcriptRef = useRef<string[]>([]);
   const participantsRef = useRef<Set<string>>(new Set());
+  const hasRedirectedRef = useRef(false); // Prevent multiple redirects
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
 
@@ -145,17 +146,17 @@ const MeetingRoom = () => {
       return;
     }
     
-    if (transcriptRef.current.length === 0) {
-      console.log('No transcript to save');
-      return;
-    }
+    // Even if no transcript, save basic meeting info with participants
+    const transcriptText = transcriptRef.current.length > 0 
+      ? transcriptRef.current.join('\n')
+      : `Созвон "${roomDisplayName}" с участниками: ${Array.from(participantsRef.current).join(', ')}`;
     
     try {
       const { data, error } = await supabase.functions.invoke('summarize-meeting', {
         body: {
           roomId: roomSlug,
           roomName: roomDisplayName,
-          transcript: transcriptRef.current.join('\n'),
+          transcript: transcriptText,
           participants: Array.from(participantsRef.current),
           userId: user.id
         }
@@ -164,12 +165,20 @@ const MeetingRoom = () => {
       if (error) throw error;
       
       console.log('Meeting saved:', data);
-      
-      // Open dashboard after call ends
-      window.open('/dashboard', '_blank');
     } catch (error) {
       console.error('Failed to save meeting:', error);
     }
+  };
+
+  // Handle call end - redirect only once
+  const handleCallEnd = async () => {
+    if (hasRedirectedRef.current) return;
+    hasRedirectedRef.current = true;
+    
+    await saveMeetingTranscript();
+    // Open apolloproduction.studio in new tab, navigate to dashboard
+    window.open('https://apolloproduction.studio', '_blank');
+    navigate(user ? '/dashboard' : '/');
   };
 
   useEffect(() => {
@@ -282,6 +291,22 @@ const MeetingRoom = () => {
           }
         });
 
+        // Capture chat messages as part of transcript
+        apiRef.current.addEventListener('incomingMessage', (data: { from: string; message: string }) => {
+          console.log('Chat message:', data);
+          if (data.message) {
+            transcriptRef.current.push(`[Чат] ${data.from || 'Unknown'}: ${data.message}`);
+          }
+        });
+
+        // Capture subtitles/closed captions
+        apiRef.current.addEventListener('subtitlesReceived', (data: { text: string; participant: { name: string } }) => {
+          console.log('Subtitles:', data);
+          if (data.text) {
+            transcriptRef.current.push(`${data.participant?.name || 'Unknown'}: ${data.text}`);
+          }
+        });
+
         // Inject custom CSS to style the toolbar to match site theme
         const injectCustomStyles = () => {
           const iframe = containerRef.current?.querySelector('iframe');
@@ -304,16 +329,9 @@ const MeetingRoom = () => {
         setTimeout(injectCustomStyles, 2000);
         setTimeout(injectCustomStyles, 4000);
 
-        // Handle call end - save transcript and redirect
-        apiRef.current.addEventListener("readyToClose", async () => {
-          await saveMeetingTranscript();
-          window.location.href = "https://apolloproduction.studio";
-        });
-
-        apiRef.current.addEventListener("videoConferenceLeft", async () => {
-          await saveMeetingTranscript();
-          window.location.href = "https://apolloproduction.studio";
-        });
+        // Handle call end - save transcript and redirect (only once)
+        apiRef.current.addEventListener("readyToClose", handleCallEnd);
+        apiRef.current.addEventListener("videoConferenceLeft", handleCallEnd);
 
       } catch (error) {
         console.error("Failed to initialize Jitsi:", error);
@@ -382,8 +400,8 @@ const MeetingRoom = () => {
         </div>
         
         <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-4">
-          <a
-            href="/"
+          <button
+            onClick={() => navigate(user ? '/dashboard' : '/')}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -396,7 +414,7 @@ const MeetingRoom = () => {
               className="w-8 h-8 object-cover rounded-full"
             />
             <span className="hidden sm:inline font-semibold">APLink</span>
-          </a>
+          </button>
           <div className="h-6 w-px bg-border/50 hidden sm:block" />
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
