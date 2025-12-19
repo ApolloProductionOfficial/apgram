@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Video, Users, Globe, Shield, ArrowRight, Sparkles, MessageCircle, ExternalLink, User, LogOut } from "lucide-react";
+import { Video, Users, Globe, Shield, ArrowRight, Sparkles, MessageCircle, ExternalLink, User, LogOut, UserPlus, Chrome } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import StarField from "@/components/StarField";
 import CustomCursor from "@/components/CustomCursor";
-import RegistrationBanner from "@/components/RegistrationBanner";
 import logoVideo from "@/assets/logo-video.mov";
 import promoVideo from "@/assets/promo-video.mp4";
 
@@ -17,8 +17,11 @@ const Index = () => {
   const roomFromUrl = (searchParams.get("room") || "").replace(/-/g, ' ');
   const [roomName, setRoomName] = useState(roomFromUrl);
   const [userName, setUserName] = useState("");
+  const [bannerVisible, setBannerVisible] = useState(true);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const navigate = useNavigate();
-  const { user, isAdmin, isLoading, signOut } = useAuth();
+  const { user, isAdmin, isLoading, signOut, signInWithGoogle } = useAuth();
+  const { toast } = useToast();
 
   // Update room name if URL param changes
   useEffect(() => {
@@ -52,6 +55,19 @@ const Index = () => {
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    const { error } = await signInWithGoogle();
+    if (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось войти через Google',
+        variant: 'destructive',
+      });
+    }
+    setGoogleLoading(false);
   };
 
   const features = [
@@ -109,11 +125,16 @@ const Index = () => {
               playsInline
               className="w-10 h-10 object-cover rounded-full"
             />
-            <span className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-              APLink
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                APLink
+              </span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground -mt-1">
+                by Apollo Production
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <a 
               href="https://t.me/Apollo_Production" 
               target="_blank" 
@@ -156,15 +177,25 @@ const Index = () => {
                 </Button>
               </div>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/auth')}
-                className="gap-2"
-              >
-                <User className="w-4 h-4" />
-                <span className="hidden sm:inline">Войти</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/auth')}
+                  className="gap-2"
+                >
+                  <User className="w-4 h-4" />
+                  <span className="hidden sm:inline">Войти</span>
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => navigate('/auth?mode=register')}
+                  className="gap-2 bg-primary hover:bg-primary/90"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Регистрация</span>
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -232,8 +263,51 @@ const Index = () => {
               </div>
               
               {/* Registration banner for non-authenticated users */}
-              {!isLoading && !user && (
-                <RegistrationBanner className="mt-4" />
+              {!isLoading && !user && bannerVisible && (
+                <div className="glass rounded-2xl p-6 border border-primary/30 relative">
+                  <button
+                    onClick={() => setBannerVisible(false)}
+                    className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors text-xl leading-none"
+                  >
+                    ×
+                  </button>
+                  
+                  <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="w-7 h-7 text-primary" />
+                    </div>
+                    
+                    <div className="flex-1 text-center sm:text-left">
+                      <h3 className="font-semibold text-lg mb-1">Создайте аккаунт</h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Сохраняйте записи звонков, получайте AI-конспекты встреч и синхронизируйте историю на всех устройствах
+                      </p>
+                      
+                      <div className="flex flex-col sm:flex-row items-center gap-2">
+                        <Button
+                          onClick={() => navigate('/auth?mode=register')}
+                          className="w-full sm:w-auto h-10 gap-2"
+                        >
+                          <UserPlus className="w-4 h-4" />
+                          Зарегистрироваться
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={handleGoogleSignIn}
+                          disabled={googleLoading}
+                          className="w-full sm:w-auto h-10 gap-2"
+                        >
+                          {googleLoading ? (
+                            <div className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+                          ) : (
+                            <Chrome className="w-4 h-4" />
+                          )}
+                          Google
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </div>
