@@ -2,7 +2,9 @@ import { Button } from "@/components/ui/button";
 import { useButtonSound } from "@/hooks/useButtonSound";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Globe } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Globe, LogIn, UserPlus, LogOut, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +17,8 @@ const Header = () => {
   const { playClickSound } = useButtonSound();
   const { language, setLanguage } = useLanguage();
   const { t } = useTranslation();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const languages = {
     ru: { label: 'Русский', flag: '🇷🇺' },
@@ -51,6 +55,12 @@ const Header = () => {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  };
+
+  const handleSignOut = async () => {
+    playClickSound();
+    await signOut();
+    navigate('/');
   };
   
   return (
@@ -119,6 +129,58 @@ const Header = () => {
               <span className="absolute inset-0 bg-[#FF4500] blur-lg opacity-80 animate-pulse-glow" />
             </Button>
             
+            {/* Auth Buttons - Desktop */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2 bg-gradient-to-br from-primary/10 to-transparent border-primary/30 hover:border-primary/50 hover:bg-primary/15 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300"
+                    onClick={playClickSound}
+                  >
+                    <User className="h-4 w-4 text-primary" />
+                    <span className="max-w-[100px] truncate">{user.email?.split('@')[0]}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-card/95 backdrop-blur-xl border-primary/20 shadow-xl shadow-primary/10">
+                  <DropdownMenuItem
+                    onClick={handleSignOut}
+                    className="hover:bg-primary/10 transition-all duration-200 cursor-pointer text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    {t.auth?.loginButton === 'Войти' ? 'Выйти' : t.auth?.loginButton === 'Sign In' ? 'Sign Out' : 'Вийти'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2 bg-gradient-to-br from-primary/10 to-transparent border-primary/30 hover:border-primary/50 hover:bg-primary/15 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300"
+                  onClick={() => {
+                    playClickSound();
+                    navigate('/auth');
+                  }}
+                >
+                  <LogIn className="h-4 w-4 text-primary" />
+                  {t.auth?.loginButton || 'Войти'}
+                </Button>
+                <Button
+                  size="sm"
+                  className="gap-2 bg-gradient-to-br from-primary via-primary/90 to-primary text-primary-foreground font-bold shadow-lg shadow-primary/40 hover:shadow-2xl hover:shadow-primary/60 transition-all duration-300 hover:scale-105"
+                  onClick={() => {
+                    playClickSound();
+                    navigate('/auth?mode=register');
+                  }}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  {t.auth?.registerButton || 'Регистрация'}
+                </Button>
+              </>
+            )}
+            
             {/* Language Selector - Desktop */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -150,33 +212,72 @@ const Header = () => {
             </DropdownMenu>
           </nav>
           
-          {/* Language Selector - Mobile */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button 
-                className="lg:hidden text-base font-semibold text-primary flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/30 hover:bg-primary/15 transition-all duration-200"
-                onClick={playClickSound}
+          {/* Mobile buttons */}
+          <div className="flex lg:hidden items-center gap-2">
+            {/* Auth buttons mobile */}
+            {user ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0"
+                onClick={handleSignOut}
               >
-                <span className="text-lg">{languages[language].flag}</span>
-                <span className="text-xs">▼</span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44 bg-card/95 backdrop-blur-xl border-primary/20 shadow-xl shadow-primary/10">
-              {Object.entries(languages).map(([code, { label, flag }]) => (
-                <DropdownMenuItem
-                  key={code}
+                <LogOut className="h-4 w-4 text-destructive" />
+              </Button>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0"
                   onClick={() => {
                     playClickSound();
-                    setLanguage(code as 'ru' | 'en' | 'uk');
+                    navigate('/auth');
                   }}
-                  className={`${language === code ? 'bg-primary/20 border-l-2 border-primary' : ''} hover:bg-primary/10 transition-all duration-200 cursor-pointer`}
                 >
-                  <span className="mr-2 text-lg">{flag}</span>
-                  <span className={language === code ? 'font-semibold text-primary' : ''}>{label}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <LogIn className="h-4 w-4 text-primary" />
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-8 w-8 p-0 bg-primary"
+                  onClick={() => {
+                    playClickSound();
+                    navigate('/auth?mode=register');
+                  }}
+                >
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+            
+            {/* Language Selector - Mobile */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button 
+                  className="text-base font-semibold text-primary flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/30 hover:bg-primary/15 transition-all duration-200"
+                  onClick={playClickSound}
+                >
+                  <span className="text-lg">{languages[language].flag}</span>
+                  <span className="text-xs">▼</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44 bg-card/95 backdrop-blur-xl border-primary/20 shadow-xl shadow-primary/10">
+                {Object.entries(languages).map(([code, { label, flag }]) => (
+                  <DropdownMenuItem
+                    key={code}
+                    onClick={() => {
+                      playClickSound();
+                      setLanguage(code as 'ru' | 'en' | 'uk');
+                    }}
+                    className={`${language === code ? 'bg-primary/20 border-l-2 border-primary' : ''} hover:bg-primary/10 transition-all duration-200 cursor-pointer`}
+                  >
+                    <span className="mr-2 text-lg">{flag}</span>
+                    <span className={language === code ? 'font-semibold text-primary' : ''}>{label}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </header>

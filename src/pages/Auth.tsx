@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, User, Chrome, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -7,48 +7,79 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import StarField from '@/components/StarField';
 import CustomCursor from '@/components/CustomCursor';
 import logoVideo from '@/assets/logo-video.mov';
 
-const emailSchema = z.string().email('Неверный формат email');
-const passwordSchema = z.string().min(6, 'Пароль должен быть минимум 6 символов');
-const nameSchema = z.string().min(2, 'Имя должно быть минимум 2 символа').max(50, 'Имя слишком длинное');
-
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode');
+  
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot' | 'reset'>(
+    mode === 'register' ? 'register' : 
+    mode === 'forgot' ? 'forgot' : 
+    mode === 'reset' ? 'reset' : 'login'
+  );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string; confirmPassword?: string }>({});
   
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isLoading, signIn, signUp, signInWithGoogle } = useAuth();
+  const { t } = useTranslation();
+  const { user, isLoading, signIn, signUp, signInWithGoogle, resetPassword, updatePassword } = useAuth();
 
-  // Redirect if already logged in
+  // Redirect if already logged in (except for reset mode)
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!isLoading && user && authMode !== 'reset') {
       navigate('/');
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, authMode]);
+
+  // Update authMode when URL params change
+  useEffect(() => {
+    if (mode === 'register') setAuthMode('register');
+    else if (mode === 'forgot') setAuthMode('forgot');
+    else if (mode === 'reset') setAuthMode('reset');
+  }, [mode]);
+
+  const emailSchema = z.string().email(t.auth.errors.invalidEmail);
+  const passwordSchema = z.string().min(6, t.auth.errors.passwordMin);
+  const nameSchema = z.string().min(2, t.auth.errors.nameMin).max(50, t.auth.errors.nameMax);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string; name?: string } = {};
+    const newErrors: { email?: string; password?: string; name?: string; confirmPassword?: string } = {};
     
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      newErrors.email = emailResult.error.errors[0].message;
+    if (authMode !== 'reset') {
+      const emailResult = emailSchema.safeParse(email);
+      if (!emailResult.success) {
+        newErrors.email = emailResult.error.errors[0].message;
+      }
     }
     
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
+    if (authMode === 'login' || authMode === 'register') {
+      const passwordResult = passwordSchema.safeParse(password);
+      if (!passwordResult.success) {
+        newErrors.password = passwordResult.error.errors[0].message;
+      }
     }
     
-    if (!isLogin) {
+    if (authMode === 'reset') {
+      const passwordResult = passwordSchema.safeParse(password);
+      if (!passwordResult.success) {
+        newErrors.password = passwordResult.error.errors[0].message;
+      }
+      if (password !== confirmPassword) {
+        newErrors.confirmPassword = t.auth.errors.passwordMismatch;
+      }
+    }
+    
+    if (authMode === 'register') {
       const nameResult = nameSchema.safeParse(displayName);
       if (!nameResult.success) {
         newErrors.name = nameResult.error.errors[0].message;
@@ -67,49 +98,79 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      if (isLogin) {
+      if (authMode === 'login') {
         const { error } = await signIn(email, password);
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
             toast({
-              title: 'Ошибка входа',
-              description: 'Неверный email или пароль',
+              title: t.auth.errors.loginError,
+              description: t.auth.errors.invalidCredentials,
               variant: 'destructive',
             });
           } else {
             toast({
-              title: 'Ошибка',
+              title: t.auth.errors.error,
               description: error.message,
               variant: 'destructive',
             });
           }
         } else {
           toast({
-            title: 'Добро пожаловать!',
-            description: 'Вы успешно вошли в аккаунт',
+            title: t.auth.success.welcome,
+            description: t.auth.success.loginSuccess,
           });
           navigate('/');
         }
-      } else {
+      } else if (authMode === 'register') {
         const { error } = await signUp(email, password, displayName);
         if (error) {
           if (error.message.includes('already registered')) {
             toast({
-              title: 'Ошибка регистрации',
-              description: 'Этот email уже зарегистрирован',
+              title: t.auth.errors.registerError,
+              description: t.auth.errors.emailExists,
               variant: 'destructive',
             });
           } else {
             toast({
-              title: 'Ошибка',
+              title: t.auth.errors.error,
               description: error.message,
               variant: 'destructive',
             });
           }
         } else {
           toast({
-            title: 'Аккаунт создан!',
-            description: 'Добро пожаловать в APLink',
+            title: t.auth.success.accountCreated,
+            description: t.auth.success.welcomeToApp,
+          });
+          navigate('/');
+        }
+      } else if (authMode === 'forgot') {
+        const { error } = await resetPassword(email);
+        if (error) {
+          toast({
+            title: t.auth.errors.error,
+            description: error.message,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: t.auth.success.emailSent,
+            description: t.auth.success.checkEmail,
+          });
+          setAuthMode('login');
+        }
+      } else if (authMode === 'reset') {
+        const { error } = await updatePassword(password);
+        if (error) {
+          toast({
+            title: t.auth.errors.error,
+            description: error.message,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: t.auth.success.passwordUpdated,
+            description: t.auth.success.canLoginNow,
           });
           navigate('/');
         }
@@ -124,8 +185,8 @@ const Auth = () => {
     const { error } = await signInWithGoogle();
     if (error) {
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось войти через Google',
+        title: t.auth.errors.error,
+        description: t.auth.errors.googleError,
         variant: 'destructive',
       });
     }
@@ -139,6 +200,24 @@ const Auth = () => {
       </div>
     );
   }
+
+  const getTitle = () => {
+    switch (authMode) {
+      case 'login': return t.auth.login;
+      case 'register': return t.auth.register;
+      case 'forgot': return t.auth.forgotPassword;
+      case 'reset': return t.auth.resetPassword;
+    }
+  };
+
+  const getDescription = () => {
+    switch (authMode) {
+      case 'login': return t.auth.loginDescription;
+      case 'register': return t.auth.registerDescription;
+      case 'forgot': return t.auth.forgotDescription;
+      case 'reset': return t.auth.resetDescription;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden cursor-none">
@@ -174,43 +253,44 @@ const Auth = () => {
         <Card className="w-full max-w-md bg-card/80 backdrop-blur-xl border-border/50">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">
-              {isLogin ? 'Вход в аккаунт' : 'Регистрация'}
+              {getTitle()}
             </CardTitle>
             <CardDescription>
-              {isLogin 
-                ? 'Войдите чтобы сохранять записи звонков' 
-                : 'Создайте аккаунт для записи созвонов'
-              }
+              {getDescription()}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              variant="outline"
-              className="w-full h-12 gap-2"
-            >
-              <Chrome className="w-5 h-5" />
-              Продолжить с Google
-            </Button>
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border/50" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">или</span>
-              </div>
-            </div>
+            {(authMode === 'login' || authMode === 'register') && (
+              <>
+                <Button
+                  onClick={handleGoogleSignIn}
+                  disabled={loading}
+                  variant="outline"
+                  className="w-full h-12 gap-2"
+                >
+                  <Chrome className="w-5 h-5" />
+                  {t.auth.continueWithGoogle}
+                </Button>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border/50" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">{t.auth.or}</span>
+                  </div>
+                </div>
+              </>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
+              {authMode === 'register' && (
                 <div>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
                       type="text"
-                      placeholder="Ваше имя"
+                      placeholder={t.auth.namePlaceholder}
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
                       className="pl-10 h-12"
@@ -222,37 +302,59 @@ const Auth = () => {
                 </div>
               )}
               
-              <div>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 h-12"
-                  />
+              {authMode !== 'reset' && (
+                <div>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10 h-12"
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-sm text-destructive mt-1">{errors.email}</p>
+                  )}
                 </div>
-                {errors.email && (
-                  <p className="text-sm text-destructive mt-1">{errors.email}</p>
-                )}
-              </div>
+              )}
               
-              <div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type="password"
-                    placeholder="Пароль"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 h-12"
-                  />
+              {(authMode === 'login' || authMode === 'register' || authMode === 'reset') && (
+                <div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      placeholder={authMode === 'reset' ? t.auth.newPassword : t.auth.password}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10 h-12"
+                    />
+                  </div>
+                  {errors.password && (
+                    <p className="text-sm text-destructive mt-1">{errors.password}</p>
+                  )}
                 </div>
-                {errors.password && (
-                  <p className="text-sm text-destructive mt-1">{errors.password}</p>
-                )}
-              </div>
+              )}
+              
+              {authMode === 'reset' && (
+                <div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      placeholder={t.auth.confirmPassword}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pl-10 h-12"
+                    />
+                  </div>
+                  {errors.confirmPassword && (
+                    <p className="text-sm text-destructive mt-1">{errors.confirmPassword}</p>
+                  )}
+                </div>
+              )}
               
               <Button
                 type="submit"
@@ -261,27 +363,58 @@ const Auth = () => {
               >
                 {loading ? (
                   <div className="w-5 h-5 rounded-full border-2 border-background/30 border-t-background animate-spin" />
-                ) : isLogin ? (
-                  'Войти'
-                ) : (
-                  'Зарегистрироваться'
-                )}
+                ) : authMode === 'login' ? t.auth.loginButton : 
+                   authMode === 'register' ? t.auth.registerButton :
+                   authMode === 'forgot' ? t.auth.sendResetLink :
+                   t.auth.updatePassword}
               </Button>
             </form>
             
-            <div className="text-center pt-4">
-              <button
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setErrors({});
-                }}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                {isLogin 
-                  ? 'Нет аккаунта? Зарегистрироваться' 
-                  : 'Уже есть аккаунт? Войти'
-                }
-              </button>
+            {authMode === 'login' && (
+              <div className="text-center">
+                <button
+                  onClick={() => setAuthMode('forgot')}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {t.auth.forgotPasswordLink}
+                </button>
+              </div>
+            )}
+            
+            <div className="text-center pt-2">
+              {authMode === 'login' && (
+                <button
+                  onClick={() => {
+                    setAuthMode('register');
+                    setErrors({});
+                  }}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {t.auth.noAccount}
+                </button>
+              )}
+              {authMode === 'register' && (
+                <button
+                  onClick={() => {
+                    setAuthMode('login');
+                    setErrors({});
+                  }}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {t.auth.hasAccount}
+                </button>
+              )}
+              {(authMode === 'forgot' || authMode === 'reset') && (
+                <button
+                  onClick={() => {
+                    setAuthMode('login');
+                    setErrors({});
+                  }}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {t.auth.backToLogin}
+                </button>
+              )}
             </div>
           </CardContent>
         </Card>

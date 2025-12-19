@@ -633,6 +633,54 @@ export const translations = {
         method: "Криптовалюта USDT TRC-20"
       },
       telegramGroup: "Перейти в группу маркетплейса"
+    },
+    // Auth
+    auth: {
+      login: "Вход в аккаунт",
+      register: "Регистрация",
+      forgotPassword: "Восстановление пароля",
+      resetPassword: "Новый пароль",
+      loginDescription: "Войдите чтобы сохранять записи звонков",
+      registerDescription: "Создайте аккаунт для записи созвонов",
+      forgotDescription: "Введите email для восстановления пароля",
+      resetDescription: "Введите новый пароль",
+      continueWithGoogle: "Продолжить с Google",
+      or: "или",
+      namePlaceholder: "Ваше имя",
+      password: "Пароль",
+      newPassword: "Новый пароль",
+      confirmPassword: "Подтвердите пароль",
+      loginButton: "Войти",
+      registerButton: "Зарегистрироваться",
+      sendResetLink: "Отправить ссылку",
+      updatePassword: "Сохранить пароль",
+      forgotPasswordLink: "Забыли пароль?",
+      noAccount: "Нет аккаунта? Зарегистрироваться",
+      hasAccount: "Уже есть аккаунт? Войти",
+      backToLogin: "Вернуться ко входу",
+      errors: {
+        invalidEmail: "Неверный формат email",
+        passwordMin: "Пароль должен быть минимум 6 символов",
+        nameMin: "Имя должно быть минимум 2 символа",
+        nameMax: "Имя слишком длинное",
+        passwordMismatch: "Пароли не совпадают",
+        loginError: "Ошибка входа",
+        invalidCredentials: "Неверный email или пароль",
+        error: "Ошибка",
+        registerError: "Ошибка регистрации",
+        emailExists: "Этот email уже зарегистрирован",
+        googleError: "Не удалось войти через Google"
+      },
+      success: {
+        welcome: "Добро пожаловать!",
+        loginSuccess: "Вы успешно вошли в аккаунт",
+        accountCreated: "Аккаунт создан!",
+        welcomeToApp: "Добро пожаловать в APLink",
+        emailSent: "Письмо отправлено!",
+        checkEmail: "Проверьте вашу почту для восстановления пароля",
+        passwordUpdated: "Пароль обновлён!",
+        canLoginNow: "Теперь вы можете войти с новым паролем"
+      }
     }
   },
   en: {
@@ -1269,6 +1317,54 @@ export const translations = {
         method: "Cryptocurrency USDT TRC-20"
       },
       telegramGroup: "Join marketplace group"
+    },
+    // Auth
+    auth: {
+      login: "Login",
+      register: "Sign Up",
+      forgotPassword: "Forgot Password",
+      resetPassword: "New Password",
+      loginDescription: "Sign in to save call recordings",
+      registerDescription: "Create an account to record calls",
+      forgotDescription: "Enter your email to reset password",
+      resetDescription: "Enter your new password",
+      continueWithGoogle: "Continue with Google",
+      or: "or",
+      namePlaceholder: "Your name",
+      password: "Password",
+      newPassword: "New password",
+      confirmPassword: "Confirm password",
+      loginButton: "Sign In",
+      registerButton: "Sign Up",
+      sendResetLink: "Send Reset Link",
+      updatePassword: "Save Password",
+      forgotPasswordLink: "Forgot password?",
+      noAccount: "Don't have an account? Sign up",
+      hasAccount: "Already have an account? Sign in",
+      backToLogin: "Back to login",
+      errors: {
+        invalidEmail: "Invalid email format",
+        passwordMin: "Password must be at least 6 characters",
+        nameMin: "Name must be at least 2 characters",
+        nameMax: "Name is too long",
+        passwordMismatch: "Passwords don't match",
+        loginError: "Login Error",
+        invalidCredentials: "Invalid email or password",
+        error: "Error",
+        registerError: "Registration Error",
+        emailExists: "This email is already registered",
+        googleError: "Failed to sign in with Google"
+      },
+      success: {
+        welcome: "Welcome!",
+        loginSuccess: "You have successfully logged in",
+        accountCreated: "Account created!",
+        welcomeToApp: "Welcome to APLink",
+        emailSent: "Email sent!",
+        checkEmail: "Check your email for password recovery",
+        passwordUpdated: "Password updated!",
+        canLoginNow: "You can now log in with your new password"
+      }
     }
   },
   uk: {
@@ -1905,6 +2001,54 @@ export const translations = {
         method: "Криптовалюта USDT TRC-20"
       },
       telegramGroup: "Перейти до групи маркетплейсу"
+    },
+    // Auth
+    auth: {
+      login: "Вхід в акаунт",
+      register: "Реєстрація",
+      forgotPassword: "Відновлення пароля",
+      resetPassword: "Новий пароль",
+      loginDescription: "Увійдіть щоб зберігати записи дзвінків",
+      registerDescription: "Створіть акаунт для запису дзвінків",
+      forgotDescription: "Введіть email для відновлення пароля",
+      resetDescription: "Введіть новий пароль",
+      continueWithGoogle: "Продовжити з Google",
+      or: "або",
+      namePlaceholder: "Ваше ім'я",
+      password: "Пароль",
+      newPassword: "Новий пароль",
+      confirmPassword: "Підтвердіть пароль",
+      loginButton: "Увійти",
+      registerButton: "Зареєструватися",
+      sendResetLink: "Надіслати посилання",
+      updatePassword: "Зберегти пароль",
+      forgotPasswordLink: "Забули пароль?",
+      noAccount: "Немає акаунту? Зареєструватися",
+      hasAccount: "Вже є акаунт? Увійти",
+      backToLogin: "Повернутися до входу",
+      errors: {
+        invalidEmail: "Невірний формат email",
+        passwordMin: "Пароль має бути мінімум 6 символів",
+        nameMin: "Ім'я має бути мінімум 2 символи",
+        nameMax: "Ім'я занадто довге",
+        passwordMismatch: "Паролі не співпадають",
+        loginError: "Помилка входу",
+        invalidCredentials: "Невірний email або пароль",
+        error: "Помилка",
+        registerError: "Помилка реєстрації",
+        emailExists: "Цей email вже зареєстрований",
+        googleError: "Не вдалося увійти через Google"
+      },
+      success: {
+        welcome: "Ласкаво просимо!",
+        loginSuccess: "Ви успішно увійшли в акаунт",
+        accountCreated: "Акаунт створено!",
+        welcomeToApp: "Ласкаво просимо до APLink",
+        emailSent: "Лист надіслано!",
+        checkEmail: "Перевірте вашу пошту для відновлення пароля",
+        passwordUpdated: "Пароль оновлено!",
+        canLoginNow: "Тепер ви можете увійти з новим паролем"
+      }
     }
   }
 };

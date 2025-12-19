@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Sparkles, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface RegistrationBannerProps {
   className?: string;
@@ -10,6 +11,7 @@ interface RegistrationBannerProps {
 const RegistrationBanner = ({ className = '' }: RegistrationBannerProps) => {
   const [isVisible, setIsVisible] = useState(true);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   if (!isVisible) return null;
 
@@ -22,35 +24,25 @@ const RegistrationBanner = ({ className = '' }: RegistrationBannerProps) => {
         <X className="w-4 h-4" />
       </button>
       
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
+      <div className="flex flex-col items-center text-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
           <Sparkles className="w-5 h-5 text-primary" />
         </div>
         
-        <div className="flex-1">
-          <h3 className="font-semibold text-sm mb-1">Записывайте созвоны!</h3>
+        <div>
+          <h3 className="font-semibold text-sm mb-1">{t.auth?.register || 'Регистрация'}</h3>
           <p className="text-xs text-muted-foreground mb-3">
-            Зарегистрируйтесь, чтобы получить AI-конспект с ключевыми моментами после каждого звонка
+            {t.auth?.registerDescription || 'Создайте аккаунт для записи созвонов'}
           </p>
           
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              onClick={() => navigate('/auth')}
-              className="h-8 text-xs"
-            >
-              <FileText className="w-3 h-3 mr-1" />
-              Регистрация
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setIsVisible(false)}
-              className="h-8 text-xs text-muted-foreground"
-            >
-              Позже
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            onClick={() => navigate('/auth?mode=register')}
+            className="h-8 text-xs"
+          >
+            <FileText className="w-3 h-3 mr-1" />
+            {t.auth?.registerButton || 'Зарегистрироваться'}
+          </Button>
         </div>
       </div>
     </div>
