@@ -1,5 +1,33 @@
 export const translations = {
   ru: {
+    // APLink (Video Calls)
+    aplink: {
+      badge: "Видеозвонки нового поколения",
+      title: "Созвоны без границ",
+      description: "Приватные видеозвонки с коллегами и партнёрами из любой точки мира. Никаких ограничений по IP — работает везде.",
+      yourName: "Ваше имя",
+      roomName: "Название комнаты (или оставьте пустым)",
+      createRoom: "Создать комнату",
+      joinRoom: "Войти",
+      telegram: "Telegram",
+      website: "Сайт",
+      admin: "Админ",
+      cabinet: "Кабинет",
+      createAccount: "Создайте аккаунт",
+      createAccountDesc: "Сохраняйте записи звонков, получайте AI-конспекты встреч и синхронизируйте историю на всех устройствах",
+      register: "Зарегистрироваться",
+      features: {
+        noBorders: "Без границ",
+        noBordersDesc: "Работает из любой страны мира, включая Россию",
+        privacy: "Приватность",
+        privacyDesc: "Защищённые звонки только для вас и ваших коллег",
+        hdQuality: "HD качество",
+        hdQualityDesc: "Чистый звук и отличная картинка",
+        groupCalls: "Групповые звонки",
+        groupCallsDesc: "До 100 участников в одной комнате"
+      },
+      footer: "© 2025 APLink by"
+    },
     // Header
     header: {
       title: "APOLLO PRODUCTION — OnlyFans Management Agency",
@@ -684,6 +712,34 @@ export const translations = {
     }
   },
   en: {
+    // APLink (Video Calls)
+    aplink: {
+      badge: "Next Generation Video Calls",
+      title: "Calls Without Borders",
+      description: "Private video calls with colleagues and partners from anywhere in the world. No IP restrictions — works everywhere.",
+      yourName: "Your name",
+      roomName: "Room name (or leave empty)",
+      createRoom: "Create Room",
+      joinRoom: "Join",
+      telegram: "Telegram",
+      website: "Website",
+      admin: "Admin",
+      cabinet: "Dashboard",
+      createAccount: "Create an Account",
+      createAccountDesc: "Save call recordings, get AI meeting summaries, and sync history across all devices",
+      register: "Register",
+      features: {
+        noBorders: "No Borders",
+        noBordersDesc: "Works from any country in the world, including Russia",
+        privacy: "Privacy",
+        privacyDesc: "Secure calls only for you and your colleagues",
+        hdQuality: "HD Quality",
+        hdQualityDesc: "Crystal clear audio and excellent video",
+        groupCalls: "Group Calls",
+        groupCallsDesc: "Up to 100 participants in one room"
+      },
+      footer: "© 2025 APLink by"
+    },
     // Header
     header: {
       title: "APOLLO PRODUCTION — OnlyFans Management Agency",
@@ -1368,6 +1424,34 @@ export const translations = {
     }
   },
   uk: {
+    // APLink (Video Calls)
+    aplink: {
+      badge: "Відеодзвінки нового покоління",
+      title: "Дзвінки без кордонів",
+      description: "Приватні відеодзвінки з колегами та партнерами з будь-якої точки світу. Без обмежень по IP — працює скрізь.",
+      yourName: "Ваше ім'я",
+      roomName: "Назва кімнати (або залиште порожнім)",
+      createRoom: "Створити кімнату",
+      joinRoom: "Увійти",
+      telegram: "Telegram",
+      website: "Сайт",
+      admin: "Адмін",
+      cabinet: "Кабінет",
+      createAccount: "Створіть акаунт",
+      createAccountDesc: "Зберігайте записи дзвінків, отримуйте AI-конспекти зустрічей та синхронізуйте історію на всіх пристроях",
+      register: "Зареєструватися",
+      features: {
+        noBorders: "Без кордонів",
+        noBordersDesc: "Працює з будь-якої країни світу, включаючи Росію",
+        privacy: "Приватність",
+        privacyDesc: "Захищені дзвінки тільки для вас та ваших колег",
+        hdQuality: "HD якість",
+        hdQualityDesc: "Чистий звук та відмінна картинка",
+        groupCalls: "Групові дзвінки",
+        groupCallsDesc: "До 100 учасників в одній кімнаті"
+      },
+      footer: "© 2025 APLink by"
+    },
     // Header
     header: {
       title: "APOLLO PRODUCTION — OnlyFans Management Agency",
