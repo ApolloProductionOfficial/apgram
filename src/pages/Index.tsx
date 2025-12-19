@@ -78,8 +78,8 @@ const Index = () => {
     const { error } = await signInWithGoogle();
     if (error) {
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось войти через Google',
+        title: t.auth?.errors?.error || 'Ошибка',
+        description: t.auth?.errors?.googleError || 'Не удалось войти через Google',
         variant: 'destructive',
       });
     }
@@ -89,23 +89,23 @@ const Index = () => {
   const features = [
     {
       icon: Globe,
-      title: "Без границ",
-      description: "Работает из любой страны мира, включая Россию"
+      title: t.aplink?.features?.noBorders || "Без границ",
+      description: t.aplink?.features?.noBordersDesc || "Работает из любой страны мира, включая Россию"
     },
     {
       icon: Shield,
-      title: "Приватность",
-      description: "Защищённые звонки только для вас и ваших коллег"
+      title: t.aplink?.features?.privacy || "Приватность",
+      description: t.aplink?.features?.privacyDesc || "Защищённые звонки только для вас и ваших коллег"
     },
     {
       icon: Video,
-      title: "HD качество",
-      description: "Чистый звук и отличная картинка"
+      title: t.aplink?.features?.hdQuality || "HD качество",
+      description: t.aplink?.features?.hdQualityDesc || "Чистый звук и отличная картинка"
     },
     {
       icon: Users,
-      title: "Групповые звонки",
-      description: "До 100 участников в одной комнате"
+      title: t.aplink?.features?.groupCalls || "Групповые звонки",
+      description: t.aplink?.features?.groupCallsDesc || "До 100 участников в одной комнате"
     }
   ];
 
@@ -158,7 +158,7 @@ const Index = () => {
               className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm"
             >
               <MessageCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Telegram</span>
+              <span className="hidden sm:inline">{t.aplink?.telegram || 'Telegram'}</span>
             </a>
             <a 
               href="https://apolloproduction.studio" 
@@ -167,7 +167,7 @@ const Index = () => {
               className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm"
             >
               <ExternalLink className="w-4 h-4" />
-              <span className="hidden sm:inline">Сайт</span>
+              <span className="hidden sm:inline">{t.aplink?.website || 'Сайт'}</span>
             </a>
             
             {/* Auth buttons */}
@@ -182,7 +182,7 @@ const Index = () => {
                   className="gap-2"
                 >
                   <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">{isAdmin ? 'Админ' : 'Кабинет'}</span>
+                  <span className="hidden sm:inline">{isAdmin ? (t.aplink?.admin || 'Админ') : (t.aplink?.cabinet || 'Кабинет')}</span>
                 </Button>
                 <Button
                   variant="ghost"
@@ -249,18 +249,17 @@ const Index = () => {
           <div className="max-w-4xl mx-auto text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 animate-pulse-glow">
               <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm text-muted-foreground">Видеозвонки нового поколения</span>
+              <span className="text-sm text-muted-foreground">{t.aplink?.badge || 'Видеозвонки нового поколения'}</span>
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-slide-up">
               <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent animate-text-shimmer">
-                Созвоны без границ
+                {t.aplink?.title || 'Созвоны без границ'}
               </span>
             </h1>
             
             <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: '100ms' }}>
-              Приватные видеозвонки с коллегами и партнёрами из любой точки мира. 
-              Никаких ограничений по IP — работает везде.
+              {t.aplink?.description || 'Приватные видеозвонки с коллегами и партнёрами из любой точки мира. Никаких ограничений по IP — работает везде.'}
             </p>
 
             {/* Join Form */}
@@ -268,14 +267,14 @@ const Index = () => {
               <div className="glass rounded-2xl p-6 space-y-4">
                 <Input
                   type="text"
-                  placeholder="Ваше имя"
+                  placeholder={t.aplink?.yourName || 'Ваше имя'}
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
                   className="bg-background/50 border-border/50 h-12 text-lg"
                 />
                 <Input
                   type="text"
-                  placeholder="Название комнаты (или оставьте пустым)"
+                  placeholder={t.aplink?.roomName || 'Название комнаты (или оставьте пустым)'}
                   value={roomName}
                   onChange={(e) => setRoomName(e.target.value)}
                   className="bg-background/50 border-border/50 h-12 text-lg"
@@ -288,7 +287,7 @@ const Index = () => {
                     className="flex-1 h-12 text-lg bg-primary hover:bg-primary/90 transition-all duration-300 hover:scale-105"
                   >
                     <Video className="w-5 h-5 mr-2" />
-                    Создать комнату
+                    {t.aplink?.createRoom || 'Создать комнату'}
                   </Button>
                   {roomName && (
                     <Button
@@ -298,7 +297,7 @@ const Index = () => {
                       className="flex-1 h-12 text-lg border-primary/50 hover:bg-primary/10 transition-all duration-300 hover:scale-105"
                     >
                       <ArrowRight className="w-5 h-5 mr-2" />
-                      Войти
+                      {t.aplink?.joinRoom || 'Войти'}
                     </Button>
                   )}
                 </div>
@@ -320,9 +319,9 @@ const Index = () => {
                     </div>
                     
                     <div className="flex-1 text-center sm:text-left">
-                      <h3 className="font-semibold text-lg mb-1">Создайте аккаунт</h3>
+                      <h3 className="font-semibold text-lg mb-1">{t.aplink?.createAccount || 'Создайте аккаунт'}</h3>
                       <p className="text-sm text-muted-foreground mb-3">
-                        Сохраняйте записи звонков, получайте AI-конспекты встреч и синхронизируйте историю на всех устройствах
+                        {t.aplink?.createAccountDesc || 'Сохраняйте записи звонков, получайте AI-конспекты встреч и синхронизируйте историю на всех устройствах'}
                       </p>
                       
                       <div className="flex flex-col sm:flex-row items-center gap-2">
@@ -331,7 +330,7 @@ const Index = () => {
                           className="w-full sm:w-auto h-10 gap-2"
                         >
                           <UserPlus className="w-4 h-4" />
-                          Зарегистрироваться
+                          {t.aplink?.register || 'Зарегистрироваться'}
                         </Button>
                         <Button
                           variant="outline"
@@ -377,7 +376,7 @@ const Index = () => {
       <footer className="relative z-10 py-8 border-t border-border/30">
         <div className="container mx-auto px-4 text-center">
           <p className="text-muted-foreground text-sm">
-            © 2025 APLink by{" "}
+            {t.aplink?.footer || '© 2025 APLink by'}{" "}
             <a 
               href="https://apolloproduction.studio" 
               target="_blank" 

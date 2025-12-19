@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Mail, Lock, User, Chrome, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, User, Chrome, ArrowLeft, Globe } from 'lucide-react';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useLanguage } from '@/contexts/LanguageContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import AnimatedBackground from '@/components/AnimatedBackground';
 import StarField from '@/components/StarField';
 import CustomCursor from '@/components/CustomCursor';
@@ -32,7 +39,14 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { language, setLanguage } = useLanguage();
   const { user, isLoading, signIn, signUp, signInWithGoogle, resetPassword, updatePassword } = useAuth();
+
+  const languages = {
+    ru: { label: 'Русский', flag: '🇷🇺' },
+    en: { label: 'English', flag: '🇬🇧' },
+    uk: { label: 'Українська', flag: '🇺🇦' }
+  };
 
   // Redirect if already logged in (except for reset mode)
   useEffect(() => {
@@ -245,6 +259,32 @@ const Auth = () => {
               APLink
             </span>
           </button>
+          
+          {/* Language Selector */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="gap-2 bg-background/50 border-border/50 hover:bg-primary/10"
+              >
+                <Globe className="h-4 w-4 text-primary" />
+                <span className="text-lg">{languages[language].flag}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44 bg-card/95 backdrop-blur-xl border-primary/20 shadow-xl">
+              {Object.entries(languages).map(([code, { label, flag }]) => (
+                <DropdownMenuItem
+                  key={code}
+                  onClick={() => setLanguage(code as 'ru' | 'en' | 'uk')}
+                  className={`${language === code ? 'bg-primary/20 border-l-2 border-primary' : ''} hover:bg-primary/10 cursor-pointer`}
+                >
+                  <span className="mr-2 text-lg">{flag}</span>
+                  <span className={language === code ? 'font-semibold text-primary' : ''}>{label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
