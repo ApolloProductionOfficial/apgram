@@ -229,7 +229,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      meeting_participants_safe: {
+        Row: {
+          id: string | null
+          joined_at: string | null
+          left_at: string | null
+          room_id: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          id?: string | null
+          joined_at?: string | null
+          left_at?: string | null
+          room_id?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          id?: string | null
+          joined_at?: string | null
+          left_at?: string | null
+          room_id?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -240,6 +266,15 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      search_profile_by_username: {
+        Args: { search_username: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          user_id: string
+          username: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"

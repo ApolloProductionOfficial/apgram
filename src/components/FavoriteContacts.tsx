@@ -114,15 +114,12 @@ const FavoriteContacts = () => {
     // Clean the username (remove @ if present)
     const cleanUsername = searchName.trim().toLowerCase().replace(/^@/, '');
     
-    // Find user by username
+    // Use security definer function to search for user by username
     const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('user_id, display_name')
-      .eq('username', cleanUsername)
-      .neq('user_id', user.id)
+      .rpc('search_profile_by_username', { search_username: cleanUsername })
       .maybeSingle();
 
-    if (profileError || !profileData) {
+    if (profileError || !profileData || profileData.user_id === user.id) {
       toast({
         title: 'Пользователь не найден',
         description: `Пользователь @${cleanUsername} не найден`,
