@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Copy, Check, Users, History, User, Sparkles, Mic, MicOff } from "lucide-react";
+import { ArrowLeft, Copy, Check, Users, History, User, Sparkles, Mic, MicOff, Wifi, WifiOff, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,9 @@ const MeetingRoom = () => {
   const [showRegistrationHint, setShowRegistrationHint] = useState(false);
   const [participantIP, setParticipantIP] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting'>('connecting');
+  const reconnectAttemptsRef = useRef(0);
+  const maxReconnectAttempts = 3;
   const transcriptRef = useRef<string[]>([]);
   const participantsRef = useRef<Set<string>>(new Set());
   const hasRedirectedRef = useRef(false); // Prevent multiple redirects
@@ -388,6 +391,51 @@ const MeetingRoom = () => {
         apiRef.current = new window.JitsiMeetExternalAPI(domain, options);
         setIsLoading(false);
 
+        // Track connection status
+        apiRef.current.addEventListener('videoConferenceJoined', () => {
+          console.log('Connected to conference');
+          setConnectionStatus('connected');
+          reconnectAttemptsRef.current = 0;
+          toast({
+            title: "Подключено",
+            description: "Вы успешно подключились к комнате",
+          });
+        });
+
+        // Handle connection failures
+        apiRef.current.addEventListener('videoConferenceLeft', () => {
+          // Only show disconnection if user didn't initiate leave
+          if (!userInitiatedEndRef.current && !hasRedirectedRef.current) {
+            console.log('Disconnected from conference');
+            setConnectionStatus('disconnected');
+            
+            // Attempt to reconnect
+            if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+              reconnectAttemptsRef.current++;
+              setConnectionStatus('reconnecting');
+              toast({
+                title: "Переподключение...",
+                description: `Попытка ${reconnectAttemptsRef.current} из ${maxReconnectAttempts}`,
+              });
+              
+              // Dispose current API and reinitialize
+              setTimeout(() => {
+                if (apiRef.current && !hasRedirectedRef.current) {
+                  apiRef.current.dispose();
+                  apiRef.current = null;
+                  initJitsi();
+                }
+              }, 2000);
+            } else {
+              toast({
+                title: "Соединение потеряно",
+                description: "Нажмите кнопку переподключения или обновите страницу",
+                variant: "destructive",
+              });
+            }
+          }
+        });
+
         // Track participants
         participantsRef.current.add(userName || 'Unknown');
         
@@ -696,6 +744,59 @@ const MeetingRoom = () => {
             <div className="w-16 h-16 rounded-full border-4 border-primary/30 border-t-primary animate-spin mx-auto mb-4" />
             <p className="text-muted-foreground">Подключение к комнате...</p>
           </div>
+        </div>
+      )}
+
+      {/* Connection Status Indicator */}
+      {connectionStatus !== 'connected' && !isLoading && (
+        <div className={`absolute top-20 right-4 z-40 flex items-center gap-2 glass rounded-full px-4 py-2 border animate-fade-in ${
+          connectionStatus === 'disconnected' ? 'border-red-500/50' : 
+          connectionStatus === 'reconnecting' ? 'border-yellow-500/50' : 
+          'border-primary/50'
+        }`}>
+          {connectionStatus === 'disconnected' ? (
+            <>
+              <WifiOff className="w-4 h-4 text-red-500" />
+              <span className="text-sm font-medium text-red-500">Отключено</span>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 ml-2"
+                onClick={() => {
+                  reconnectAttemptsRef.current = 0;
+                  if (apiRef.current) {
+                    apiRef.current.dispose();
+                    apiRef.current = null;
+                  }
+                  setConnectionStatus('reconnecting');
+                  setIsLoading(true);
+                  // Will trigger useEffect to reinitialize
+                  window.location.reload();
+                }}
+              >
+                <RefreshCw className="w-3 h-3 mr-1" />
+                Переподключить
+              </Button>
+            </>
+          ) : connectionStatus === 'reconnecting' ? (
+            <>
+              <RefreshCw className="w-4 h-4 text-yellow-500 animate-spin" />
+              <span className="text-sm font-medium text-yellow-500">Переподключение...</span>
+            </>
+          ) : (
+            <>
+              <Wifi className="w-4 h-4 text-primary animate-pulse" />
+              <span className="text-sm font-medium text-primary">Подключение...</span>
+            </>
+          )}
+        </div>
+      )}
+      
+      {/* Connected indicator (brief) */}
+      {connectionStatus === 'connected' && (
+        <div className="absolute top-20 right-4 z-40 flex items-center gap-2 glass rounded-full px-3 py-1 border border-green-500/30">
+          <Wifi className="w-3 h-3 text-green-500" />
+          <span className="text-xs text-green-500">Подключено</span>
         </div>
       )}
 
