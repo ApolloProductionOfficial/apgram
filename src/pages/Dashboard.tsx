@@ -117,15 +117,34 @@ const Dashboard = () => {
     
     const fetchParticipants = async () => {
       setLoadingParticipants(true);
-      const { data } = await supabase
+      
+      // First get participants
+      const { data: participantsData } = await supabase
         .from('meeting_participants')
         .select('*')
         .order('joined_at', { ascending: false })
         .limit(100);
       
-      if (data) {
-        setParticipants(data as ParticipantWithIP[]);
+      if (participantsData && participantsData.length > 0) {
+        // Then get geo data for these participants
+        const participantIds = participantsData.map(p => p.id);
+        const { data: geoData } = await supabase
+          .from('participant_geo_data')
+          .select('*')
+          .in('participant_id', participantIds);
+        
+        // Merge geo data with participants
+        const geoMap = new Map(geoData?.map(g => [g.participant_id, g]) || []);
+        const merged = participantsData.map(p => ({
+          ...p,
+          geo: geoMap.get(p.id) || null
+        }));
+        
+        setParticipants(merged as ParticipantWithIP[]);
+      } else {
+        setParticipants([]);
       }
+      
       setLoadingParticipants(false);
     };
     
