@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   Dialog,
   DialogContent,
@@ -32,12 +33,35 @@ const FavoriteContacts = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchName, setSearchName] = useState('');
   const [addNickname, setAddNickname] = useState('');
   const [adding, setAdding] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const favorites = t.favorites || {
+    title: 'Избранные контакты',
+    addContact: 'Добавить контакт',
+    noContacts: 'Нет избранных контактов',
+    userNotFound: 'Пользователь не найден',
+    userNotFoundDesc: 'Пользователь @{username} не найден',
+    alreadyAdded: 'Контакт уже добавлен',
+    contactAdded: 'Контакт добавлен',
+    contactRemoved: 'Контакт удалён',
+    linkCopied: 'Ссылка скопирована',
+    sendTo: 'Отправьте её',
+    username: 'username',
+    nickname: 'Никнейм (необязательно)',
+    add: 'Добавить',
+    adding: 'Добавление...',
+    online: 'Онлайн',
+    offline: 'Офлайн',
+    inRoom: 'В комнате',
+    user: 'Пользователь',
+    error: 'Ошибка'
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -121,8 +145,8 @@ const FavoriteContacts = () => {
 
     if (profileError || !profileData || profileData.user_id === user.id) {
       toast({
-        title: 'Пользователь не найден',
-        description: `Пользователь @${cleanUsername} не найден`,
+        title: favorites.userNotFound,
+        description: favorites.userNotFoundDesc.replace('{username}', cleanUsername),
         variant: 'destructive',
       });
       setAdding(false);
@@ -138,24 +162,22 @@ const FavoriteContacts = () => {
     if (error) {
       if (error.code === '23505') {
         toast({
-          title: 'Контакт уже добавлен',
+          title: favorites.alreadyAdded,
           variant: 'destructive',
         });
       } else {
         toast({
-          title: 'Ошибка',
+          title: favorites.error,
           description: error.message,
           variant: 'destructive',
         });
       }
     } else {
       toast({
-        title: 'Контакт добавлен',
+        title: favorites.contactAdded,
       });
       setSearchName('');
       setAddNickname('');
-      setDialogOpen(false);
-      fetchContacts();
       setDialogOpen(false);
       fetchContacts();
     }
@@ -171,7 +193,7 @@ const FavoriteContacts = () => {
 
     if (!error) {
       setContacts((prev) => prev.filter((c) => c.id !== contactId));
-      toast({ title: 'Контакт удалён' });
+      toast({ title: favorites.contactRemoved });
     }
   };
 
@@ -184,8 +206,8 @@ const FavoriteContacts = () => {
     navigator.clipboard.writeText(link);
     
     toast({
-      title: 'Ссылка скопирована',
-      description: `Отправьте её ${contact.nickname || contact.profile?.display_name || 'контакту'}`,
+      title: favorites.linkCopied,
+      description: `${favorites.sendTo} ${contact.nickname || contact.profile?.display_name || favorites.user}`,
     });
     
     // Navigate to room
@@ -199,7 +221,7 @@ const FavoriteContacts = () => {
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold flex items-center gap-2">
           <Star className="w-4 h-4 text-primary" />
-          Избранные контакты
+          {favorites.title}
         </h3>
         
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -210,20 +232,20 @@ const FavoriteContacts = () => {
           </DialogTrigger>
           <DialogContent className="bg-card border-border">
             <DialogHeader>
-              <DialogTitle>Добавить контакт</DialogTitle>
+              <DialogTitle>{favorites.addContact}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
                 <Input
-                  placeholder="username"
+                  placeholder={favorites.username}
                   value={searchName}
                   onChange={(e) => setSearchName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                   className="pl-8"
                 />
               </div>
               <Input
-                placeholder="Никнейм (необязательно)"
+                placeholder={favorites.nickname}
                 value={addNickname}
                 onChange={(e) => setAddNickname(e.target.value)}
               />
@@ -232,7 +254,7 @@ const FavoriteContacts = () => {
                 disabled={adding || !searchName.trim()}
                 className="w-full"
               >
-                {adding ? 'Добавление...' : 'Добавить'}
+                {adding ? favorites.adding : favorites.add}
               </Button>
             </div>
           </DialogContent>
@@ -245,7 +267,7 @@ const FavoriteContacts = () => {
         </div>
       ) : contacts.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">
-          Нет избранных контактов
+          {favorites.noContacts}
         </p>
       ) : (
         <div className="space-y-2">
@@ -271,16 +293,16 @@ const FavoriteContacts = () => {
                 </div>
                 <div>
                   <p className="text-sm font-medium">
-                    {contact.nickname || contact.profile?.display_name || 'Пользователь'}
+                    {contact.nickname || contact.profile?.display_name || favorites.user}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {contact.profile?.username && <span className="text-primary">@{contact.profile.username}</span>}
                     {contact.profile?.username && ' · '}
                     {contact.presence?.is_online
                       ? contact.presence.current_room
-                        ? `В комнате: ${contact.presence.current_room}`
-                        : 'Онлайн'
-                      : 'Офлайн'}
+                        ? `${favorites.inRoom}: ${contact.presence.current_room}`
+                        : favorites.online
+                      : favorites.offline}
                   </p>
                 </div>
               </div>
