@@ -270,7 +270,7 @@ const Index = () => {
                   loop 
                   muted 
                   playsInline
-                  className="absolute inset-0 w-full h-full object-cover scale-[2] origin-center"
+                  className="absolute inset-0 w-full h-full object-cover scale-[1.3] origin-center"
                 />
               </div>
             </div>
