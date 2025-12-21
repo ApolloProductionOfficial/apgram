@@ -28,6 +28,28 @@ export const translations = {
       },
       footer: "© 2025 APLink by"
     },
+    // Favorite Contacts
+    favorites: {
+      title: "Избранные контакты",
+      addContact: "Добавить контакт",
+      noContacts: "Нет избранных контактов",
+      userNotFound: "Пользователь не найден",
+      userNotFoundDesc: "Пользователь @{username} не найден",
+      alreadyAdded: "Контакт уже добавлен",
+      contactAdded: "Контакт добавлен",
+      contactRemoved: "Контакт удалён",
+      linkCopied: "Ссылка скопирована",
+      sendTo: "Отправьте её",
+      username: "username",
+      nickname: "Никнейм (необязательно)",
+      add: "Добавить",
+      adding: "Добавление...",
+      online: "Онлайн",
+      offline: "Офлайн",
+      inRoom: "В комнате",
+      user: "Пользователь",
+      error: "Ошибка"
+    },
     // Header
     header: {
       title: "APOLLO PRODUCTION — OnlyFans Management Agency",
@@ -740,6 +762,28 @@ export const translations = {
       },
       footer: "© 2025 APLink by"
     },
+    // Favorite Contacts
+    favorites: {
+      title: "Favorite Contacts",
+      addContact: "Add Contact",
+      noContacts: "No favorite contacts",
+      userNotFound: "User not found",
+      userNotFoundDesc: "User @{username} not found",
+      alreadyAdded: "Contact already added",
+      contactAdded: "Contact added",
+      contactRemoved: "Contact removed",
+      linkCopied: "Link copied",
+      sendTo: "Send it to",
+      username: "username",
+      nickname: "Nickname (optional)",
+      add: "Add",
+      adding: "Adding...",
+      online: "Online",
+      offline: "Offline",
+      inRoom: "In room",
+      user: "User",
+      error: "Error"
+    },
     // Header
     header: {
       title: "APOLLO PRODUCTION — OnlyFans Management Agency",
@@ -1451,6 +1495,28 @@ export const translations = {
         groupCallsDesc: "До 100 учасників в одній кімнаті"
       },
       footer: "© 2025 APLink by"
+    },
+    // Favorite Contacts
+    favorites: {
+      title: "Обрані контакти",
+      addContact: "Додати контакт",
+      noContacts: "Немає обраних контактів",
+      userNotFound: "Користувача не знайдено",
+      userNotFoundDesc: "Користувача @{username} не знайдено",
+      alreadyAdded: "Контакт вже додано",
+      contactAdded: "Контакт додано",
+      contactRemoved: "Контакт видалено",
+      linkCopied: "Посилання скопійовано",
+      sendTo: "Надішліть його",
+      username: "username",
+      nickname: "Нікнейм (необов'язково)",
+      add: "Додати",
+      adding: "Додавання...",
+      online: "Онлайн",
+      offline: "Офлайн",
+      inRoom: "В кімнаті",
+      user: "Користувач",
+      error: "Помилка"
     },
     // Header
     header: {
