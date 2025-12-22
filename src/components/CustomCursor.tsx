@@ -10,7 +10,8 @@ const CustomCursor = () => {
 
     const handlePointerMove = (e: PointerEvent | MouseEvent) => {
       if (glowRef.current) {
-        glowRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`;
+        glowRef.current.style.left = `${e.clientX}px`;
+        glowRef.current.style.top = `${e.clientY}px`;
       }
     };
 
@@ -31,19 +32,19 @@ const CustomCursor = () => {
         *, *::before, *::after { cursor: none !important; }
       `}</style>
 
-      {/* Bright glow cursor */}
+      {/* Flashlight cursor - illuminates the dark background */}
       <div
         ref={glowRef}
-        className="fixed top-0 left-0 pointer-events-none z-[9999]"
-        style={{ willChange: 'transform' }}
-      >
-        <div 
-          className="w-44 h-44 rounded-full -translate-x-1/2 -translate-y-1/2"
-          style={{
-            background: 'radial-gradient(circle, hsla(199, 89%, 60%, 0.5) 0%, hsla(199, 89%, 55%, 0.25) 25%, hsla(199, 89%, 50%, 0.1) 45%, transparent 65%)',
-          }}
-        />
-      </div>
+        className="fixed pointer-events-none z-[9999]"
+        style={{
+          width: '500px',
+          height: '500px',
+          marginLeft: '-250px',
+          marginTop: '-250px',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(6,182,212,0.08) 20%, rgba(6,182,212,0.03) 40%, transparent 60%)',
+          mixBlendMode: 'screen',
+        }}
+      />
     </div>
   );
 };
