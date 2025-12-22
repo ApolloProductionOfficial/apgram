@@ -1,58 +1,25 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
-type CursorVariant = 'default' | 'pointer' | 'drag';
-
 type TrailDot = {
-  id: string;
+  id: number;
   x: number;
   y: number;
-  variant: CursorVariant;
+  opacity: number;
 };
+
+const TRAIL_LENGTH = 20;
+const TRAIL_FADE_SPEED = 0.06;
 
 const CustomCursor = () => {
   const [isText, setIsText] = useState(false);
-  const [variant, setVariant] = useState<CursorVariant>('default');
   const [trails, setTrails] = useState<TrailDot[]>([]);
 
   const cursorRef = useRef<HTMLDivElement>(null);
   const positionRef = useRef({ x: 0, y: 0 });
   const rafRef = useRef<number | null>(null);
-  const lastMoveRef = useRef<{ x: number; y: number; t: number } | null>(null);
-
-  const scale = useMemo(() => {
-    switch (variant) {
-      case 'pointer':
-        return 1.5;
-      case 'drag':
-        return 1.35;
-      default:
-        return 1;
-    }
-  }, [variant]);
-
-  const colorClasses = useMemo(() => {
-    switch (variant) {
-      case 'pointer':
-        return {
-          core: 'bg-accent/80',
-          inner: 'bg-accent/50',
-          outer: 'bg-accent/25',
-        };
-      case 'drag':
-        return {
-          core: 'bg-primary/80 ring-1 ring-primary/40',
-          inner: 'bg-primary/45',
-          outer: 'bg-primary/20',
-        };
-      default:
-        return {
-          core: 'bg-primary/80',
-          inner: 'bg-primary/50',
-          outer: 'bg-primary/30',
-        };
-    }
-  }, [variant]);
+  const trailIdRef = useRef(0);
+  const lastTrailPosRef = useRef({ x: 0, y: 0 });
 
   const updateCursorPosition = useCallback(() => {
     if (cursorRef.current) {
@@ -62,71 +29,59 @@ const CustomCursor = () => {
     rafRef.current = null;
   }, []);
 
+  // Fade out trails smoothly
   useEffect(() => {
-    const getVariant = (target: HTMLElement): { variant: CursorVariant; isText: boolean } => {
-      const isTextInput = !!target.closest('input, textarea, [contenteditable="true"]');
-      if (isTextInput) return { variant: 'default', isText: true };
+    const fadeInterval = setInterval(() => {
+      setTrails((prev) => 
+        prev
+          .map((t) => ({ ...t, opacity: t.opacity - TRAIL_FADE_SPEED }))
+          .filter((t) => t.opacity > 0)
+      );
+    }, 16);
 
-      // Sliders / draggable controls (Radix slider uses role="slider" and data-radix-slider-*)
-      const isDrag = !!target.closest('[role="slider"], [data-radix-slider-thumb], [data-radix-slider-track]');
-      if (isDrag) return { variant: 'drag', isText: false };
+    return () => clearInterval(fadeInterval);
+  }, []);
 
-      const isClickable = !!target.closest('button, a, [role="button"]');
-      if (isClickable) return { variant: 'pointer', isText: false };
-
-      return { variant: 'default', isText: false };
-    };
-
-    const addTrailIfFast = (x: number, y: number, nextVariant: CursorVariant) => {
-      const now = performance.now();
-      const last = lastMoveRef.current;
-      lastMoveRef.current = { x, y, t: now };
-
-      if (!last) return;
-      const dt = now - last.t;
-      if (dt <= 0) return;
-
-      const dx = x - last.x;
-      const dy = y - last.y;
-      const speed = Math.sqrt(dx * dx + dy * dy) / dt; // px/ms
-
-      // Only spawn trail on fast moves
-      if (speed < 1.0) return;
-
-      const id = `${now}-${Math.random().toString(16).slice(2)}`;
-      const dot: TrailDot = { id, x, y, variant: nextVariant };
-
-      setTrails((prev) => {
-        const next = [dot, ...prev];
-        return next.slice(0, 12);
-      });
-
-      window.setTimeout(() => {
-        setTrails((prev) => prev.filter((t) => t.id !== id));
-      }, 250);
-    };
-
+  useEffect(() => {
     const handlePointerMove = (e: PointerEvent | MouseEvent) => {
-      const x = (e as PointerEvent).clientX;
-      const y = (e as PointerEvent).clientY;
+      const x = e.clientX;
+      const y = e.clientY;
       positionRef.current = { x, y };
 
-      // Make position updates stick to the pointer even while dragging (pointer capture)
       if (!rafRef.current) {
         rafRef.current = requestAnimationFrame(updateCursorPosition);
       }
 
+      // Check for text input
       const target = e.target as HTMLElement | null;
       if (target) {
-        const next = getVariant(target);
-        setIsText(next.isText);
-        setVariant(next.variant);
-        addTrailIfFast(x, y, next.variant);
+        const isTextInput = !!target.closest('input, textarea, [contenteditable="true"]');
+        setIsText(isTextInput);
+      }
+
+      // Add trail dot if moved enough distance
+      const lastPos = lastTrailPosRef.current;
+      const dx = x - lastPos.x;
+      const dy = y - lastPos.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > 8) {
+        lastTrailPosRef.current = { x, y };
+        trailIdRef.current += 1;
+
+        setTrails((prev) => {
+          const newTrail: TrailDot = {
+            id: trailIdRef.current,
+            x,
+            y,
+            opacity: 0.6,
+          };
+          return [newTrail, ...prev].slice(0, TRAIL_LENGTH);
+        });
       }
     };
 
     window.addEventListener('pointermove', handlePointerMove as EventListener, { capture: true, passive: true });
-    // Fallback for older environments
     window.addEventListener('mousemove', handlePointerMove as EventListener, { capture: true, passive: true } as AddEventListenerOptions);
 
     return () => {
@@ -136,7 +91,6 @@ const CustomCursor = () => {
     };
   }, [updateCursorPosition]);
 
-  // Don't show custom cursor over text inputs - let browser handle it
   if (isText) {
     return (
       <style>{`
@@ -149,17 +103,25 @@ const CustomCursor = () => {
 
   return (
     <div className="hidden md:block">
-      {/* Trail */}
-      {trails.map((t) => (
-        <div
-          key={t.id}
-          className={cn(
-            'fixed pointer-events-none z-[9998] w-2 h-2 rounded-full blur-[1px] animate-fade-out',
-            t.variant === 'pointer' ? 'bg-accent/25' : t.variant === 'drag' ? 'bg-primary/20' : 'bg-primary/15'
-          )}
-          style={{ left: `${t.x}px`, top: `${t.y}px`, transform: 'translate(-50%, -50%)' }}
-        />
-      ))}
+      {/* Comet trail */}
+      {trails.map((t, index) => {
+        const size = Math.max(2, 6 - index * 0.25);
+        return (
+          <div
+            key={t.id}
+            className="fixed pointer-events-none z-[9998] rounded-full bg-primary"
+            style={{
+              left: `${t.x}px`,
+              top: `${t.y}px`,
+              width: `${size}px`,
+              height: `${size}px`,
+              opacity: t.opacity,
+              transform: 'translate(-50%, -50%)',
+              filter: `blur(${Math.min(index * 0.3, 2)}px)`,
+            }}
+          />
+        );
+      })}
 
       {/* Main cursor */}
       <div
@@ -168,14 +130,13 @@ const CustomCursor = () => {
         style={{
           left: `${positionRef.current.x}px`,
           top: `${positionRef.current.y}px`,
-          transform: `translate(-50%, -50%) scale(${scale})`,
-          transition: 'transform 0.1s ease-out',
+          transform: 'translate(-50%, -50%)',
         }}
       >
         <div className="relative w-2 h-2">
-          <div className={cn('absolute inset-0 rounded-full', colorClasses.core)} />
-          <div className={cn('absolute -inset-1 rounded-full blur-[4px]', colorClasses.inner)} />
-          <div className={cn('absolute -inset-3 rounded-full blur-[8px]', colorClasses.outer)} />
+          <div className="absolute inset-0 rounded-full bg-primary/80" />
+          <div className="absolute -inset-1 rounded-full bg-primary/50 blur-[4px]" />
+          <div className="absolute -inset-3 rounded-full bg-primary/30 blur-[8px]" />
         </div>
       </div>
     </div>
