@@ -308,27 +308,39 @@ export type Database = {
       telegram_chat_settings: {
         Row: {
           chat_id: number
+          chat_title: string | null
           created_at: string
           id: string
           owner_user_id: string | null
+          quick_phrases_enabled: boolean | null
           summary_enabled: boolean | null
           summary_time: string | null
+          translator_enabled: boolean | null
+          voice_enabled: boolean | null
         }
         Insert: {
           chat_id: number
+          chat_title?: string | null
           created_at?: string
           id?: string
           owner_user_id?: string | null
+          quick_phrases_enabled?: boolean | null
           summary_enabled?: boolean | null
           summary_time?: string | null
+          translator_enabled?: boolean | null
+          voice_enabled?: boolean | null
         }
         Update: {
           chat_id?: number
+          chat_title?: string | null
           created_at?: string
           id?: string
           owner_user_id?: string | null
+          quick_phrases_enabled?: boolean | null
           summary_enabled?: boolean | null
           summary_time?: string | null
+          translator_enabled?: boolean | null
+          voice_enabled?: boolean | null
         }
         Relationships: []
       }
