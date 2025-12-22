@@ -60,15 +60,72 @@ const MeetingRoom = () => {
   const diagnosticsLogRef = useRef<{ ts: string; event: string; data?: unknown }[]>([]);
   const [diagnosticsCopied, setDiagnosticsCopied] = useState(false);
 
-  // Helper to log diagnostic events (capped at 50 entries)
+  // Helper to log diagnostic events (capped at 100 entries)
   const logDiagnostic = (event: string, data?: unknown) => {
     const entry = {
       ts: new Date().toISOString(),
       event,
       data,
     };
-    diagnosticsLogRef.current = [...diagnosticsLogRef.current.slice(-49), entry];
+    diagnosticsLogRef.current = [...diagnosticsLogRef.current.slice(-99), entry];
+    console.log(`[DIAG:${event}]`, data ?? '');
   };
+
+  // Page Lifecycle & Browser events for extended diagnostics
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      logDiagnostic('visibilitychange', { hidden: document.hidden, state: document.visibilityState });
+    };
+    const onPageHide = (e: PageTransitionEvent) => {
+      logDiagnostic('pagehide', { persisted: e.persisted });
+    };
+    const onPageShow = (e: PageTransitionEvent) => {
+      logDiagnostic('pageshow', { persisted: e.persisted });
+    };
+    const onFreeze = () => {
+      logDiagnostic('freeze', {});
+    };
+    const onResume = () => {
+      logDiagnostic('resume', {});
+    };
+    const onFocus = () => {
+      logDiagnostic('focus', {});
+    };
+    const onBlur = () => {
+      logDiagnostic('blur', {});
+    };
+    const onOnline = () => {
+      logDiagnostic('online', {});
+    };
+    const onOffline = () => {
+      logDiagnostic('offline', {});
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', onPageHide);
+    window.addEventListener('pageshow', onPageShow);
+    // freeze/resume are part of Page Lifecycle API (Chrome only)
+    (document as any).addEventListener?.('freeze', onFreeze);
+    (document as any).addEventListener?.('resume', onResume);
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('blur', onBlur);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+
+    logDiagnostic('diagnostics-init', { userAgent: navigator.userAgent });
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', onPageHide);
+      window.removeEventListener('pageshow', onPageShow);
+      (document as any).removeEventListener?.('freeze', onFreeze);
+      (document as any).removeEventListener?.('resume', onResume);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('blur', onBlur);
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
 
   // Copy diagnostics to clipboard
   const copyDiagnostics = async () => {
@@ -485,6 +542,7 @@ const MeetingRoom = () => {
         const reinitJitsiIfPossible = () => {
           if (!initJitsiRef.current) return;
           if (apiRef.current) {
+            logDiagnostic('jitsi-api-disposing', { reason: 'reinit' });
             apiRef.current.dispose();
             apiRef.current = null;
           }
@@ -575,6 +633,7 @@ const MeetingRoom = () => {
         pendingReconnectRef.current = false;
         setConnectionStatus('reconnecting');
         if (apiRef.current) {
+          logDiagnostic('jitsi-api-disposing', { reason: 'focus-reconnect' });
           apiRef.current.dispose();
           apiRef.current = null;
         }
@@ -770,7 +829,9 @@ const MeetingRoom = () => {
           },
         };
 
+        logDiagnostic('jitsi-api-creating', { domain, roomName: options.roomName });
         apiRef.current = new window.JitsiMeetExternalAPI(domain, options);
+        logDiagnostic('jitsi-api-created', {});
         setIsLoading(false);
 
         const logJitsiEvent = (name: string, payload?: unknown) => {
@@ -849,6 +910,7 @@ const MeetingRoom = () => {
               // Dispose current API and reinitialize
               setTimeout(() => {
                 if (apiRef.current && !hasRedirectedRef.current) {
+                  logDiagnostic('jitsi-api-disposing', { reason: 'auto-reconnect' });
                   apiRef.current.dispose();
                   apiRef.current = null;
                   initJitsi();
@@ -997,6 +1059,7 @@ const MeetingRoom = () => {
         clearInterval(qualityInterval);
       }
       if (apiRef.current) {
+        logDiagnostic('jitsi-api-disposing', { reason: 'cleanup' });
         apiRef.current.dispose();
         apiRef.current = null;
       }
@@ -1281,6 +1344,7 @@ const MeetingRoom = () => {
                 onClick={() => {
                   reconnectAttemptsRef.current = 0;
                   if (apiRef.current) {
+                    logDiagnostic('jitsi-api-disposing', { reason: 'manual-reconnect' });
                     apiRef.current.dispose();
                     apiRef.current = null;
                   }
