@@ -1,19 +1,16 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Bot, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
-import GoogleIcon from "@/components/icons/GoogleIcon";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { user, signIn, signUp, signInWithGoogle, isLoading } = useAuth();
+  const { user, signIn, isLoading } = useAuth();
   
-  const [isLogin, setIsLogin] = useState(searchParams.get("mode") !== "register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,32 +26,15 @@ const Auth = () => {
     setIsSubmitting(true);
 
     try {
-      if (isLogin) {
-        const { error } = await signIn(email, password);
-        if (error) {
-          toast.error(error.message || "Ошибка входа");
-        } else {
-          toast.success("Добро пожаловать!");
-          navigate("/dashboard");
-        }
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast.error("Неверный логин или пароль");
       } else {
-        const { error: signUpError } = await signUp(email, password, email.split('@')[0]);
-        if (signUpError) {
-          toast.error(signUpError.message || "Ошибка регистрации");
-        } else {
-          toast.success("Аккаунт создан!");
-          navigate("/dashboard");
-        }
+        toast.success("Добро пожаловать!");
+        navigate("/dashboard");
       }
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    const { error } = await signInWithGoogle();
-    if (error) {
-      toast.error("Ошибка входа через Google");
     }
   };
 
@@ -84,32 +64,12 @@ const Auth = () => {
               Telegram Bot Manager
             </CardTitle>
             <CardDescription className="text-muted-foreground mt-2">
-              {isLogin ? "Войдите в аккаунт" : "Создайте аккаунт"}
+              Войдите в панель управления
             </CardDescription>
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          {/* Google Sign In */}
-          <Button
-            variant="outline"
-            className="w-full h-12 border-border/50 bg-background/50 hover:bg-background/80"
-            onClick={handleGoogleSignIn}
-          >
-            <GoogleIcon className="w-5 h-5 mr-3" />
-            Продолжить с Google
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border/50" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">или</span>
-            </div>
-          </div>
-
-          {/* Email/Password Form */}
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <div className="relative">
@@ -135,7 +95,6 @@ const Auth = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 h-12 bg-background/50 border-border/50"
                   required
-                  minLength={6}
                 />
               </div>
             </div>
@@ -149,25 +108,12 @@ const Auth = () => {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  {isLogin ? "Войти" : "Создать аккаунт"}
+                  Войти
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </>
               )}
             </Button>
           </form>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              {isLogin ? "Нет аккаунта? " : "Уже есть аккаунт? "}
-              <span className="text-primary font-medium">
-                {isLogin ? "Зарегистрироваться" : "Войти"}
-              </span>
-            </button>
-          </div>
         </CardContent>
       </Card>
     </div>
