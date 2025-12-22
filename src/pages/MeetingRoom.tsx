@@ -29,6 +29,7 @@ const MeetingRoom = () => {
   const apiRef = useRef<any>(null);
   const initJitsiRef = useRef<null | (() => void)>(null);
   const pendingReconnectRef = useRef(false);
+  const mediaStateOnHideRef = useRef<{ audioMuted: boolean; videoMuted: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showRegistrationHint, setShowRegistrationHint] = useState(false);
@@ -416,15 +417,31 @@ const MeetingRoom = () => {
 
     const handleVisibilityChange = async () => {
       console.log('Visibility changed:', document.hidden ? 'hidden' : 'visible');
-      
+
       // Resume audio context immediately when visibility changes
       if (audioContextKeepAlive?.state === 'suspended') {
         audioContextKeepAlive.resume().catch(() => {});
       }
-      
+
       if (!document.hidden) {
         // Tab became visible again - immediately try to restore connection
         await requestWakeLock();
+
+        // Restore media state if we muted video on hide
+        if (apiRef.current && mediaStateOnHideRef.current) {
+          try {
+            const prev = mediaStateOnHideRef.current;
+            const isVideoMuted = (await apiRef.current.isVideoMuted?.()) ?? true;
+            if (prev.videoMuted === false && isVideoMuted === true) {
+              console.log('Restoring video state after background');
+              apiRef.current.executeCommand('toggleVideo');
+            }
+          } catch (e) {
+            console.log('Could not restore media state:', e);
+          } finally {
+            mediaStateOnHideRef.current = null;
+          }
+        }
 
         const reinitJitsiIfPossible = () => {
           if (!initJitsiRef.current) return;
@@ -462,9 +479,23 @@ const MeetingRoom = () => {
           reinitJitsiIfPossible();
         }
       } else {
-        // Tab is being hidden - send a keep-alive immediately
+        // Tab is being hidden - reduce load proactively (helps prevent disconnect on some browsers)
         if (apiRef.current && !userInitiatedEndRef.current) {
           try {
+            const [audioMuted, videoMuted] = await Promise.all([
+              (apiRef.current.isAudioMuted?.() as Promise<boolean> | undefined) ?? Promise.resolve(false),
+              (apiRef.current.isVideoMuted?.() as Promise<boolean> | undefined) ?? Promise.resolve(false),
+            ]);
+
+            mediaStateOnHideRef.current = { audioMuted, videoMuted };
+
+            // Mute video while in background to reduce CPU/network pressure; we restore on return.
+            if (!videoMuted) {
+              console.log('Backgrounding: muting video to improve stability');
+              apiRef.current.executeCommand('toggleVideo');
+            }
+
+            // Send a keep-alive immediately
             apiRef.current.executeCommand('sendEndpointTextMessage', '', 'pre-hide-keepalive');
           } catch (e) {
             // Ignore
@@ -607,6 +638,8 @@ const MeetingRoom = () => {
   }, [connectionStatus, playReconnectingSound]);
 
   useEffect(() => {
+    let qualityInterval: ReturnType<typeof setInterval> | null = null;
+
     const initJitsi = () => {
       if (!containerRef.current || !window.JitsiMeetExternalAPI) {
         // Retry if API not loaded yet
@@ -632,12 +665,8 @@ const MeetingRoom = () => {
               enabled: false,
             },
             disableDeepLinking: true,
-            // Keep call alive when tab is hidden/minimized
             disableAudioLevels: false,
             enableNoisyMicDetection: true,
-            p2p: {
-              enabled: false, // Disable P2P to maintain connection through JVB server
-            },
             enableInsecureRoomNameWarning: false,
             defaultLanguage: "ru",
             // Enable transcription
@@ -645,20 +674,11 @@ const MeetingRoom = () => {
               enabled: true,
               autoTranscribeOnRecord: true,
             },
-            // Prevent disconnection on tab switch/minimize
-            disableSuspendVideo: true,
-            channelLastN: -1, // Receive all video streams
-            enableLayerSuspension: false,
-            // WebSocket keep-alive settings
-            websocket: {
-              keepAlive: true,
-              keepAliveInterval: 10000,
-            },
-            // Connection quality settings
-            connectionQuality: {
-              minWeight: 0.5,
-            },
-            // Audio settings to maintain connection
+            // Background-friendly defaults (closer to "обычный" Jitsi)
+            disableSuspendVideo: false,
+            enableLayerSuspension: true,
+            channelLastN: 8,
+            // Audio settings
             audioQuality: {
               stereo: false,
               opusMaxAverageBitrate: 20000,
@@ -808,36 +828,34 @@ const MeetingRoom = () => {
           }
         });
 
-        // Track connection quality - use local stats
+        // Track connection quality - best effort
         const updateConnectionQuality = () => {
-          if (apiRef.current) {
-            try {
-              // Get participant info to check our own stats
-              const participants = apiRef.current.getParticipantsInfo();
-              const localParticipant = participants?.find((p: any) => p.local);
-              
-              if (localParticipant) {
-                // Use audio level as proxy for connection quality
-                const audioLevel = localParticipant.audioLevel || 0;
-                // Also check if we have video/audio enabled
-                const hasVideo = !localParticipant.videoMuted;
-                const hasAudio = !localParticipant.audioMuted;
-                
-                // Calculate quality score (0-100)
-                let quality = 100;
-                if (!hasAudio && !hasVideo) quality -= 30;
-                if (audioLevel < 0.01 && hasAudio) quality -= 20;
-                
-                setConnectionQuality(quality);
-              }
-            } catch (e) {
-              // Silently fail - quality monitoring is optional
+          if (!apiRef.current) return;
+          try {
+            const participants = apiRef.current.getParticipantsInfo();
+            const localParticipant = participants?.find((p: any) => p.local);
+
+            if (localParticipant) {
+              const audioLevel = localParticipant.audioLevel || 0;
+              const hasVideo = !localParticipant.videoMuted;
+              const hasAudio = !localParticipant.audioMuted;
+
+              let quality = 100;
+              if (!hasAudio && !hasVideo) quality -= 30;
+              if (audioLevel < 0.01 && hasAudio) quality -= 20;
+
+              setConnectionQuality(quality);
             }
+          } catch (e) {
+            // ignore
           }
         };
-        
+
         // Update quality every 5 seconds
-        const qualityInterval = setInterval(updateConnectionQuality, 5000);
+        if (qualityInterval) {
+          clearInterval(qualityInterval);
+        }
+        qualityInterval = setInterval(updateConnectionQuality, 5000);
         updateConnectionQuality();
 
         // Listen for transcription messages
@@ -855,11 +873,6 @@ const MeetingRoom = () => {
             transcriptRef.current.push(`${data.participant?.displayName || 'Unknown'}: ${data.text}`);
           }
         });
-        
-        // Cleanup quality interval on unmount
-        return () => {
-          clearInterval(qualityInterval);
-        };
 
         // Capture chat messages as part of transcript
         apiRef.current.addEventListener('incomingMessage', (data: { from: string; message: string }) => {
@@ -877,11 +890,20 @@ const MeetingRoom = () => {
           }
         });
 
-        // Inject custom CSS to style the toolbar to match site theme
+        // Handle hangup button click - user initiated end
+        apiRef.current.addEventListener("readyToClose", () => {
+          userInitiatedEndRef.current = true;
+          handleUserEndCall();
+        });
+
+        // Inject custom CSS if same-origin (8x8 iframe is cross-origin, so this is best-effort)
         const injectCustomStyles = () => {
-          const iframe = containerRef.current?.querySelector('iframe');
-          if (iframe && iframe.contentDocument) {
-            const style = iframe.contentDocument.createElement('style');
+          try {
+            const iframe = containerRef.current?.querySelector('iframe');
+            const doc = iframe?.contentDocument;
+            if (!iframe || !doc) return;
+
+            const style = doc.createElement('style');
             style.textContent = `
               .new-toolbox {
                 background: linear-gradient(to top, rgba(10, 10, 10, 0.95), rgba(10, 10, 10, 0.8)) !important;
@@ -891,21 +913,14 @@ const MeetingRoom = () => {
                 background: linear-gradient(to top, rgba(10, 10, 10, 0.95), transparent) !important;
               }
             `;
-            iframe.contentDocument.head.appendChild(style);
+            doc.head.appendChild(style);
+          } catch {
+            // Cross-origin access will throw; ignore.
           }
         };
-        
-        // Try to inject styles after iframe loads
+
         setTimeout(injectCustomStyles, 2000);
         setTimeout(injectCustomStyles, 4000);
-
-        // Handle hangup button click - user initiated end
-        apiRef.current.addEventListener("readyToClose", () => {
-          userInitiatedEndRef.current = true;
-          handleUserEndCall();
-        });
-        
-        // Don't auto-redirect on videoConferenceLeft - this fires when switching tabs
 
       } catch (error) {
         console.error("Failed to initialize Jitsi:", error);
@@ -921,8 +936,12 @@ const MeetingRoom = () => {
     initJitsi();
 
     return () => {
+      if (qualityInterval) {
+        clearInterval(qualityInterval);
+      }
       if (apiRef.current) {
         apiRef.current.dispose();
+        apiRef.current = null;
       }
     };
   }, [roomId, userName, toast, user]);
