@@ -73,6 +73,31 @@ export const translations = {
       error: "Ошибка",
       copyLinkError: "Не удалось скопировать ссылку"
     },
+    // Common toast messages
+    toast: {
+      error: "Ошибка",
+      success: "Успешно",
+      saved: "Сохранено",
+      copied: "Скопировано",
+      copiedToClipboard: "скопирован в буфер",
+      usernameMinLength: "Username должен быть минимум 3 символа",
+      usernameTaken: "Этот username уже занят",
+      usernameSaveError: "Не удалось сохранить username",
+      yourUsername: "Ваш username:",
+      loginSuccess: "Вы успешно вошли в систему"
+    },
+    // Two Factor Auth
+    twoFactor: {
+      title: "Двухфакторная аутентификация",
+      description: "Введите 6-значный код из вашего приложения-аутентификатора",
+      enterCode: "Введите код",
+      verify: "Подтвердить",
+      cancel: "Отмена",
+      factorNotFound: "Фактор 2FA не найден",
+      invalidCode: "Неверный код. Попробуйте ещё раз.",
+      success: "Успешно",
+      loginSuccess: "Вы успешно вошли в систему"
+    },
     // Favorite Contacts
     favorites: {
       title: "Избранные контакты",
@@ -895,6 +920,31 @@ export const translations = {
       error: "Error",
       copyLinkError: "Could not copy link"
     },
+    // Common toast messages
+    toast: {
+      error: "Error",
+      success: "Success",
+      saved: "Saved",
+      copied: "Copied",
+      copiedToClipboard: "copied to clipboard",
+      usernameMinLength: "Username must be at least 3 characters",
+      usernameTaken: "This username is already taken",
+      usernameSaveError: "Could not save username",
+      yourUsername: "Your username:",
+      loginSuccess: "You have successfully logged in"
+    },
+    // Two Factor Auth
+    twoFactor: {
+      title: "Two-Factor Authentication",
+      description: "Enter the 6-digit code from your authenticator app",
+      enterCode: "Enter code",
+      verify: "Verify",
+      cancel: "Cancel",
+      factorNotFound: "2FA factor not found",
+      invalidCode: "Invalid code. Please try again.",
+      success: "Success",
+      loginSuccess: "You have successfully logged in"
+    },
     // Favorite Contacts
     favorites: {
       title: "Favorite Contacts",
@@ -1716,6 +1766,31 @@ export const translations = {
       recording: "Йде запис дзвінка",
       error: "Помилка",
       copyLinkError: "Не вдалося скопіювати посилання"
+    },
+    // Common toast messages
+    toast: {
+      error: "Помилка",
+      success: "Успішно",
+      saved: "Збережено",
+      copied: "Скопійовано",
+      copiedToClipboard: "скопійовано в буфер",
+      usernameMinLength: "Username повинен бути мінімум 3 символи",
+      usernameTaken: "Цей username вже зайнятий",
+      usernameSaveError: "Не вдалося зберегти username",
+      yourUsername: "Ваш username:",
+      loginSuccess: "Ви успішно увійшли в систему"
+    },
+    // Two Factor Auth
+    twoFactor: {
+      title: "Двофакторна автентифікація",
+      description: "Введіть 6-значний код з вашого додатку-автентифікатора",
+      enterCode: "Введіть код",
+      verify: "Підтвердити",
+      cancel: "Скасувати",
+      factorNotFound: "Фактор 2FA не знайдено",
+      invalidCode: "Невірний код. Спробуйте ще раз.",
+      success: "Успішно",
+      loginSuccess: "Ви успішно увійшли в систему"
     },
     // Favorite Contacts
     favorites: {
