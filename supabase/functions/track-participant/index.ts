@@ -49,13 +49,16 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     
     if (action === 'join') {
-      // Insert new participant record (without sensitive geo data)
+      // For guests without userId, generate a temporary guest ID
+      const finalUserId = userId || `guest-${crypto.randomUUID()}`;
+      
+      // Insert new participant record
       const { data, error } = await supabase
         .from('meeting_participants')
         .insert({
           room_id: roomId,
           user_name: userName,
-          user_id: userId || null
+          user_id: finalUserId
         })
         .select()
         .single();
