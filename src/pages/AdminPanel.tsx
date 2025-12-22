@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import CustomCursor from '@/components/CustomCursor';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import TwoFactorSetup from '@/components/TwoFactorSetup';
-import logoVideo from '@/assets/logo-video.mov';
+import apolloLogo from '@/assets/apollo-logo.mp4';
 
 interface MeetingTranscript {
   id: string;
@@ -459,7 +459,7 @@ const AdminPanel = () => {
             >
               <ArrowLeft className="w-4 h-4" />
               <video 
-                src={logoVideo} 
+                src={apolloLogo} 
                 autoPlay 
                 loop 
                 muted 

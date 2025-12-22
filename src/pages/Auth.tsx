@@ -21,7 +21,7 @@ import AnimatedBackground from '@/components/AnimatedBackground';
 import StarField from '@/components/StarField';
 import CustomCursor from '@/components/CustomCursor';
 import TwoFactorVerify from '@/components/TwoFactorVerify';
-import logoVideo from '@/assets/logo-video.mov';
+import apolloLogo from '@/assets/apollo-logo.mp4';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -276,7 +276,7 @@ const Auth = () => {
           >
             <ArrowLeft className="w-5 h-5" />
             <video 
-              src={logoVideo} 
+              src={apolloLogo} 
               autoPlay 
               loop 
               muted 
