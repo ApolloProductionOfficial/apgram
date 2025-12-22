@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Copy, Check, Users, User, Sparkles, Mic, MicOff, Wifi, WifiOff, RefreshCw, Globe, Languages, Signal, SignalLow, SignalMedium, SignalHigh } from "lucide-react";
+import { ArrowLeft, Copy, Check, Users, User, Sparkles, Mic, MicOff, Wifi, WifiOff, RefreshCw, Globe, Languages, Signal, SignalLow, SignalMedium, SignalHigh, Bug, ClipboardCopy } from "lucide-react";
 import ParticipantsIPPanel from "@/components/ParticipantsIPPanel";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +57,40 @@ const MeetingRoom = () => {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showTranslator, setShowTranslator] = useState(false);
   const [connectionQuality, setConnectionQuality] = useState<number>(100); // 0-100 percentage
+  const diagnosticsLogRef = useRef<{ ts: string; event: string; data?: unknown }[]>([]);
+  const [diagnosticsCopied, setDiagnosticsCopied] = useState(false);
+
+  // Helper to log diagnostic events (capped at 50 entries)
+  const logDiagnostic = (event: string, data?: unknown) => {
+    const entry = {
+      ts: new Date().toISOString(),
+      event,
+      data,
+    };
+    diagnosticsLogRef.current = [...diagnosticsLogRef.current.slice(-49), entry];
+  };
+
+  // Copy diagnostics to clipboard
+  const copyDiagnostics = async () => {
+    const report = {
+      room: roomSlug,
+      user: userName,
+      connectionStatus,
+      visibilityState: document.visibilityState,
+      hidden: document.hidden,
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString(),
+      events: diagnosticsLogRef.current,
+    };
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(report, null, 2));
+      setDiagnosticsCopied(true);
+      toast({ title: "Отчёт скопирован", description: "Отправьте его разработчику" });
+      setTimeout(() => setDiagnosticsCopied(false), 2000);
+    } catch {
+      toast({ title: "Ошибка", description: "Не удалось скопировать", variant: "destructive" });
+    }
+  };
 
   // Use room ID as-is for Jitsi (consistent room name)
   // Display with proper formatting (dashes to spaces)
@@ -740,11 +774,13 @@ const MeetingRoom = () => {
         setIsLoading(false);
 
         const logJitsiEvent = (name: string, payload?: unknown) => {
-          console.log(`[JITSI:${name}]`, {
+          const entry = {
             hidden: document.hidden,
             visibilityState: document.visibilityState,
             payload,
-          });
+          };
+          console.log(`[JITSI:${name}]`, entry);
+          logDiagnostic(`JITSI:${name}`, entry);
         };
 
         // Listen for error messages from Jitsi
@@ -768,6 +804,8 @@ const MeetingRoom = () => {
         apiRef.current.addEventListener('conferenceFailed', (e: unknown) => logJitsiEvent('conferenceFailed', e));
         apiRef.current.addEventListener('connectionInterrupted', (e: unknown) => logJitsiEvent('connectionInterrupted', e));
         apiRef.current.addEventListener('connectionRestored', (e: unknown) => logJitsiEvent('connectionRestored', e));
+        apiRef.current.addEventListener('videoConferenceJoined', (e: unknown) => logJitsiEvent('videoConferenceJoined', e));
+        apiRef.current.addEventListener('videoConferenceLeft', (e: unknown) => logJitsiEvent('videoConferenceLeft', e));
 
         // Track connection status
         apiRef.current.addEventListener('videoConferenceJoined', () => {
@@ -1064,6 +1102,16 @@ const MeetingRoom = () => {
               <Globe className="w-4 h-4" />
             </Button>
           )}
+          {/* Mobile diagnostics button */}
+          <Button
+            onClick={copyDiagnostics}
+            variant="outline"
+            size="sm"
+            className="border-yellow-500/50 hover:bg-yellow-500/10 text-yellow-500"
+            title="Отчёт"
+          >
+            {diagnosticsCopied ? <Check className="w-4 h-4" /> : <Bug className="w-4 h-4" />}
+          </Button>
         </div>
         
         <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-4">
@@ -1155,6 +1203,20 @@ const MeetingRoom = () => {
                 <Copy className="w-4 h-4 mr-2" />
                 Скопировать ссылку
               </>
+            )}
+          </Button>
+          {/* Diagnostics report button */}
+          <Button
+            onClick={copyDiagnostics}
+            variant="outline"
+            size="sm"
+            className="border-yellow-500/50 hover:bg-yellow-500/10 text-yellow-500"
+            title="Скопировать отчёт диагностики"
+          >
+            {diagnosticsCopied ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <Bug className="w-4 h-4" />
             )}
           </Button>
         </div>
