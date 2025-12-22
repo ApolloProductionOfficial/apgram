@@ -3,7 +3,7 @@ import { useButtonSound } from "@/hooks/useButtonSound";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
-import { Globe, LogIn, UserPlus, LogOut, User } from "lucide-react";
+import { Globe, LogIn, UserPlus, LogOut, User, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -90,6 +90,18 @@ const Header = () => {
           </div>
           
           <nav className="hidden lg:flex items-center gap-4">
+            <a 
+              href="/telegram-bot" 
+              className="text-sm font-bold text-foreground hover:text-primary transition-all duration-300 relative group px-4 py-2 rounded-lg bg-gradient-to-br from-[#0088cc]/20 via-[#0088cc]/15 to-[#0088cc]/20 border border-[#0088cc]/50 hover:border-[#0088cc]/70 hover:shadow-xl hover:shadow-[#0088cc]/30 hover:scale-105"
+              onClick={(e) => {
+                e.preventDefault();
+                playClickSound();
+                navigate('/telegram-bot');
+              }}
+            >
+              <MessageCircle className="inline-block w-4 h-4 mr-1.5 text-[#0088cc]" />
+              <span className="relative z-10 drop-shadow-[0_0_8px_rgba(0,136,204,0.5)]">Telegram</span>
+            </a>
             <a 
               href="#about" 
               className="text-sm font-bold text-foreground hover:text-primary transition-all duration-300 relative group px-4 py-2 rounded-lg bg-gradient-to-br from-primary/15 via-primary/10 to-primary/15 border border-primary/40 hover:border-primary/60 hover:shadow-xl hover:shadow-primary/30 hover:scale-105 animate-nav-wave-1"
