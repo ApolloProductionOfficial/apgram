@@ -106,8 +106,12 @@ async function getFileUrl(fileId: string): Promise<string> {
   return `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${data.result.file_path}`;
 }
 
-// Детекция языка и перевод через Lovable AI
-async function detectAndTranslate(text: string): Promise<{ detectedLang: string; translation: string; isRussian: boolean }> {
+// Перевод RU ↔ EN через Lovable AI
+async function translateRuEn(text: string): Promise<{ translation: string; isRussian: boolean }> {
+  // Простая проверка на русский текст
+  const hasRussian = /[а-яё]/i.test(text);
+  const targetLang = hasRussian ? 'English' : 'Russian';
+  
   const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -119,14 +123,7 @@ async function detectAndTranslate(text: string): Promise<{ detectedLang: string;
       messages: [
         {
           role: 'system',
-          content: `You are a translator. Detect the language of the input text.
-If the text is in Russian, translate it to English.
-If the text is in any other language, translate it to Russian.
-
-Respond ONLY with valid JSON in this exact format:
-{"detected_lang": "language_name", "is_russian": true/false, "translation": "translated text"}
-
-Do not include any other text or explanation.`
+          content: `You are a translator. Translate the text to ${targetLang}. Return ONLY the translation, nothing else.`
         },
         { role: 'user', content: text }
       ],
@@ -134,19 +131,9 @@ Do not include any other text or explanation.`
   });
 
   const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || '';
+  const translation = data.choices?.[0]?.message?.content || text;
   
-  try {
-    const parsed = JSON.parse(content);
-    return {
-      detectedLang: parsed.detected_lang,
-      translation: parsed.translation,
-      isRussian: parsed.is_russian,
-    };
-  } catch {
-    console.error('Failed to parse translation response:', content);
-    return { detectedLang: 'unknown', translation: text, isRussian: false };
-  }
+  return { translation: translation.trim(), isRussian: hasRussian };
 }
 
 // Транскрипция аудио через ElevenLabs
@@ -395,7 +382,7 @@ async function handleTextMessage(message: any) {
   });
   
   // Переводим
-  const { translation, isRussian, detectedLang } = await detectAndTranslate(text);
+  const { translation, isRussian } = await translateRuEn(text);
   
   // Обновляем с переводом
   await supabase.from('telegram_chat_messages')
@@ -403,8 +390,9 @@ async function handleTextMessage(message: any) {
     .eq('chat_id', chatId)
     .eq('message_id', messageId);
   
-  const targetLang = isRussian ? 'English' : 'Russian';
-  await sendMessage(chatId, `🌐 <b>${detectedLang} → ${targetLang}</b>\n\n${translation}`, messageId);
+  const fromLang = isRussian ? 'RU' : 'EN';
+  const toLang = isRussian ? 'EN' : 'RU';
+  await sendMessage(chatId, `🌐 <b>${fromLang} → ${toLang}</b>\n\n${translation}`, messageId);
 }
 
 // Обработка голосового сообщения
@@ -441,7 +429,7 @@ async function handleVoiceMessage(message: any) {
     });
     
     // Переводим
-    const { translation, isRussian, detectedLang } = await detectAndTranslate(transcription);
+    const { translation, isRussian } = await translateRuEn(transcription);
     
     // Обновляем
     await supabase.from('telegram_chat_messages')
@@ -449,13 +437,14 @@ async function handleVoiceMessage(message: any) {
       .eq('chat_id', chatId)
       .eq('message_id', messageId);
     
-    const targetLang = isRussian ? 'English' : 'Russian';
+    const fromLang = isRussian ? 'RU' : 'EN';
+    const toLang = isRussian ? 'EN' : 'RU';
     
     // Отправляем текстовый перевод
-    await sendMessage(chatId, `🎤 <b>Транскрипция (${detectedLang}):</b>\n${transcription}\n\n🌐 <b>Перевод (${targetLang}):</b>\n${translation}`, messageId);
+    await sendMessage(chatId, `🎤 <b>Транскрипция (${fromLang}):</b>\n${transcription}\n\n🌐 <b>Перевод (${toLang}):</b>\n${translation}`, messageId);
     
     // Генерируем голосовой перевод
-    const audioBase64 = await textToSpeech(translation, targetLang);
+    const audioBase64 = await textToSpeech(translation, isRussian ? 'English' : 'Russian');
     await sendVoice(chatId, audioBase64, messageId);
     
   } catch (error) {
