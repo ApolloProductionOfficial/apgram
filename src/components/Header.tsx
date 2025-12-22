@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import logoVideo from "@/assets/logo-video.mov";
+import apolloLogo from "@/assets/apollo-logo.mp4";
 
 const Header = () => {
   const { playClickSound } = useButtonSound();
@@ -70,7 +70,7 @@ const Header = () => {
           <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-shrink-0">
             <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-primary/30 shadow-lg shadow-primary/20">
               <video 
-                src={logoVideo} 
+                src={apolloLogo} 
                 autoPlay 
                 loop 
                 muted 
