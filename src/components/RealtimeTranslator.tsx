@@ -90,7 +90,8 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
   const [isPreviewingVoice, setIsPreviewingVoice] = useState(false);
   const [pushToTalkMode, setPushToTalkMode] = useState(false);
   const [isPushToTalkActive, setIsPushToTalkActive] = useState(false);
-  const [vadEnabled, setVadEnabled] = useState(true);
+  // VAD is always enabled (no toggle needed)
+  const vadEnabled = true;
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   const [vadSettingsOpen, setVadSettingsOpen] = useState(false);
@@ -570,30 +571,41 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
     }
   }, []);
 
-  // Keyboard listener for push-to-talk (Space key)
+  // Keyboard listener for push-to-talk (Space key) - proper hold behavior
   useEffect(() => {
     if (!isListening || !pushToTalkMode) return;
 
+    let isSpaceHeld = false;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !e.repeat && e.target === document.body) {
+      // Only trigger on spacebar, and prevent auto-repeat from triggering multiple starts
+      if (e.code === 'Space' && !isSpaceHeld) {
+        // Check if we're not focused on an input/textarea
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+          return;
+        }
         e.preventDefault();
+        isSpaceHeld = true;
         startPushToTalk();
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
+      if (e.code === 'Space' && isSpaceHeld) {
         e.preventDefault();
+        isSpaceHeld = false;
         stopPushToTalk();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    // Use capture phase to catch events before they bubble
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('keyup', handleKeyUp, true);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('keyup', handleKeyUp, true);
     };
   }, [isListening, pushToTalkMode, startPushToTalk, stopPushToTalk]);
 
@@ -848,133 +860,127 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
               </div>
             </div>
 
-            {/* VAD toggle with settings */}
-            <Collapsible open={vadSettingsOpen} onOpenChange={setVadSettingsOpen}>
-              <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50 border border-border/50">
-                <div className="flex items-center gap-2 flex-1">
-                  <Activity className={cn("h-4 w-4", isSpeaking && vadEnabled && isListening ? "text-green-500 animate-pulse" : "text-muted-foreground")} />
-                  <Label htmlFor="vad-mode" className="text-xs cursor-pointer">
-                    VAD (определение речи)
-                  </Label>
-                  {isSpeaking && vadEnabled && isListening && (
-                    <Badge variant="outline" className="text-[10px] h-4 px-1 border-green-500/50 text-green-500">
-                      Говорите...
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
+            {/* VAD settings (always enabled, just show settings when not in PTT mode) */}
+            {!pushToTalkMode && (
+              <Collapsible open={vadSettingsOpen} onOpenChange={setVadSettingsOpen}>
+                <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50 border border-border/50">
+                  <div className="flex items-center gap-2 flex-1">
+                    <Activity className={cn("h-4 w-4", isSpeaking && isListening ? "text-green-500 animate-pulse" : "text-muted-foreground")} />
+                    <span className="text-xs">VAD (определение речи)</span>
+                    {isSpeaking && isListening && (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1 border-green-500/50 text-green-500">
+                        Говорите...
+                      </Badge>
+                    )}
+                  </div>
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" disabled={!vadEnabled}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
                       <Settings2 className="h-3.5 w-3.5" />
                     </Button>
                   </CollapsibleTrigger>
-                  <Switch
-                    id="vad-mode"
-                    checked={vadEnabled}
-                    onCheckedChange={setVadEnabled}
-                    disabled={isListening || pushToTalkMode}
-                  />
                 </div>
-              </div>
-              
-              <CollapsibleContent className="mt-2 space-y-3 px-3 py-2 rounded-lg bg-muted/30 border border-border/30">
-                {/* Audio level indicator */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground">Уровень звука</span>
-                    <span className="text-[10px] text-muted-foreground">{Math.round(audioLevel)}%</span>
-                  </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                
+                <CollapsibleContent className="mt-2 space-y-3 px-3 py-2 rounded-lg bg-muted/30 border border-border/30">
+                  {/* Audio level indicator */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground">Уровень звука</span>
+                      <span className="text-[10px] text-muted-foreground">{Math.round(audioLevel)}%</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className={cn(
+                          "h-full transition-all duration-75 rounded-full",
+                          audioLevel > vadThreshold * 500 ? "bg-green-500" : "bg-primary/50"
+                        )}
+                        style={{ width: `${audioLevel}%` }}
+                      />
+                    </div>
                     <div 
-                      className={cn(
-                        "h-full transition-all duration-75 rounded-full",
-                        audioLevel > vadThreshold * 500 ? "bg-green-500" : "bg-primary/50"
-                      )}
-                      style={{ width: `${audioLevel}%` }}
+                      className="relative h-0.5 -mt-1"
+                      style={{ marginLeft: `${Math.min(100, vadThreshold * 500)}%` }}
+                    >
+                      <div className="absolute w-0.5 h-3 -top-1 bg-destructive rounded" title="Порог" />
+                    </div>
+                  </div>
+                  
+                  {/* Threshold slider */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground">Порог громкости</span>
+                      <span className="text-[10px] font-mono text-muted-foreground">{(vadThreshold * 100).toFixed(1)}%</span>
+                    </div>
+                    <Slider
+                      value={[vadThreshold * 100]}
+                      onValueChange={([v]) => setVadThreshold(v / 100)}
+                      min={0.5}
+                      max={10}
+                      step={0.1}
+                      className="h-4"
+                      disabled={isListening}
                     />
                   </div>
-                  <div 
-                    className="relative h-0.5 -mt-1"
-                    style={{ marginLeft: `${Math.min(100, vadThreshold * 500)}%` }}
-                  >
-                    <div className="absolute w-0.5 h-3 -top-1 bg-destructive rounded" title="Порог" />
+                  
+                  {/* Silence duration slider */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground">Пауза для отправки</span>
+                      <span className="text-[10px] font-mono text-muted-foreground">{(silenceDuration / 1000).toFixed(1)}с</span>
+                    </div>
+                    <Slider
+                      value={[silenceDuration]}
+                      onValueChange={([v]) => setSilenceDuration(v)}
+                      min={500}
+                      max={4000}
+                      step={100}
+                      className="h-4"
+                      disabled={isListening}
+                    />
                   </div>
-                </div>
-                
-                {/* Threshold slider */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground">Порог громкости</span>
-                    <span className="text-[10px] font-mono text-muted-foreground">{(vadThreshold * 100).toFixed(1)}%</span>
+                  
+                  {/* Min speech duration slider */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground">Мин. длит. речи</span>
+                      <span className="text-[10px] font-mono text-muted-foreground">{minSpeechDuration}мс</span>
+                    </div>
+                    <Slider
+                      value={[minSpeechDuration]}
+                      onValueChange={([v]) => setMinSpeechDuration(v)}
+                      min={100}
+                      max={1000}
+                      step={50}
+                      className="h-4"
+                      disabled={isListening}
+                    />
                   </div>
-                  <Slider
-                    value={[vadThreshold * 100]}
-                    onValueChange={([v]) => setVadThreshold(v / 100)}
-                    min={0.5}
-                    max={10}
-                    step={0.1}
-                    className="h-4"
-                    disabled={isListening}
-                  />
-                </div>
-                
-                {/* Silence duration slider */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground">Пауза для отправки</span>
-                    <span className="text-[10px] font-mono text-muted-foreground">{(silenceDuration / 1000).toFixed(1)}с</span>
-                  </div>
-                  <Slider
-                    value={[silenceDuration]}
-                    onValueChange={([v]) => setSilenceDuration(v)}
-                    min={500}
-                    max={4000}
-                    step={100}
-                    className="h-4"
-                    disabled={isListening}
-                  />
-                </div>
-                
-                {/* Min speech duration slider */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground">Мин. длит. речи</span>
-                    <span className="text-[10px] font-mono text-muted-foreground">{minSpeechDuration}мс</span>
-                  </div>
-                  <Slider
-                    value={[minSpeechDuration]}
-                    onValueChange={([v]) => setMinSpeechDuration(v)}
-                    min={100}
-                    max={1000}
-                    step={50}
-                    className="h-4"
-                    disabled={isListening}
-                  />
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
 
             {/* Push-to-talk toggle */}
             <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50 border border-border/50">
               <div className="flex items-center gap-2">
-                <Keyboard className="h-4 w-4 text-muted-foreground" />
+                <Keyboard className={cn("h-4 w-4", isPushToTalkActive ? "text-green-500 animate-pulse" : "text-muted-foreground")} />
                 <Label htmlFor="ptt-mode" className="text-xs cursor-pointer">
-                  Push-to-talk (Пробел)
+                  Push-to-talk (удерживать Пробел)
                 </Label>
+                {isPushToTalkActive && (
+                  <Badge variant="outline" className="text-[10px] h-4 px-1 border-green-500/50 text-green-500">
+                    Запись...
+                  </Badge>
+                )}
               </div>
               <Switch
                 id="ptt-mode"
                 checked={pushToTalkMode}
-                onCheckedChange={(checked) => {
-                  setPushToTalkMode(checked);
-                  if (checked) setVadEnabled(false);
-                }}
+                onCheckedChange={setPushToTalkMode}
                 disabled={isListening}
               />
             </div>
 
-            {/* Live audio level bar when listening */}
-            {isListening && vadEnabled && (
+            {/* Live audio level bar when listening (VAD mode only) */}
+            {isListening && !pushToTalkMode && (
               <div className="flex items-center gap-2 px-1">
                 <Mic className={cn("h-3.5 w-3.5 shrink-0", isSpeaking ? "text-green-500" : "text-muted-foreground")} />
                 <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -1012,9 +1018,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
             <p className="text-xs text-muted-foreground text-center">
               {pushToTalkMode 
                 ? 'Удерживайте Пробел и говорите — отпустите для перевода.'
-                : vadEnabled 
-                ? 'Говорите — VAD автоматически определит паузы и переведёт.'
-                : 'Говорите в микрофон — перевод каждые 10 сек.'}
+                : 'Говорите — VAD автоматически определит паузы и переведёт.'}
             </p>
 
             {/* Subtitles area */}
