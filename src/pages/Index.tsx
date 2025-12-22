@@ -134,8 +134,8 @@ const Index = () => {
       navigator.clipboard.writeText(`@${userUsername}`);
       setCopied(true);
       toast({
-        title: 'Скопировано',
-        description: `@${userUsername} скопирован в буфер`,
+        title: t.toast.copied,
+        description: `@${userUsername} ${t.toast.copiedToClipboard}`,
       });
       setTimeout(() => setCopied(false), 2000);
     }
@@ -147,8 +147,8 @@ const Index = () => {
     const username = newUsername.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
     if (username.length < 3) {
       toast({
-        title: 'Ошибка',
-        description: 'Username должен быть минимум 3 символа',
+        title: t.toast.error,
+        description: t.toast.usernameMinLength,
         variant: 'destructive',
       });
       return;
@@ -165,8 +165,8 @@ const Index = () => {
     
     if (existing) {
       toast({
-        title: 'Ошибка',
-        description: 'Этот username уже занят',
+        title: t.toast.error,
+        description: t.toast.usernameTaken,
         variant: 'destructive',
       });
       setSavingUsername(false);
@@ -180,8 +180,8 @@ const Index = () => {
     
     if (error) {
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось сохранить username',
+        title: t.toast.error,
+        description: t.toast.usernameSaveError,
         variant: 'destructive',
       });
     } else {
@@ -189,8 +189,8 @@ const Index = () => {
       setShowUsernameForm(false);
       setNewUsername("");
       toast({
-        title: 'Сохранено',
-        description: `Ваш username: @${username}`,
+        title: t.toast.saved,
+        description: `${t.toast.yourUsername} @${username}`,
       });
     }
     

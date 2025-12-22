@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface TwoFactorVerifyProps {
   onSuccess: () => void;
@@ -16,6 +17,7 @@ export const TwoFactorVerify = ({ onSuccess, onCancel }: TwoFactorVerifyProps) =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleVerify = async () => {
     if (verifyCode.length !== 6) return;
@@ -32,7 +34,7 @@ export const TwoFactorVerify = ({ onSuccess, onCancel }: TwoFactorVerifyProps) =
       const totpFactor = factorsData.totp[0];
       
       if (!totpFactor) {
-        throw new Error('Фактор 2FA не найден');
+        throw new Error(t.twoFactor.factorNotFound);
       }
       
       // Create a challenge
@@ -52,13 +54,13 @@ export const TwoFactorVerify = ({ onSuccess, onCancel }: TwoFactorVerifyProps) =
       if (verifyError) throw verifyError;
       
       toast({
-        title: 'Успешно',
-        description: 'Вы успешно вошли в систему',
+        title: t.twoFactor.success,
+        description: t.twoFactor.loginSuccess,
       });
       
       onSuccess();
     } catch (err: any) {
-      setError(err.message || 'Неверный код. Попробуйте ещё раз.');
+      setError(err.message || t.twoFactor.invalidCode);
     } finally {
       setLoading(false);
     }
@@ -70,9 +72,9 @@ export const TwoFactorVerify = ({ onSuccess, onCancel }: TwoFactorVerifyProps) =
         <div className="mx-auto w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-2">
           <Shield className="w-6 h-6 text-primary" />
         </div>
-        <CardTitle className="text-xl">Двухфакторная аутентификация</CardTitle>
+        <CardTitle className="text-xl">{t.twoFactor.title}</CardTitle>
         <CardDescription>
-          Введите 6-значный код из вашего приложения-аутентификатора
+          {t.twoFactor.description}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -102,7 +104,7 @@ export const TwoFactorVerify = ({ onSuccess, onCancel }: TwoFactorVerifyProps) =
           {loading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
-            'Подтвердить'
+            t.twoFactor.verify
           )}
         </Button>
         
@@ -112,7 +114,7 @@ export const TwoFactorVerify = ({ onSuccess, onCancel }: TwoFactorVerifyProps) =
             onClick={onCancel}
             className="w-full"
           >
-            Отмена
+            {t.twoFactor.cancel}
           </Button>
         )}
       </CardContent>
