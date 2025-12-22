@@ -420,15 +420,15 @@ const Index = () => {
             <div className="flex flex-wrap justify-center gap-4 mb-12 animate-slide-up" style={{ animationDelay: '100ms' }}>
               <div className="glass px-5 py-3 rounded-xl flex items-center gap-3 hover:scale-105 transition-transform duration-300 hover:border-primary/50 border border-transparent animate-[pulse_2s_ease-in-out_3]">
                 <Globe className="w-5 h-5 text-primary animate-[pulse_1.5s_ease-in-out_infinite]" />
-                <span className="text-muted-foreground">Без ограничений по IP</span>
+                <span className="text-muted-foreground">{(t.aplink as any)?.noIPRestrictions || 'No IP Restrictions'}</span>
               </div>
               <div className="glass px-5 py-3 rounded-xl flex items-center gap-3 hover:scale-105 transition-transform duration-300 hover:border-primary/50 border border-transparent animate-[pulse_2s_ease-in-out_3]" style={{ animationDelay: '200ms' }}>
                 <Sparkles className="w-5 h-5 text-primary animate-[pulse_1.5s_ease-in-out_infinite]" style={{ animationDelay: '200ms' }} />
-                <span className="text-muted-foreground">AI-конспекты встреч</span>
+                <span className="text-muted-foreground">{(t.aplink as any)?.aiMeetingSummaries || 'AI Meeting Summaries'}</span>
               </div>
               <div className="glass px-5 py-3 rounded-xl flex items-center gap-3 hover:scale-105 transition-transform duration-300 hover:border-primary/50 border border-transparent animate-[pulse_2s_ease-in-out_3]" style={{ animationDelay: '400ms' }}>
                 <MessageCircle className="w-5 h-5 text-primary animate-[pulse_1.5s_ease-in-out_infinite]" style={{ animationDelay: '400ms' }} />
-                <span className="text-muted-foreground">Переводчик в реальном времени</span>
+                <span className="text-muted-foreground">{(t.aplink as any)?.realtimeTranslator || 'Real-time Translator'}</span>
               </div>
             </div>
 
@@ -557,7 +557,7 @@ const Index = () => {
                             <User className="w-5 h-5 text-primary" />
                           </div>
                           <div>
-                            <p className="text-sm text-muted-foreground">Ваш @username</p>
+                            <p className="text-sm text-muted-foreground">{(t.aplink as any)?.yourUsername || 'Your @username'}</p>
                             <p className="font-semibold text-primary text-lg">@{userUsername}</p>
                           </div>
                         </div>
@@ -576,7 +576,7 @@ const Index = () => {
                         </Button>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Нажмите, чтобы скопировать
+                        {(t.aplink as any)?.clickToCopy || 'Click to copy'}
                       </p>
                     </div>
                   ) : (
@@ -594,8 +594,8 @@ const Index = () => {
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-yellow-500">Добавьте @username</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">Чтобы вас могли найти и добавить в контакты</p>
+                          <p className="font-medium text-yellow-500">{(t.aplink as any)?.addUsername || 'Add @username'}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{(t.aplink as any)?.addUsernameDesc || 'So others can find and add you to contacts'}</p>
 
                           <div className="mt-3 flex gap-2">
                             <Input
@@ -631,7 +631,7 @@ const Index = () => {
                           </div>
 
                           <p className="mt-2 text-[11px] text-muted-foreground">
-                            3–20 символов: латиница, цифры, подчёркивание
+                            {(t.aplink as any)?.usernameHint || '3-20 characters: letters, numbers, underscore'}
                           </p>
                         </div>
                       </div>
