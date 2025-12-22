@@ -260,7 +260,7 @@ const Header = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button 
-                  className="text-base font-semibold text-primary flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/30 hover:bg-primary/15 transition-all duration-200"
+                  className="text-base font-semibold text-primary flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/30 hover:bg-primary/15 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
                   onClick={playClickSound}
                 >
                   <span className="text-lg">{languages[language].flag}</span>
