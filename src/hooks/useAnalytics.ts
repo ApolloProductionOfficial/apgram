@@ -34,18 +34,21 @@ export const useAnalytics = () => {
   const sessionId = useRef(getSessionId());
 
   const trackEvent = useCallback(async ({ eventType, eventData = {}, pagePath }: TrackEventParams) => {
+    // Only track for authenticated users (RLS requires auth)
+    if (!user?.id) return;
+    
     try {
       await supabase.from('site_analytics').insert([{
         event_type: eventType,
         event_data: eventData as Json,
-        user_id: user?.id || null,
+        user_id: user.id,
         session_id: sessionId.current,
         page_path: pagePath || window.location.pathname,
         referrer: document.referrer || null,
         user_agent: navigator.userAgent,
       }]);
     } catch (error) {
-      console.error('Analytics tracking error:', error);
+      // Silently ignore analytics errors
     }
   }, [user?.id]);
 
@@ -63,24 +66,27 @@ export const useAnalytics = () => {
   };
 };
 
-// Standalone function for use outside React components
+// Standalone function for use outside React components (requires userId)
 export const trackAnalyticsEvent = async (
   eventType: AnalyticsEventType,
   eventData: Record<string, Json> = {},
   userId?: string
 ) => {
+  // Only track for authenticated users
+  if (!userId) return;
+  
   try {
     const sessionId = getSessionId();
     await supabase.from('site_analytics').insert([{
       event_type: eventType,
       event_data: eventData as Json,
-      user_id: userId || null,
+      user_id: userId,
       session_id: sessionId,
       page_path: window.location.pathname,
       referrer: document.referrer || null,
       user_agent: navigator.userAgent,
     }]);
   } catch (error) {
-    console.error('Analytics tracking error:', error);
+    // Silently ignore analytics errors
   }
 };
