@@ -38,13 +38,10 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
       timers.forEach(clearTimeout);
     };
   }, [onComplete]);
-  
-  // Don't render anything if not showing
-  if (!shouldShow) return null;
 
   // Play sound when logo appears
   useEffect(() => {
-    if (stage === 1 && !soundPlayedRef.current) {
+    if (stage === 1 && !soundPlayedRef.current && shouldShow) {
       soundPlayedRef.current = true;
       
       const playSound = async () => {
@@ -76,7 +73,10 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
       // Small delay to sync with logo animation
       setTimeout(() => playSound(), 400);
     }
-  }, [stage]);
+  }, [stage, shouldShow]);
+  
+  // Don't render anything if not showing
+  if (!shouldShow) return null;
 
 
   return (
