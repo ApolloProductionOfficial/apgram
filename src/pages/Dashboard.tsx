@@ -24,6 +24,8 @@ interface QuickPhrase {
   id: string;
   command: string;
   phrase: string;
+  media_url?: string | null;
+  media_type?: string | null;
 }
 
 interface ChatSettings {
@@ -86,10 +88,11 @@ const Dashboard = () => {
       return;
     }
 
-    const command = newCommand.startsWith("/p_") ? newCommand : `/p_${newCommand}`;
+    // Убираем слеш из команды при сохранении (бот сам добавит /p_)
+    const command = newCommand.replace("/p_", "").replace("/", "").trim();
 
     const { error } = await supabase.from("telegram_quick_phrases").insert({
-      command,
+      command: `p_${command}`,
       phrase: newPhrase,
       user_id: user?.id,
     });
@@ -285,9 +288,14 @@ const Dashboard = () => {
                   >
                     <div className="space-y-1 flex-1">
                       <code className="text-sm font-mono text-primary bg-primary/10 px-2 py-1 rounded">
-                        {phrase.command}
+                        /{phrase.command}
                       </code>
                       <p className="text-foreground mt-2">{phrase.phrase}</p>
+                      {phrase.media_url && (
+                        <span className="text-xs text-muted-foreground">
+                          📎 {phrase.media_type === 'animation' ? 'GIF' : phrase.media_type === 'video' ? 'Видео' : 'Фото'}
+                        </span>
+                      )}
                     </div>
                     <Button
                       variant="ghost"
