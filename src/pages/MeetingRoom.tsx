@@ -1194,7 +1194,7 @@ const MeetingRoom = () => {
                   variant={isRecording ? "destructive" : "outline"}
                   size="sm"
                   disabled={isTranscribing}
-                  className={`flex flex-col sm:flex-row items-center justify-center gap-1 h-auto py-2 px-2 sm:px-3 ${isRecording ? "animate-pulse" : "border-primary/50 hover:bg-primary/10"}`}
+                  className={`flex flex-col sm:flex-row items-center justify-center gap-1 h-auto py-2 px-2 sm:px-3 focus-visible:ring-0 ${isRecording ? "animate-pulse ring-0" : "border-primary/50 hover:bg-primary/10 ring-0"}`}
                 >
                   {isTranscribing ? (
                     <>
@@ -1229,7 +1229,7 @@ const MeetingRoom = () => {
                   onClick={() => setShowTranslator(!showTranslator)}
                   variant={showTranslator ? "default" : "outline"}
                   size="sm"
-                  className={`flex flex-col sm:flex-row items-center justify-center gap-1 h-auto py-2 px-2 sm:px-3 ${showTranslator ? "ring-2 ring-primary/50" : "border-primary/50 hover:bg-primary/10"}`}
+                  className={`flex flex-col sm:flex-row items-center justify-center gap-1 h-auto py-2 px-2 sm:px-3 focus-visible:ring-0 ${showTranslator ? "ring-0" : "border-primary/50 hover:bg-primary/10"}`}
                 >
                   <Languages className="w-5 h-5" />
                   <span className="text-[10px] sm:text-xs font-medium">{t.meetingRoom.translate}</span>
@@ -1247,7 +1247,7 @@ const MeetingRoom = () => {
                   onClick={copyLink}
                   variant="outline"
                   size="sm"
-                  className="flex flex-col sm:flex-row items-center justify-center gap-1 h-auto py-2 px-2 sm:px-3 border-primary/50 hover:bg-primary/10"
+                  className="flex flex-col sm:flex-row items-center justify-center gap-1 h-auto py-2 px-2 sm:px-3 border-primary/50 hover:bg-primary/10 focus-visible:ring-0"
                 >
                   {copied ? (
                     <>
@@ -1274,7 +1274,7 @@ const MeetingRoom = () => {
                   onClick={isAdmin ? () => setShowIPPanel(!showIPPanel) : copyDiagnostics}
                   variant={showIPPanel && isAdmin ? "default" : "outline"}
                   size="sm"
-                  className={`flex flex-col sm:flex-row items-center justify-center gap-1 h-auto py-2 px-2 sm:px-3 ${isAdmin ? (showIPPanel ? "" : "border-primary/50 hover:bg-primary/10") : "border-yellow-500/50 hover:bg-yellow-500/10 text-yellow-500"}`}
+                  className={`flex flex-col sm:flex-row items-center justify-center gap-1 h-auto py-2 px-2 sm:px-3 focus-visible:ring-0 ${isAdmin ? (showIPPanel ? "" : "border-primary/50 hover:bg-primary/10") : "border-yellow-500/50 hover:bg-yellow-500/10 text-yellow-500"}`}
                 >
                   {isAdmin ? (
                     <>
