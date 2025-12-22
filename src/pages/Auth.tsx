@@ -5,15 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Bot, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Bot, Mail, Lock, ArrowRight, Loader2, UserPlus } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { user, signIn, isLoading } = useAuth();
+  const { user, signIn, signUp, isLoading } = useAuth();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSetupMode, setIsSetupMode] = useState(false);
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -26,12 +27,22 @@ const Auth = () => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await signIn(email, password);
-      if (error) {
-        toast.error("Неверный логин или пароль");
+      if (isSetupMode) {
+        const { error } = await signUp(email, password, email.split('@')[0]);
+        if (error) {
+          toast.error(error.message || "Ошибка создания аккаунта");
+        } else {
+          toast.success("Аккаунт создан! Теперь войдите.");
+          setIsSetupMode(false);
+        }
       } else {
-        toast.success("Добро пожаловать!");
-        navigate("/dashboard");
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast.error("Неверный логин или пароль");
+        } else {
+          toast.success("Добро пожаловать!");
+          navigate("/dashboard");
+        }
       }
     } finally {
       setIsSubmitting(false);
@@ -64,12 +75,12 @@ const Auth = () => {
               Telegram Bot Manager
             </CardTitle>
             <CardDescription className="text-muted-foreground mt-2">
-              Войдите в панель управления
+              {isSetupMode ? "Создание аккаунта администратора" : "Войдите в панель управления"}
             </CardDescription>
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <div className="relative">
@@ -108,12 +119,31 @@ const Auth = () => {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  Войти
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  {isSetupMode ? (
+                    <>
+                      <UserPlus className="w-5 h-5 mr-2" />
+                      Создать аккаунт
+                    </>
+                  ) : (
+                    <>
+                      Войти
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </>
+                  )}
                 </>
               )}
             </Button>
           </form>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setIsSetupMode(!isSetupMode)}
+              className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            >
+              {isSetupMode ? "← Назад к входу" : "Первоначальная настройка"}
+            </button>
+          </div>
         </CardContent>
       </Card>
     </div>
