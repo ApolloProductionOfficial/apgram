@@ -735,7 +735,21 @@ const MeetingRoom = () => {
     };
   }, [playReconnectingSound]);
 
+  // Store stable refs to avoid re-running useEffect on object identity changes
+  const userIdRef = useRef(user?.id);
   useEffect(() => {
+    userIdRef.current = user?.id;
+  }, [user?.id]);
+
+  const jitsiInitializedRef = useRef(false);
+
+  useEffect(() => {
+    // Prevent re-initialization if already done for this room+user combo
+    if (jitsiInitializedRef.current) {
+      logDiagnostic('jitsi-init-skipped', { reason: 'already-initialized' });
+      return;
+    }
+
     let qualityInterval: ReturnType<typeof setInterval> | null = null;
 
     const initJitsi = () => {
@@ -1052,6 +1066,7 @@ const MeetingRoom = () => {
     };
 
     initJitsiRef.current = initJitsi;
+    jitsiInitializedRef.current = true;
     initJitsi();
 
     return () => {
@@ -1063,8 +1078,10 @@ const MeetingRoom = () => {
         apiRef.current.dispose();
         apiRef.current = null;
       }
+      jitsiInitializedRef.current = false;
     };
-  }, [roomId, userName, toast, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, userName]);
 
   // Don't render if no username - redirecting
   if (!userName) {
