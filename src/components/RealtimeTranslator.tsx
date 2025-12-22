@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 
 interface TranslationEntry {
@@ -105,6 +106,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
 }) => {
   const { user } = useAuth();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   // Load initial values from localStorage
   const storedSettings = loadStoredSettings();
   
@@ -205,7 +207,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
       })) || []);
     } catch (error) {
       console.error('Error loading history:', error);
-      toast.error('Не удалось загрузить историю');
+      toast.error(t.translator.loadHistoryError);
     } finally {
       setHistoryLoading(false);
     }
@@ -241,17 +243,17 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
       if (error) throw error;
 
       setHistoryItems([]);
-      toast.success('История очищена');
+      toast.success(t.translator.historyCleared);
     } catch (error) {
       console.error('Error clearing history:', error);
-      toast.error('Ошибка очистки истории');
+      toast.error(t.translator.clearHistoryError);
     }
   };
 
   const exportHistory = () => {
     const items = historyItems.length > 0 ? historyItems : translations;
     if (items.length === 0) {
-      toast.error('Нет данных для экспорта');
+      toast.error(t.translator.noDataToExport);
       return;
     }
 
@@ -273,7 +275,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
     link.download = `translations_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-    toast.success('История экспортирована');
+    toast.success(t.translator.historyExported);
   };
 
   // Preview selected voice
@@ -328,7 +330,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
       }
     } catch (error) {
       console.error('Voice preview error:', error);
-      toast.error('Не удалось воспроизвести голос');
+      toast.error(t.translator.voicePreviewError);
     } finally {
       setIsPreviewingVoice(false);
     }
@@ -678,16 +680,16 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
       setIsListening(true);
 
       if (pushToTalkMode) {
-        toast.success('Режим Push-to-talk: удерживайте Пробел и говорите');
+        toast.success(t.translator.pttActivated);
       } else {
-        toast.success('VAD активирован — говорите, перевод начнётся автоматически');
+        toast.success(t.translator.vadActivated);
       }
 
       // Always start audio analysis (mic level meter). In non-PTT mode this also runs VAD.
       startVad();
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      toast.error('Не удалось получить доступ к микрофону');
+      toast.error(t.translator.micError);
     }
   }, [pushToTalkMode, startVad]);
 
@@ -824,7 +826,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Languages className="h-5 w-5 text-primary" />
-            <span className="font-semibold text-sm">Translator</span>
+            <span className="font-semibold text-sm">{t.translator.title}</span>
             {pushToTalkMode && isPushToTalkActive && (
               <Badge variant="destructive" className="animate-pulse text-xs">
                 REC
@@ -851,11 +853,11 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
           <TabsList className="grid w-full grid-cols-2 h-9">
             <TabsTrigger value="translate" className="text-xs flex items-center gap-1.5">
               <Languages className="h-3.5 w-3.5" />
-              Translate
+              {t.translator.tabTranslate}
             </TabsTrigger>
             <TabsTrigger value="history" className="text-xs flex items-center gap-1.5">
               <History className="h-3.5 w-3.5" />
-              History
+              {t.translator.tabHistory}
             </TabsTrigger>
           </TabsList>
 
@@ -869,7 +871,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                       {sourceLanguage === 'auto' ? '🌍' : LANGUAGES.find(l => l.code === sourceLanguage)?.flag || '🌍'}
                     </span>
                     <span className="truncate text-xs">
-                      {sourceLanguage === 'auto' ? 'Auto' : LANGUAGES.find(l => l.code === sourceLanguage)?.name}
+                      {sourceLanguage === 'auto' ? t.translator.autoDetect : LANGUAGES.find(l => l.code === sourceLanguage)?.name}
                     </span>
                   </div>
                 </SelectTrigger>
@@ -877,7 +879,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                   <SelectItem value="auto">
                     <span className="flex items-center gap-2">
                       <span className="text-base">🌍</span>
-                      <span>Auto-detect</span>
+                      <span>{t.translator.autoDetect}</span>
                     </span>
                   </SelectItem>
                   {LANGUAGES.map(lang => (
@@ -925,11 +927,11 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                 <SelectTrigger className="h-10 text-sm flex-1 bg-muted/40 border-border/40 hover:bg-muted/60 transition-colors">
                   <div className="flex items-center gap-2 min-w-0">
                     <Volume2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{VOICES.find(v => v.id === selectedVoice)?.name || 'Голос'}</span>
+                    <span className="truncate">{VOICES.find(v => v.id === selectedVoice)?.name || t.translator.voice}</span>
                   </div>
                 </SelectTrigger>
                 <SelectContent className="max-h-[280px]">
-                  <div className="px-2 py-1 text-[10px] font-semibold text-pink-500/80 uppercase tracking-wide">Женские</div>
+                  <div className="px-2 py-1 text-[10px] font-semibold text-pink-500/80 uppercase tracking-wide">{t.translator.femaleVoices}</div>
                   {VOICES.filter(v => v.gender === 'female').map(voice => (
                     <SelectItem key={voice.id} value={voice.id}>
                       <span className="flex items-center gap-2">
@@ -938,7 +940,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                       </span>
                     </SelectItem>
                   ))}
-                  <div className="px-2 py-1 text-[10px] font-semibold text-blue-500/80 uppercase tracking-wide mt-1">Мужские</div>
+                  <div className="px-2 py-1 text-[10px] font-semibold text-blue-500/80 uppercase tracking-wide mt-1">{t.translator.maleVoices}</div>
                   {VOICES.filter(v => v.gender === 'male').map(voice => (
                     <SelectItem key={voice.id} value={voice.id}>
                       <span className="flex items-center gap-2">
@@ -947,7 +949,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                       </span>
                     </SelectItem>
                   ))}
-                  <div className="px-2 py-1 text-[10px] font-semibold text-amber-500/80 uppercase tracking-wide mt-1">Нейтральные</div>
+                  <div className="px-2 py-1 text-[10px] font-semibold text-amber-500/80 uppercase tracking-wide mt-1">{t.translator.neutralVoices}</div>
                   {VOICES.filter(v => v.gender === 'neutral').map(voice => (
                     <SelectItem key={voice.id} value={voice.id}>
                       <span className="flex items-center gap-2">
@@ -964,7 +966,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                 className="h-10 w-10 shrink-0 bg-muted/40 border-border/40 hover:bg-muted/60"
                 onClick={previewVoice}
                 disabled={isPreviewingVoice || isListening}
-                title="Preview voice"
+                title={t.translator.previewVoice}
               >
                 {isPreviewingVoice ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               </Button>
@@ -984,7 +986,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                 )}
               >
                 <Activity className="h-4 w-4" />
-                Auto
+                {t.translator.modeAuto}
               </button>
               <button
                 type="button"
@@ -998,7 +1000,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                 )}
               >
                 <Keyboard className="h-4 w-4" />
-                Space
+                {t.translator.modeSpace}
               </button>
             </div>
 
@@ -1013,13 +1015,13 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                     >
                       <div className="flex items-center gap-1.5">
                         <Settings2 className="h-3 w-3" />
-                        <span>Mic Settings</span>
+                        <span>{t.translator.micSettings}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         {isSpeaking && isListening && (
                           <span className="flex items-center gap-1 text-green-500 text-[10px]">
                             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                            Speaking
+                            {t.translator.speaking}
                           </span>
                         )}
                         <Settings2 className={cn("h-3 w-3 transition-transform", vadSettingsOpen && "rotate-90")} />
@@ -1031,7 +1033,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                     {/* Audio level indicator */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                        <span>Level</span>
+                        <span>{t.translator.level}</span>
                         <span>{Math.round(audioLevel)}%</span>
                       </div>
                       <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -1049,13 +1051,13 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <span>Sensitivity</span>
+                          <span>{t.translator.sensitivity}</span>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <HelpCircle className="h-3 w-3 cursor-help opacity-60 hover:opacity-100" />
                             </TooltipTrigger>
                             <TooltipContent side="top" className="max-w-[200px] text-xs">
-                              Minimum audio level to detect speech. Lower = more sensitive (catches quiet speech), higher = needs louder voice.
+                              {t.translator.sensitivityTooltip}
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -1076,13 +1078,13 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <span>Pause</span>
+                          <span>{t.translator.pause}</span>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <HelpCircle className="h-3 w-3 cursor-help opacity-60 hover:opacity-100" />
                             </TooltipTrigger>
                             <TooltipContent side="top" className="max-w-[200px] text-xs">
-                              How long to wait after you stop speaking before translating. Longer = waits for longer pauses.
+                              {t.translator.pauseTooltip}
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -1134,7 +1136,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
             {pushToTalkMode && isPushToTalkActive && (
               <div className="flex items-center justify-center gap-2 py-3 rounded-lg bg-green-500/10 border border-green-500/30">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-sm font-medium text-green-600">Recording...</span>
+                <span className="text-sm font-medium text-green-600">{t.translator.recording}</span>
               </div>
             )}
 
@@ -1142,8 +1144,8 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
             {pushToTalkMode ? (
               <div className="text-center py-3 px-4 rounded-lg bg-muted/30 border border-dashed border-border">
                 <Keyboard className="h-6 w-6 mx-auto mb-1.5 text-muted-foreground" />
-                <p className="text-sm font-medium">Hold Space to record</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Release to translate</p>
+                <p className="text-sm font-medium">{t.translator.holdSpaceToRecord}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t.translator.releaseToTranslate}</p>
               </div>
             ) : (
               <Button
@@ -1154,12 +1156,12 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                 {isListening ? (
                   <>
                     <MicOff className="h-4 w-4" />
-                    Stop
+                    {t.translator.stop}
                   </>
                 ) : (
                   <>
                     <Mic className="h-4 w-4" />
-                    Start Translation
+                    {t.translator.startTranslation}
                   </>
                 )}
               </Button>
@@ -1169,7 +1171,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
             <div className="flex-1 overflow-y-auto min-h-[80px] max-h-[150px] border rounded-lg bg-muted/30 p-2 space-y-2">
               {translations.length === 0 ? (
                 <div className="text-center text-muted-foreground text-xs py-4">
-                  {isListening ? 'Listening... speak clearly' : 'Press "Start Translation"'}
+                  {isListening ? t.translator.listening : t.translator.pressStart}
                 </div>
               ) : (
                 translations.map((entry) => (
@@ -1186,7 +1188,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
             {translations.length > 0 && (
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" className="text-xs flex-1" onClick={clearTranslations}>
-                  Clear
+                  {t.translator.clear}
                 </Button>
                 <Button variant="outline" size="sm" className="text-xs gap-1" onClick={exportHistory}>
                   <Download className="h-3 w-3" />
@@ -1199,7 +1201,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
           <TabsContent value="history" className="flex-1 flex flex-col gap-3 overflow-hidden mt-3">
             {!user ? (
               <div className="text-center text-muted-foreground text-xs py-8">
-                Sign in to view translation history
+                {t.translator.signInToViewHistory}
               </div>
             ) : historyLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -1210,7 +1212,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                 <div className="flex-1 overflow-y-auto min-h-[150px] max-h-[250px] border rounded-lg bg-muted/30 p-2 space-y-2">
                   {historyItems.length === 0 ? (
                     <div className="text-center text-muted-foreground text-xs py-8">
-                      No translation history
+                      {t.translator.noHistory}
                     </div>
                   ) : (
                     historyItems.map((entry) => (
@@ -1232,11 +1234,11 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                   <div className="flex gap-2">
                     <Button variant="destructive" size="sm" className="text-xs flex-1 gap-1" onClick={clearHistory}>
                       <Trash2 className="h-3 w-3" />
-                      Clear
+                      {t.translator.clearHistory}
                     </Button>
                     <Button variant="outline" size="sm" className="text-xs flex-1 gap-1" onClick={exportHistory}>
                       <Download className="h-3 w-3" />
-                      Export CSV
+                      {t.translator.exportCsv}
                     </Button>
                   </div>
                 )}
