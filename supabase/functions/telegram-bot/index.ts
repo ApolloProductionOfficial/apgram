@@ -15,17 +15,32 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // Отправка сообщения в Telegram
-async function sendMessage(chatId: number, text: string, replyToMessageId?: number) {
+async function sendMessage(chatId: number, text: string, replyToMessageId?: number, customEmojiId?: string) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  
+  const body: any = {
+    chat_id: chatId,
+    text,
+    reply_to_message_id: replyToMessageId,
+    parse_mode: 'HTML',
+  };
+  
+  // Если есть кастомный эмодзи, добавляем его как entity
+  if (customEmojiId) {
+    // Добавляем placeholder эмодзи в начало текста
+    body.text = `⭐ ${text}`;
+    body.entities = [{
+      type: 'custom_emoji',
+      offset: 0,
+      length: 1,
+      custom_emoji_id: customEmojiId
+    }];
+  }
+  
   await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      reply_to_message_id: replyToMessageId,
-      parse_mode: 'HTML',
-    }),
+    body: JSON.stringify(body),
   });
 }
 
@@ -327,7 +342,7 @@ async function handleCommand(message: any) {
         
         const { data: phrases, error: phraseError } = await supabase
           .from('telegram_quick_phrases')
-          .select('phrase, media_url, media_type')
+          .select('phrase, media_url, media_type, custom_emoji_id')
           .eq('command', phraseCommand)
           .limit(1);
         
@@ -349,11 +364,11 @@ async function handleCommand(message: any) {
                 await sendAnimation(chatId, phrase.media_url, phrase.phrase);
                 break;
               default:
-                await sendMessage(chatId, phrase.phrase);
+                await sendMessage(chatId, phrase.phrase, undefined, phrase.custom_emoji_id);
             }
           } else {
-            // Просто текст
-            await sendMessage(chatId, phrase.phrase);
+            // Текст с возможным кастомным эмодзи
+            await sendMessage(chatId, phrase.phrase, undefined, phrase.custom_emoji_id);
           }
         } else {
           console.log('No phrase found for command:', phraseCommand);
