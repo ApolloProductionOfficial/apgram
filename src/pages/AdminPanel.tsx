@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Users, Calendar, Clock, MapPin, Globe, Shield, User, Camera, Save, Trash2, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, Users, Calendar, Clock, MapPin, Globe, Shield, User, Camera, Save, Trash2, Loader2, BarChart3, Languages, MousePointer, TrendingUp, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -60,6 +60,17 @@ interface Profile {
   avatar_url: string | null;
 }
 
+interface AnalyticsStats {
+  totalPageViews: number;
+  totalTranslations: number;
+  totalClicks: number;
+  totalRoomJoins: number;
+  uniqueSessions: number;
+  topPages: { path: string; count: number }[];
+  recentEvents: { event_type: string; created_at: string; page_path: string; event_data: Record<string, unknown> }[];
+  translationsByLanguage: { language: string; count: number }[];
+}
+
 const AdminPanel = () => {
   const navigate = useNavigate();
   const { user, isAdmin, isLoading } = useAuth();
@@ -67,7 +78,7 @@ const AdminPanel = () => {
   const [participants, setParticipants] = useState<MeetingParticipant[]>([]);
   const [geoData, setGeoData] = useState<Map<string, ParticipantGeoData>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'transcripts' | 'participants' | 'profile'>('transcripts');
+  const [activeTab, setActiveTab] = useState<'transcripts' | 'participants' | 'profile' | 'analytics'>('analytics');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
@@ -75,6 +86,8 @@ const AdminPanel = () => {
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [has2FA, setHas2FA] = useState(false);
   const [disabling2FA, setDisabling2FA] = useState(false);
+  const [analyticsStats, setAnalyticsStats] = useState<AnalyticsStats | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   // Redirect if not admin
   useEffect(() => {
@@ -154,6 +167,87 @@ const AdminPanel = () => {
       supabase.removeChannel(channel);
     };
   }, [user, isAdmin]);
+
+  // Load analytics data
+  useEffect(() => {
+    if (!user || !isAdmin || activeTab !== 'analytics') return;
+    
+    const loadAnalytics = async () => {
+      setAnalyticsLoading(true);
+      try {
+        // Fetch all analytics data
+        const { data: analyticsData, error } = await supabase
+          .from('site_analytics')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1000);
+
+        if (error) throw error;
+
+        // Also get translation history count
+        const { count: translationCount } = await supabase
+          .from('translation_history')
+          .select('*', { count: 'exact', head: true });
+
+        const events = analyticsData || [];
+        
+        // Calculate stats
+        const totalPageViews = events.filter(e => e.event_type === 'page_view').length;
+        const totalTranslations = (translationCount || 0) + events.filter(e => e.event_type === 'translation_completed').length;
+        const totalClicks = events.filter(e => e.event_type === 'button_click').length;
+        const totalRoomJoins = events.filter(e => e.event_type === 'room_joined').length;
+        const uniqueSessions = new Set(events.map(e => e.session_id)).size;
+
+        // Top pages
+        const pageCount = new Map<string, number>();
+        events.filter(e => e.event_type === 'page_view').forEach(e => {
+          const path = e.page_path || '/';
+          pageCount.set(path, (pageCount.get(path) || 0) + 1);
+        });
+        const topPages = Array.from(pageCount.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+          .map(([path, count]) => ({ path, count }));
+
+        // Translations by language
+        const langCount = new Map<string, number>();
+        events.filter(e => e.event_type === 'translation_completed').forEach(e => {
+          const data = e.event_data as Record<string, unknown>;
+          const lang = (data?.target_language as string) || 'unknown';
+          langCount.set(lang, (langCount.get(lang) || 0) + 1);
+        });
+        const translationsByLanguage = Array.from(langCount.entries())
+          .sort((a, b) => b[1] - a[1])
+          .map(([language, count]) => ({ language, count }));
+
+        // Recent events
+        const recentEvents = events.slice(0, 50).map(e => ({
+          event_type: e.event_type,
+          created_at: e.created_at,
+          page_path: e.page_path || '/',
+          event_data: (e.event_data || {}) as Record<string, unknown>,
+        }));
+
+        setAnalyticsStats({
+          totalPageViews,
+          totalTranslations,
+          totalClicks,
+          totalRoomJoins,
+          uniqueSessions,
+          topPages,
+          recentEvents,
+          translationsByLanguage,
+        });
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+        toast.error('Не удалось загрузить аналитику');
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+
+    loadAnalytics();
+  }, [user, isAdmin, activeTab]);
 
   // Check if user has 2FA enabled
   useEffect(() => {
@@ -289,7 +383,16 @@ const AdminPanel = () => {
             </Badge>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              variant={activeTab === 'analytics' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('analytics')}
+              className="gap-2"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Статистика
+            </Button>
             <Button
               variant={activeTab === 'transcripts' ? 'default' : 'outline'}
               size="sm"
@@ -325,6 +428,176 @@ const AdminPanel = () => {
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-12 h-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+          </div>
+        ) : activeTab === 'analytics' ? (
+          <div className="space-y-6">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <BarChart3 className="w-6 h-6 text-primary" />
+              Аналитика сайта
+            </h1>
+            
+            {analyticsLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : analyticsStats ? (
+              <>
+                {/* Stats cards */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-blue-500/20">
+                          <Eye className="w-5 h-5 text-blue-500" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">{analyticsStats.totalPageViews}</p>
+                          <p className="text-xs text-muted-foreground">Просмотров</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-green-500/20">
+                          <Languages className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">{analyticsStats.totalTranslations}</p>
+                          <p className="text-xs text-muted-foreground">Переводов</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-purple-500/20">
+                          <MousePointer className="w-5 h-5 text-purple-500" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">{analyticsStats.totalClicks}</p>
+                          <p className="text-xs text-muted-foreground">Кликов</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-amber-500/20">
+                          <Users className="w-5 h-5 text-amber-500" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">{analyticsStats.totalRoomJoins}</p>
+                          <p className="text-xs text-muted-foreground">Входов в комнаты</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-cyan-500/20">
+                          <TrendingUp className="w-5 h-5 text-cyan-500" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">{analyticsStats.uniqueSessions}</p>
+                          <p className="text-xs text-muted-foreground">Сессий</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Top pages */}
+                  <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Eye className="w-5 h-5 text-primary" />
+                        Популярные страницы
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {analyticsStats.topPages.length === 0 ? (
+                        <p className="text-muted-foreground text-sm">Нет данных</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {analyticsStats.topPages.map((page, i) => (
+                            <div key={i} className="flex items-center justify-between text-sm">
+                              <span className="truncate flex-1 mr-4">{page.path}</span>
+                              <Badge variant="secondary">{page.count}</Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Translations by language */}
+                  <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Languages className="w-5 h-5 text-primary" />
+                        Переводы по языкам
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {analyticsStats.translationsByLanguage.length === 0 ? (
+                        <p className="text-muted-foreground text-sm">Нет данных о переводах</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {analyticsStats.translationsByLanguage.map((item, i) => (
+                            <div key={i} className="flex items-center justify-between text-sm">
+                              <span className="uppercase font-mono">{item.language}</span>
+                              <Badge variant="secondary">{item.count}</Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Recent events */}
+                <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-primary" />
+                      Последние события
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                      {analyticsStats.recentEvents.map((event, i) => (
+                        <div key={i} className="flex items-center gap-3 text-sm border-b border-border/30 pb-2 last:border-0">
+                          <Badge variant="outline" className="shrink-0 text-xs">
+                            {event.event_type.replace(/_/g, ' ')}
+                          </Badge>
+                          <span className="text-muted-foreground truncate flex-1">{event.page_path}</span>
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            {new Date(event.created_at).toLocaleString('ru-RU')}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Нет данных аналитики</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         ) : activeTab === 'transcripts' ? (
           <div className="space-y-6">

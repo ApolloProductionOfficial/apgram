@@ -14,6 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { cn } from '@/lib/utils';
 
 interface TranslationEntry {
@@ -102,7 +103,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
   className,
 }) => {
   const { user } = useAuth();
-  
+  const { trackEvent } = useAnalytics();
   // Load initial values from localStorage
   const storedSettings = loadStoredSettings();
   
@@ -413,6 +414,17 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
 
         setTranslations(prev => [...prev.slice(-19), entry]);
         
+        // Track translation completion
+        trackEvent({
+          eventType: 'translation_completed',
+          eventData: {
+            source_language: result.detectedLanguage || sourceLanguage,
+            target_language: targetLanguage,
+            voice_id: selectedVoice,
+            text_length: result.originalText?.length || 0,
+          },
+        });
+        
         // Save to database if user is logged in
         if (user) {
           await saveTranslation(entry);
@@ -423,7 +435,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
     } finally {
       setIsProcessing(false);
     }
-  }, [targetLanguage, sourceLanguage, selectedVoice, playNextAudio, user, roomId]);
+  }, [targetLanguage, sourceLanguage, selectedVoice, playNextAudio, user, roomId, trackEvent]);
 
   // VAD: Start recording when speech detected
   const startVadRecording = useCallback(() => {
