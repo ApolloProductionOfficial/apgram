@@ -158,7 +158,7 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
               представляет
             </motion.p>
             
-            {/* APLink logo - letter by letter from shadow, left to right with gradient */}
+            {/* APLink logo - letter by letter from shadow, with shimmer gradient */}
             <div className="relative mb-6">
               {/* Sweeping glow effect */}
               <motion.div
@@ -171,45 +171,34 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                 transition={{ delay: 0.6, duration: 2, ease: "easeInOut" }}
               />
               <h1 className="text-6xl sm:text-8xl font-bold relative z-10 flex justify-center">
-                {"APLink".split("").map((letter, index) => {
-                  // Gradient colors matching main page: from-primary via-foreground to-primary
-                  const colors = [
-                    "hsl(var(--primary))",      // A
-                    "hsl(var(--primary))",      // P
-                    "hsl(var(--foreground))",   // L
-                    "hsl(var(--foreground))",   // i
-                    "hsl(var(--primary))",      // n
-                    "hsl(var(--primary))",      // k
-                  ];
-                  return (
-                    <motion.span
-                      key={index}
-                      className="inline-block relative"
-                      style={{ color: colors[index] }}
-                      initial={{ 
-                        opacity: 0, 
-                        x: -30,
-                        filter: "blur(8px)",
-                        textShadow: "0 0 0px transparent"
-                      }}
-                      animate={{ 
-                        opacity: stage >= 1 ? 1 : 0, 
-                        x: stage >= 1 ? 0 : -30,
-                        filter: stage >= 1 ? "blur(0px)" : "blur(8px)",
-                        textShadow: stage >= 1 
-                          ? "0 0 30px hsl(var(--primary) / 0.5)" 
-                          : "0 0 0px transparent"
-                      }}
-                      transition={{ 
-                        delay: 0.6 + index * 0.15, 
-                        duration: 0.5,
-                        ease: [0.25, 0.46, 0.45, 0.94]
-                      }}
-                    >
-                      {letter}
-                    </motion.span>
-                  );
-                })}
+                {"APLink".split("").map((letter, index) => (
+                  <motion.span
+                    key={index}
+                    className="inline-block relative bg-gradient-to-r from-primary via-foreground to-primary bg-clip-text text-transparent bg-[length:200%_auto]"
+                    style={{
+                      animationDelay: `${index * 0.1}s`,
+                    }}
+                    initial={{ 
+                      opacity: 0, 
+                      x: -30,
+                      filter: "blur(8px)",
+                    }}
+                    animate={{ 
+                      opacity: stage >= 1 ? 1 : 0, 
+                      x: stage >= 1 ? 0 : -30,
+                      filter: stage >= 1 ? "blur(0px)" : "blur(8px)",
+                      backgroundPosition: stage >= 1 ? ["200% 0", "-200% 0"] : "200% 0",
+                    }}
+                    transition={{ 
+                      opacity: { delay: 0.6 + index * 0.15, duration: 0.5 },
+                      x: { delay: 0.6 + index * 0.15, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+                      filter: { delay: 0.6 + index * 0.15, duration: 0.5 },
+                      backgroundPosition: { delay: 1.5, duration: 3, repeat: Infinity, ease: "linear" },
+                    }}
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
               </h1>
             </div>
             
