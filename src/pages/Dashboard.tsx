@@ -357,23 +357,35 @@ const Dashboard = () => {
       <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
+            {/* Logo - same style as main page */}
+            <div 
               onClick={() => navigate('/')}
-              className="gap-2"
+              className="flex items-center gap-2 md:gap-3 cursor-pointer group"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <video 
-                src={logoVideo} 
-                autoPlay 
-                loop 
-                muted 
-                playsInline
-                className="w-8 h-8 object-cover rounded-full"
-              />
-              <span className="font-semibold">APLink</span>
-            </Button>
+              <div className="relative w-10 h-10 md:w-12 md:h-12">
+                <div className="absolute inset-0 rounded-full bg-primary/40 blur-md animate-pulse" />
+                <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden ring-2 ring-primary/50 shadow-[0_0_20px_hsl(var(--primary)/0.6)]">
+                  <video 
+                    src={logoVideo} 
+                    autoPlay 
+                    loop 
+                    muted 
+                    playsInline
+                    preload="metadata"
+                    className="absolute inset-0 w-full h-full object-cover scale-[1.3] origin-center"
+                    style={{ willChange: 'transform' }}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-lg md:text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent group-hover:opacity-80 transition-opacity">
+                  APLink
+                </span>
+                <span className="text-[9px] md:text-xs text-muted-foreground -mt-1">
+                  by Apollo Production
+                </span>
+              </div>
+            </div>
           </div>
           
           <div className="flex items-center gap-2">

@@ -868,7 +868,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
           <TabsContent value="translate" className="flex-1 flex flex-col gap-2.5 overflow-hidden mt-3">
             {/* Language selectors with arrow */}
             <div className="flex items-center gap-1">
-              <Select value={sourceLanguage} onValueChange={setSourceLanguage} disabled={isListening}>
+              <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
                 <SelectTrigger className="h-10 text-sm bg-muted/40 border-border/40 hover:bg-muted/60 transition-colors flex-1">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-base shrink-0">
@@ -901,7 +901,7 @@ export const RealtimeTranslator: React.FC<RealtimeTranslatorProps> = ({
                 <ArrowRight className="h-4 w-4 text-muted-foreground" />
               </div>
 
-              <Select value={targetLanguage} onValueChange={setTargetLanguage} disabled={isListening}>
+              <Select value={targetLanguage} onValueChange={setTargetLanguage}>
                 <SelectTrigger className="h-10 text-sm bg-muted/40 border-border/40 hover:bg-muted/60 transition-colors flex-1">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-base shrink-0">

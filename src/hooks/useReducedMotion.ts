@@ -11,8 +11,10 @@ export const useReducedMotion = () => {
     
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.innerWidth < 768;
+    // Safari detection - Safari has performance issues with blur/backdrop-filter
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     
-    return prefersReducedMotion || isMobile;
+    return prefersReducedMotion || isMobile || isSafari;
   });
 
   useEffect(() => {
@@ -21,6 +23,9 @@ export const useReducedMotion = () => {
     
     // Check if on mobile (likely lower performance)
     const isMobile = window.innerWidth < 768;
+    
+    // Safari detection - Safari struggles with blur effects
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     
     // Check device memory if available (Chrome only)
     const hasLowMemory = (navigator as any).deviceMemory && (navigator as any).deviceMemory < 4;
@@ -41,14 +46,14 @@ export const useReducedMotion = () => {
     };
     checkBattery();
     
-    // Reduce motion on mobile or low-power devices
-    const shouldReduce = prefersReducedMotion || isMobile || hasLowMemory || hasLowCores;
+    // Reduce motion on mobile, low-power devices, or Safari
+    const shouldReduce = prefersReducedMotion || isMobile || isSafari || hasLowMemory || hasLowCores;
     setShouldReduceMotion(shouldReduce);
 
     // Listen for changes in preference
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const handleChange = (e: MediaQueryListEvent) => {
-      setShouldReduceMotion(e.matches || isMobile);
+      setShouldReduceMotion(e.matches || isMobile || isSafari);
     };
 
     mediaQuery.addEventListener('change', handleChange);
@@ -59,7 +64,7 @@ export const useReducedMotion = () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
         const nowMobile = window.innerWidth < 768;
-        setShouldReduceMotion(prefersReducedMotion || nowMobile);
+        setShouldReduceMotion(prefersReducedMotion || nowMobile || isSafari);
       }, 150);
     };
 

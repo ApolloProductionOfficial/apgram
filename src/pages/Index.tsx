@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Video, Users, Globe, Shield, ArrowRight, MessageCircle, ExternalLink, User, LogOut, UserPlus, Check, Languages } from "lucide-react";
+import { Video, Users, Globe, Shield, ArrowRight, ExternalLink, User, LogOut, UserPlus, Check, Languages, Send } from "lucide-react";
 import GoogleIcon from "@/components/icons/GoogleIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -299,7 +299,7 @@ const Index = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-sm p-2 rounded-lg hover:bg-primary/10"
                 >
-                  <MessageCircle className="w-4 h-4" />
+                  <Send className="w-4 h-4" />
                   <span>{t.aplink?.telegram || 'Telegram'}</span>
                 </a>
                 <a 
@@ -308,7 +308,7 @@ const Index = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-sm p-2 rounded-lg hover:bg-primary/10"
                 >
-                  <ExternalLink className="w-4 h-4" />
+                  <Globe className="w-4 h-4" />
                   <span>{t.aplink?.website || 'Сайт'}</span>
                 </a>
               </div>
