@@ -29,6 +29,51 @@ async function sendMessage(chatId: number, text: string, replyToMessageId?: numb
   });
 }
 
+// Отправка фото
+async function sendPhoto(chatId: number, photoUrl: string, caption?: string) {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`;
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      photo: photoUrl,
+      caption,
+      parse_mode: 'HTML',
+    }),
+  });
+}
+
+// Отправка видео
+async function sendVideo(chatId: number, videoUrl: string, caption?: string) {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo`;
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      video: videoUrl,
+      caption,
+      parse_mode: 'HTML',
+    }),
+  });
+}
+
+// Отправка GIF/анимации
+async function sendAnimation(chatId: number, animationUrl: string, caption?: string) {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendAnimation`;
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      animation: animationUrl,
+      caption,
+      parse_mode: 'HTML',
+    }),
+  });
+}
+
 // Отправка голосового сообщения
 async function sendVoice(chatId: number, audioBase64: string, replyToMessageId?: number) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice`;
@@ -291,14 +336,40 @@ async function handleCommand(message: any) {
       // Проверяем, есть ли это быстрая фраза
       if (command.startsWith('/')) {
         const phraseCommand = command.substring(1);
-        const { data: phrases } = await supabase
+        console.log('Looking for quick phrase:', phraseCommand);
+        
+        const { data: phrases, error: phraseError } = await supabase
           .from('telegram_quick_phrases')
-          .select('phrase')
+          .select('phrase, media_url, media_type')
           .eq('command', phraseCommand)
           .limit(1);
         
+        console.log('Phrase query result:', phrases, 'error:', phraseError);
+        
         if (phrases && phrases.length > 0) {
-          await sendMessage(chatId, phrases[0].phrase);
+          const phrase = phrases[0];
+          
+          // Если есть медиа - отправляем с подписью
+          if (phrase.media_url) {
+            switch (phrase.media_type) {
+              case 'photo':
+                await sendPhoto(chatId, phrase.media_url, phrase.phrase);
+                break;
+              case 'video':
+                await sendVideo(chatId, phrase.media_url, phrase.phrase);
+                break;
+              case 'animation':
+                await sendAnimation(chatId, phrase.media_url, phrase.phrase);
+                break;
+              default:
+                await sendMessage(chatId, phrase.phrase);
+            }
+          } else {
+            // Просто текст
+            await sendMessage(chatId, phrase.phrase);
+          }
+        } else {
+          console.log('No phrase found for command:', phraseCommand);
         }
       }
   }
