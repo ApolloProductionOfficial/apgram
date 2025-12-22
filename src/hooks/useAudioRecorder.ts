@@ -76,7 +76,8 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
   const stopRecording = useCallback(async (): Promise<Blob | null> => {
     return new Promise((resolve) => {
       if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') {
-        resolve(null);
+        const existing = audioBlobRef.current;
+        resolve(existing && existing.size > 0 ? existing : null);
         return;
       }
 

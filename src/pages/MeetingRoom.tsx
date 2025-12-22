@@ -375,11 +375,6 @@ const MeetingRoom = () => {
       return;
     }
 
-    // Only save if there's actual transcript content
-    if (transcriptRef.current.length === 0) {
-      console.log('No transcript content, skipping save');
-      return;
-    }
 
     const transcriptText = transcriptRef.current.join('\n');
 

@@ -125,7 +125,7 @@ const Sidebar = () => {
                 <button
                   key={i}
                   onClick={() => handleThemeChange(i)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  className={`w-2 h-2 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 ring-offset-background ${
                     activeTheme === i ? 'bg-primary scale-125' : 'bg-muted hover:bg-muted-foreground'
                   }`}
                 />
@@ -134,13 +134,13 @@ const Sidebar = () => {
             <div className="flex gap-2">
               <button 
                 onClick={handlePrev}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 ring-offset-background"
               >
                 ‹
               </button>
               <button 
                 onClick={handleNext}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 ring-offset-background"
               >
                 ›
               </button>
@@ -190,7 +190,7 @@ const Sidebar = () => {
                     playClickSound();
                     navigate(link.url);
                   }}
-                  className={`w-full group relative overflow-hidden px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 hover:scale-105 hover:shadow-xl hover:shadow-primary/30 ${
+                  className={`w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 ring-offset-background group relative overflow-hidden px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 hover:scale-105 hover:shadow-xl hover:shadow-primary/30 ${
                     link.highlight
                       ? 'bg-gradient-to-r from-primary/25 to-primary/15 border-2 border-primary/60 shadow-lg shadow-primary/20'
                       : 'bg-gradient-to-r from-card/80 to-card/60 border border-border/50 hover:border-primary/40'
@@ -226,7 +226,7 @@ const Sidebar = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={playClickSound}
-                  className={`w-full group relative overflow-hidden px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 hover:scale-105 hover:shadow-xl hover:shadow-primary/30 ${
+                  className={`w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 ring-offset-background group relative overflow-hidden px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 hover:scale-105 hover:shadow-xl hover:shadow-primary/30 ${
                     link.highlight
                       ? 'bg-gradient-to-r from-primary/25 to-primary/15 border-2 border-primary/60 shadow-lg shadow-primary/20'
                       : 'bg-gradient-to-r from-card/80 to-card/60 border border-border/50 hover:border-primary/40'
