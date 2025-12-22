@@ -22,6 +22,7 @@ import FavoritesSheet from "@/components/FavoritesSheet";
 import SplashScreen from "@/components/SplashScreen";
 import HowItWorks from "@/components/HowItWorks";
 import FeatureCards from "@/components/FeatureCards";
+import PerformanceMonitor from "@/components/PerformanceMonitor";
 import apolloLogo from "@/assets/apollo-logo.mp4";
 import {
   DropdownMenu,
@@ -596,6 +597,9 @@ const Index = () => {
         
         {/* Favorites Sheet */}
         <FavoritesSheet open={favoritesOpen} onOpenChange={setFavoritesOpen} />
+        
+        {/* Performance Monitor - shows with ?perf=1 in URL */}
+        <PerformanceMonitor />
       </motion.div>
     </>
   );

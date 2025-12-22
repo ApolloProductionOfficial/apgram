@@ -332,27 +332,43 @@ const MeetingRoom = () => {
     }
   };
 
-  // Save meeting transcript and summary - only if recording was started
+  // Save meeting transcript and summary - always stop recording if active
   const saveMeetingTranscript = async () => {
-    // Only save if user started recording
-    if (!hasStartedRecordingRef.current) {
-      console.log('Recording was not started, skipping transcript save');
-      return;
-    }
-    
-    // Stop recording if active
+    // Always stop recording if it's active, even if hasStartedRecordingRef wasn't set
     if (isRecording) {
+      console.log('Recording is active, stopping and transcribing...');
       const audioBlob = await stopRecording();
       if (audioBlob && audioBlob.size > 0) {
+        toast({
+          title: "Запись остановлена",
+          description: "Транскрибируем созвон...",
+        });
         try {
           const transcript = await transcribeAudio(audioBlob);
           if (transcript) {
             transcriptRef.current.push(`[Транскрипция] ${userName}: ${transcript}`);
+            toast({
+              title: "Транскрипция готова",
+              description: "Конспект сохранён",
+            });
           }
         } catch (error) {
           console.error('Final transcription failed:', error);
+          toast({
+            title: "Ошибка транскрипции",
+            description: "Не удалось транскрибировать аудио",
+            variant: "destructive",
+          });
         }
       }
+      // Mark that recording was processed
+      hasStartedRecordingRef.current = true;
+    }
+    
+    // Only save if user started recording at some point
+    if (!hasStartedRecordingRef.current) {
+      console.log('Recording was not started, skipping transcript save');
+      return;
     }
     
     // Only save if user is authenticated
@@ -383,6 +399,10 @@ const MeetingRoom = () => {
       if (error) throw error;
       
       console.log('Meeting saved:', data);
+      toast({
+        title: "Встреча сохранена",
+        description: "Конспект доступен в личном кабинете",
+      });
     } catch (error) {
       console.error('Failed to save meeting:', error);
     }

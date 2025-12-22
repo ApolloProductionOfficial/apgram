@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
-const TRAIL_LENGTH = 25;
+const TRAIL_LENGTH = 15; // Reduced from 25 for performance
 
 const CustomCursor = () => {
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -10,13 +11,14 @@ const CustomCursor = () => {
     Array(TRAIL_LENGTH).fill({ x: -100, y: -100 })
   );
   const rafRef = useRef<number | null>(null);
+  const reduceMotion = useReducedMotion();
 
   const animate = useCallback(() => {
     // Update trail positions - each follows the one before it with lerp
     for (let i = TRAIL_LENGTH - 1; i > 0; i--) {
       const prev = trailPositions.current[i - 1];
       const curr = trailPositions.current[i];
-      const ease = 0.35 - (i * 0.01);
+      const ease = 0.35 - (i * 0.015);
       trailPositions.current[i] = {
         x: curr.x + (prev.x - curr.x) * ease,
         y: curr.y + (prev.y - curr.y) * ease,
@@ -67,27 +69,6 @@ const CustomCursor = () => {
           ctx.lineCap = 'round';
           ctx.lineJoin = 'round';
           ctx.stroke();
-          
-          // Draw glow effect - thicker blurred line
-          ctx.beginPath();
-          ctx.moveTo(points[0].x, points[0].y);
-          for (let i = 1; i < points.length; i++) {
-            ctx.lineTo(points[i].x, points[i].y);
-          }
-          
-          const glowGradient = ctx.createLinearGradient(
-            points[0].x, points[0].y,
-            points[points.length - 1].x, points[points.length - 1].y
-          );
-          glowGradient.addColorStop(0, 'hsla(199, 89%, 70%, 0.3)');
-          glowGradient.addColorStop(0.5, 'hsla(199, 89%, 80%, 0.1)');
-          glowGradient.addColorStop(1, 'hsla(0, 0%, 100%, 0)');
-          
-          ctx.strokeStyle = glowGradient;
-          ctx.lineWidth = 8;
-          ctx.filter = 'blur(4px)';
-          ctx.stroke();
-          ctx.filter = 'none';
         }
       }
     }
@@ -96,6 +77,9 @@ const CustomCursor = () => {
   }, []);
 
   useEffect(() => {
+    // Don't run cursor effects on mobile/Safari/reduced motion
+    if (reduceMotion) return;
+    
     // Set canvas size
     const canvas = trailCanvasRef.current;
     if (canvas) {
@@ -106,7 +90,7 @@ const CustomCursor = () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
       };
-      window.addEventListener('resize', handleResize);
+      window.addEventListener('resize', handleResize, { passive: true });
     }
 
     const handlePointerMove = (e: PointerEvent | MouseEvent) => {
@@ -114,16 +98,19 @@ const CustomCursor = () => {
     };
 
     window.addEventListener('pointermove', handlePointerMove as EventListener, { capture: true, passive: true });
-    window.addEventListener('mousemove', handlePointerMove as EventListener, { capture: true, passive: true } as AddEventListenerOptions);
     
     rafRef.current = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener('pointermove', handlePointerMove as EventListener, { capture: true } as EventListenerOptions);
-      window.removeEventListener('mousemove', handlePointerMove as EventListener, { capture: true } as EventListenerOptions);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [animate]);
+  }, [animate, reduceMotion]);
+
+  // Don't render on mobile/Safari for performance
+  if (reduceMotion) {
+    return null;
+  }
 
   return (
     <div className="hidden md:block">
@@ -149,7 +136,6 @@ const CustomCursor = () => {
         <div className="relative w-3 h-3">
           <div className="absolute inset-0 rounded-full bg-sky-400" />
           <div className="absolute -inset-1 rounded-full bg-sky-300/60 blur-[3px]" />
-          <div className="absolute -inset-2 rounded-full bg-white/30 blur-[6px]" />
         </div>
       </div>
     </div>
