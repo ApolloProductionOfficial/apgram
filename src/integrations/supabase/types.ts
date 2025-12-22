@@ -336,6 +336,7 @@ export type Database = {
         Row: {
           command: string
           created_at: string
+          custom_emoji_id: string | null
           id: string
           media_type: string | null
           media_url: string | null
@@ -345,6 +346,7 @@ export type Database = {
         Insert: {
           command: string
           created_at?: string
+          custom_emoji_id?: string | null
           id?: string
           media_type?: string | null
           media_url?: string | null
@@ -354,6 +356,7 @@ export type Database = {
         Update: {
           command?: string
           created_at?: string
+          custom_emoji_id?: string | null
           id?: string
           media_type?: string | null
           media_url?: string | null
