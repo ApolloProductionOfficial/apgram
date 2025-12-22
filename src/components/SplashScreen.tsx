@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import backgroundVideo from "@/assets/background-video-new.mp4";
 
@@ -8,48 +8,13 @@ interface SplashScreenProps {
 
 const SplashScreen = ({ onComplete }: SplashScreenProps) => {
   const [stage, setStage] = useState(0);
-  const audioPlayedRef = useRef(false);
   // 0 = video reveals, 1 = text appears, 2 = fade out
 
   useEffect(() => {
-    // Prevent double audio play
-    if (audioPlayedRef.current) return;
-    audioPlayedRef.current = true;
-
-    // Play whisper intro sound
-    const playWhisper = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whisper-intro`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-          }
-        );
-        
-        if (response.ok) {
-          const audioBlob = await response.blob();
-          const audioUrl = URL.createObjectURL(audioBlob);
-          const audio = new Audio(audioUrl);
-          audio.volume = 0.35; // Softer volume
-          audio.play().catch(() => {});
-        }
-      } catch (error) {
-        console.log("Could not play whisper intro");
-      }
-    };
-
-    // Delay whisper to sync with text appearance
-    setTimeout(() => playWhisper(), 1500);
-
     const timers = [
-      setTimeout(() => setStage(1), 1500),   // Show text
-      setTimeout(() => setStage(2), 5500),   // Start fade out (longer)
-      setTimeout(() => onComplete(), 6300),  // Complete
+      setTimeout(() => setStage(1), 300),    // Show text quickly
+      setTimeout(() => setStage(2), 1700),   // Start fade out
+      setTimeout(() => onComplete(), 2200),  // Complete at ~2 seconds
     ];
 
     return () => {
@@ -101,13 +66,13 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
               opacity: stage >= 1 ? 1 : 0, 
               y: stage >= 1 ? 0 : 20 
             }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
           >
             <motion.p
               className="text-base sm:text-lg text-muted-foreground/70 mb-4 tracking-widest uppercase"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: stage >= 1 ? 1 : 0, y: stage >= 1 ? 0 : 10 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
+              transition={{ delay: 0.1, duration: 0.3 }}
             >
               Apollo Production
             </motion.p>
@@ -115,7 +80,7 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
               className="text-sm sm:text-base text-muted-foreground/60 mb-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: stage >= 1 ? 1 : 0 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
             >
               представляет
             </motion.p>
@@ -126,7 +91,7 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                 opacity: stage >= 1 ? 1 : 0, 
                 scale: stage >= 1 ? 1 : 0.9 
               }}
-              transition={{ delay: 0.7, duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+              transition={{ delay: 0.3, duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
             >
               APLink
             </motion.h1>
@@ -134,7 +99,7 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
               className="text-xl sm:text-2xl text-muted-foreground/80 font-light"
               initial={{ opacity: 0 }}
               animate={{ opacity: stage >= 1 ? 1 : 0 }}
-              transition={{ delay: 1, duration: 0.5 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
             >
               Созвоны без границ
             </motion.p>
@@ -145,13 +110,13 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
             className="absolute bottom-20 w-40 h-0.5 bg-muted/20 rounded-full overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: stage >= 1 ? 1 : 0 }}
-            transition={{ delay: 1.2, duration: 0.3 }}
+            transition={{ delay: 0.5, duration: 0.2 }}
           >
             <motion.div
               className="h-full bg-gradient-to-r from-primary/50 to-primary rounded-full"
               initial={{ width: "0%" }}
               animate={{ width: stage >= 1 ? "100%" : "0%" }}
-              transition={{ delay: 1.3, duration: 3.5, ease: "easeInOut" }}
+              transition={{ delay: 0.5, duration: 1.2, ease: "easeInOut" }}
             />
           </motion.div>
         </motion.div>
