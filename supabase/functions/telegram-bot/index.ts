@@ -1,0 +1,434 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
+const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY')!;
+const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!;
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+// Отправка сообщения в Telegram
+async function sendMessage(chatId: number, text: string, replyToMessageId?: number) {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      reply_to_message_id: replyToMessageId,
+      parse_mode: 'HTML',
+    }),
+  });
+}
+
+// Отправка голосового сообщения
+async function sendVoice(chatId: number, audioBase64: string, replyToMessageId?: number) {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice`;
+  
+  // Конвертируем base64 в blob
+  const binaryString = atob(audioBase64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  
+  const formData = new FormData();
+  formData.append('chat_id', chatId.toString());
+  formData.append('voice', new Blob([bytes], { type: 'audio/ogg' }), 'voice.ogg');
+  if (replyToMessageId) {
+    formData.append('reply_to_message_id', replyToMessageId.toString());
+  }
+  
+  await fetch(url, {
+    method: 'POST',
+    body: formData,
+  });
+}
+
+// Получение файла из Telegram
+async function getFileUrl(fileId: string): Promise<string> {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${fileId}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  return `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${data.result.file_path}`;
+}
+
+// Детекция языка и перевод через Lovable AI
+async function detectAndTranslate(text: string): Promise<{ detectedLang: string; translation: string; isRussian: boolean }> {
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a translator. Detect the language of the input text.
+If the text is in Russian, translate it to English.
+If the text is in any other language, translate it to Russian.
+
+Respond ONLY with valid JSON in this exact format:
+{"detected_lang": "language_name", "is_russian": true/false, "translation": "translated text"}
+
+Do not include any other text or explanation.`
+        },
+        { role: 'user', content: text }
+      ],
+    }),
+  });
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content || '';
+  
+  try {
+    const parsed = JSON.parse(content);
+    return {
+      detectedLang: parsed.detected_lang,
+      translation: parsed.translation,
+      isRussian: parsed.is_russian,
+    };
+  } catch {
+    console.error('Failed to parse translation response:', content);
+    return { detectedLang: 'unknown', translation: text, isRussian: false };
+  }
+}
+
+// Транскрипция аудио через ElevenLabs
+async function transcribeAudio(audioUrl: string): Promise<string> {
+  // Скачиваем аудио
+  const audioResponse = await fetch(audioUrl);
+  const audioBlob = await audioResponse.blob();
+  
+  const formData = new FormData();
+  formData.append('file', audioBlob, 'audio.ogg');
+  formData.append('model_id', 'scribe_v1');
+  
+  const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
+    method: 'POST',
+    headers: {
+      'xi-api-key': ELEVENLABS_API_KEY,
+    },
+    body: formData,
+  });
+  
+  const data = await response.json();
+  return data.text || '';
+}
+
+// Генерация голоса через ElevenLabs
+async function textToSpeech(text: string, targetLang: string): Promise<string> {
+  // Выбираем голос в зависимости от языка
+  const voiceId = targetLang === 'Russian' ? 'onwK4e9ZLuTAKqWW03F9' : 'JBFqnCBsd6RMkjVDRZzb'; // Daniel для русского, George для английского
+  
+  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    method: 'POST',
+    headers: {
+      'xi-api-key': ELEVENLABS_API_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      text,
+      model_id: 'eleven_multilingual_v2',
+      output_format: 'mp3_44100_128',
+    }),
+  });
+  
+  const arrayBuffer = await response.arrayBuffer();
+  
+  // Конвертируем в base64
+  const uint8Array = new Uint8Array(arrayBuffer);
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < uint8Array.length; i += chunkSize) {
+    const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+    binary += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+  
+  return btoa(binary);
+}
+
+// Генерация саммари за период
+async function generateSummary(chatId: number, hours: number = 24): Promise<string> {
+  const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  
+  const { data: messages } = await supabase
+    .from('telegram_chat_messages')
+    .select('*')
+    .eq('chat_id', chatId)
+    .gte('created_at', since)
+    .order('created_at', { ascending: true });
+  
+  if (!messages || messages.length === 0) {
+    return 'За последние сутки сообщений не было.';
+  }
+  
+  const transcript = messages.map(m => {
+    const text = m.transcription || m.text || '[медиа]';
+    return `${m.username || 'Аноним'}: ${text}`;
+  }).join('\n');
+  
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        {
+          role: 'system',
+          content: `Ты помощник, который делает выжимку из переписки.
+Проанализируй диалог и создай краткий отчёт на русском языке:
+1. Основные темы обсуждения
+2. Ключевые решения и выводы
+3. Важные договорённости (если есть)
+4. Нерешённые вопросы (если есть)
+
+Будь кратким, но информативным.`
+        },
+        { role: 'user', content: `Переписка за последние ${hours} часов:\n\n${transcript}` }
+      ],
+    }),
+  });
+  
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || 'Не удалось создать саммари.';
+}
+
+// Обработка команд
+async function handleCommand(message: any) {
+  const chatId = message.chat.id;
+  const text = message.text || '';
+  const command = text.split(' ')[0].replace('@' + (message.via_bot?.username || ''), '');
+  
+  console.log('Processing command:', command);
+  
+  switch (command) {
+    case '/start':
+      await sendMessage(chatId, `👋 Привет! Я бот-переводчик с функциями:
+
+• <b>Автоперевод</b> — пишите на любом языке, я переведу (рус↔другие)
+• <b>Голосовые</b> — транскрибирую и переведу аудио
+• <b>/summary</b> — выжимка за последние сутки
+• <b>/summary_all</b> — общий отчёт за всё время
+• <b>/phrases</b> — управление быстрыми фразами
+
+Добавьте меня в группу и дайте права на чтение сообщений!`);
+      break;
+      
+    case '/summary':
+      await sendMessage(chatId, '⏳ Генерирую саммари за последние 24 часа...');
+      const dailySummary = await generateSummary(chatId, 24);
+      await sendMessage(chatId, `📊 <b>Саммари за сутки:</b>\n\n${dailySummary}`);
+      break;
+      
+    case '/summary_all':
+      await sendMessage(chatId, '⏳ Анализирую всю историю чата...');
+      const { data: allMessages } = await supabase
+        .from('telegram_chat_messages')
+        .select('*')
+        .eq('chat_id', chatId)
+        .order('created_at', { ascending: true })
+        .limit(500);
+      
+      if (!allMessages || allMessages.length === 0) {
+        await sendMessage(chatId, 'История чата пуста.');
+        break;
+      }
+      
+      const fullTranscript = allMessages.map(m => {
+        const txt = m.transcription || m.text || '[медиа]';
+        return `${m.username || 'Аноним'}: ${txt}`;
+      }).join('\n');
+      
+      const allSummaryResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'system',
+              content: `Проанализируй всю историю переписки и создай подробный отчёт на русском:
+1. Общая тематика обсуждений
+2. Ключевые участники и их роли
+3. Основные решения и выводы за всё время
+4. Важные договорённости
+5. Открытые вопросы и задачи`
+            },
+            { role: 'user', content: `Полная история чата (${allMessages.length} сообщений):\n\n${fullTranscript}` }
+          ],
+        }),
+      });
+      
+      const allSummaryData = await allSummaryResponse.json();
+      await sendMessage(chatId, `📋 <b>Полный отчёт:</b>\n\n${allSummaryData.choices?.[0]?.message?.content || 'Ошибка'}`);
+      break;
+      
+    case '/phrases':
+      await sendMessage(chatId, `📝 Управление быстрыми фразами доступно через веб-интерфейс.
+
+Перейдите на сайт и авторизуйтесь, чтобы добавить свои фразы.
+После этого используйте их командами вида: /phrase_название`);
+      break;
+      
+    default:
+      // Проверяем, есть ли это быстрая фраза
+      if (command.startsWith('/')) {
+        const phraseCommand = command.substring(1);
+        const { data: phrases } = await supabase
+          .from('telegram_quick_phrases')
+          .select('phrase')
+          .eq('command', phraseCommand)
+          .limit(1);
+        
+        if (phrases && phrases.length > 0) {
+          await sendMessage(chatId, phrases[0].phrase);
+        }
+      }
+  }
+}
+
+// Обработка текстового сообщения
+async function handleTextMessage(message: any) {
+  const chatId = message.chat.id;
+  const text = message.text;
+  const messageId = message.message_id;
+  const username = message.from?.username || message.from?.first_name || 'Unknown';
+  
+  // Игнорируем команды
+  if (text.startsWith('/')) return;
+  
+  // Сохраняем сообщение
+  await supabase.from('telegram_chat_messages').insert({
+    chat_id: chatId,
+    message_id: messageId,
+    user_id: message.from?.id,
+    username,
+    text,
+  });
+  
+  // Переводим
+  const { translation, isRussian, detectedLang } = await detectAndTranslate(text);
+  
+  // Обновляем с переводом
+  await supabase.from('telegram_chat_messages')
+    .update({ translation })
+    .eq('chat_id', chatId)
+    .eq('message_id', messageId);
+  
+  const targetLang = isRussian ? 'English' : 'Russian';
+  await sendMessage(chatId, `🌐 <b>${detectedLang} → ${targetLang}</b>\n\n${translation}`, messageId);
+}
+
+// Обработка голосового сообщения
+async function handleVoiceMessage(message: any) {
+  const chatId = message.chat.id;
+  const messageId = message.message_id;
+  const username = message.from?.username || message.from?.first_name || 'Unknown';
+  const voice = message.voice || message.audio;
+  
+  if (!voice) return;
+  
+  await sendMessage(chatId, '🎤 Транскрибирую аудио...', messageId);
+  
+  try {
+    // Получаем URL файла
+    const fileUrl = await getFileUrl(voice.file_id);
+    
+    // Транскрибируем
+    const transcription = await transcribeAudio(fileUrl);
+    
+    if (!transcription) {
+      await sendMessage(chatId, '❌ Не удалось распознать аудио', messageId);
+      return;
+    }
+    
+    // Сохраняем
+    await supabase.from('telegram_chat_messages').insert({
+      chat_id: chatId,
+      message_id: messageId,
+      user_id: message.from?.id,
+      username,
+      is_voice: true,
+      transcription,
+    });
+    
+    // Переводим
+    const { translation, isRussian, detectedLang } = await detectAndTranslate(transcription);
+    
+    // Обновляем
+    await supabase.from('telegram_chat_messages')
+      .update({ translation })
+      .eq('chat_id', chatId)
+      .eq('message_id', messageId);
+    
+    const targetLang = isRussian ? 'English' : 'Russian';
+    
+    // Отправляем текстовый перевод
+    await sendMessage(chatId, `🎤 <b>Транскрипция (${detectedLang}):</b>\n${transcription}\n\n🌐 <b>Перевод (${targetLang}):</b>\n${translation}`, messageId);
+    
+    // Генерируем голосовой перевод
+    const audioBase64 = await textToSpeech(translation, targetLang);
+    await sendVoice(chatId, audioBase64, messageId);
+    
+  } catch (error) {
+    console.error('Voice processing error:', error);
+    await sendMessage(chatId, '❌ Ошибка обработки голосового сообщения', messageId);
+  }
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const update = await req.json();
+    console.log('Telegram update:', JSON.stringify(update));
+    
+    const message = update.message || update.edited_message;
+    
+    if (!message) {
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Обработка разных типов сообщений
+    if (message.text?.startsWith('/')) {
+      await handleCommand(message);
+    } else if (message.text) {
+      await handleTextMessage(message);
+    } else if (message.voice || message.audio) {
+      await handleVoiceMessage(message);
+    }
+    
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+    
+  } catch (error: unknown) {
+    console.error('Error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});

@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import Profile from "./pages/Profile";
+import TelegramBot from "./pages/TelegramBot";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/room/:roomId" element={<MeetingRoom />} />
                 <Route path="/history" element={<MeetingHistory />} />
+                <Route path="/telegram-bot" element={<TelegramBot />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

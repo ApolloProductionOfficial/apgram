@@ -266,6 +266,96 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_chat_messages: {
+        Row: {
+          chat_id: number
+          created_at: string
+          id: string
+          is_voice: boolean | null
+          message_id: number
+          text: string | null
+          transcription: string | null
+          translation: string | null
+          user_id: number | null
+          username: string | null
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string
+          id?: string
+          is_voice?: boolean | null
+          message_id: number
+          text?: string | null
+          transcription?: string | null
+          translation?: string | null
+          user_id?: number | null
+          username?: string | null
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string
+          id?: string
+          is_voice?: boolean | null
+          message_id?: number
+          text?: string | null
+          transcription?: string | null
+          translation?: string | null
+          user_id?: number | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      telegram_chat_settings: {
+        Row: {
+          chat_id: number
+          created_at: string
+          id: string
+          owner_user_id: string | null
+          summary_enabled: boolean | null
+          summary_time: string | null
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string
+          id?: string
+          owner_user_id?: string | null
+          summary_enabled?: boolean | null
+          summary_time?: string | null
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string
+          id?: string
+          owner_user_id?: string | null
+          summary_enabled?: boolean | null
+          summary_time?: string | null
+        }
+        Relationships: []
+      }
+      telegram_quick_phrases: {
+        Row: {
+          command: string
+          created_at: string
+          id: string
+          phrase: string
+          user_id: string | null
+        }
+        Insert: {
+          command: string
+          created_at?: string
+          id?: string
+          phrase: string
+          user_id?: string | null
+        }
+        Update: {
+          command?: string
+          created_at?: string
+          id?: string
+          phrase?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       translation_history: {
         Row: {
           created_at: string
