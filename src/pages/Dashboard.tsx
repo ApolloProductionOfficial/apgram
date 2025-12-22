@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
   MessageCircle, 
@@ -30,7 +32,11 @@ import {
   History,
   Mic,
   User,
-  Smile
+  Smile,
+  Languages,
+  Volume2,
+  Power,
+  Hash
 } from "lucide-react";
 
 interface QuickPhrase {
@@ -57,8 +63,12 @@ interface ChatMessage {
 interface ChatSettings {
   id: string;
   chat_id: number;
-  summary_enabled: boolean;
-  summary_time: string;
+  chat_title?: string | null;
+  summary_enabled: boolean | null;
+  summary_time: string | null;
+  translator_enabled?: boolean | null;
+  voice_enabled?: boolean | null;
+  quick_phrases_enabled?: boolean | null;
 }
 
 const Dashboard = () => {
@@ -75,6 +85,7 @@ const Dashboard = () => {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState("phrases");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -242,6 +253,27 @@ const Dashboard = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const copyText = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    toast.success("Текст скопирован!");
+  };
+
+  const updateChatSetting = async (chatId: number, field: string, value: boolean) => {
+    const { error } = await supabase
+      .from("telegram_chat_settings")
+      .update({ [field]: value })
+      .eq("chat_id", chatId);
+
+    if (error) {
+      toast.error("Ошибка обновления");
+    } else {
+      setChatSettings(prev => 
+        prev.map(s => s.chat_id === chatId ? { ...s, [field]: value } : s)
+      );
+      toast.success("Настройки обновлены");
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
@@ -269,29 +301,31 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-[#0088cc]/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-[#0088cc]/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#0088cc]/5 rounded-full blur-3xl" />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/30 bg-background/60 backdrop-blur-2xl">
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-2xl">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="relative group">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0088cc] to-[#00a8e8] flex items-center justify-center shadow-xl shadow-[#0088cc]/30 transition-transform group-hover:scale-105">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0088cc] to-[#00a8e8] flex items-center justify-center shadow-xl shadow-[#0088cc]/30 transition-all duration-300 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-[#0088cc]/50">
                 <Bot className="w-6 h-6 text-white" />
               </div>
+              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-[#0088cc]/30 to-[#00a8e8]/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-white via-white to-[#0088cc] bg-clip-text text-transparent">
                 Apollo Bot Manager
               </h1>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <p className="text-xs text-slate-400 flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-[#0088cc]" />
-                Панель управления
+                Telegram Automation
               </p>
             </div>
           </div>
@@ -300,7 +334,7 @@ const Dashboard = () => {
             variant="ghost"
             size="sm"
             onClick={handleSignOut}
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Выйти
@@ -311,229 +345,368 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 py-8 space-y-8 relative z-10">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-card/40 border-border/30 backdrop-blur-xl hover:bg-card/60 transition-all group">
-            <CardContent className="pt-6">
+          <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl hover:bg-slate-800/50 transition-all group overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="pt-6 relative">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform border border-primary/20">
                   <Zap className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-primary">{phrases.length}</p>
-                  <p className="text-xs text-muted-foreground">Фраз</p>
+                  <p className="text-3xl font-bold text-white">{phrases.length}</p>
+                  <p className="text-xs text-slate-400">Быстрых фраз</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/40 border-border/30 backdrop-blur-xl hover:bg-card/60 transition-all group">
-            <CardContent className="pt-6">
+          <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl hover:bg-slate-800/50 transition-all group overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0088cc]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="pt-6 relative">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0088cc]/20 to-[#0088cc]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0088cc]/30 to-[#0088cc]/10 flex items-center justify-center group-hover:scale-110 transition-transform border border-[#0088cc]/20">
                   <MessageSquare className="w-6 h-6 text-[#0088cc]" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-[#0088cc]">{messages.length}</p>
-                  <p className="text-xs text-muted-foreground">Сообщений</p>
+                  <p className="text-3xl font-bold text-white">{messages.length}</p>
+                  <p className="text-xs text-slate-400">Сообщений</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/40 border-border/30 backdrop-blur-xl hover:bg-card/60 transition-all group">
-            <CardContent className="pt-6">
+          <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl hover:bg-slate-800/50 transition-all group overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="pt-6 relative">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Globe className="w-6 h-6 text-purple-500" />
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/30 to-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform border border-purple-500/20">
+                  <Hash className="w-6 h-6 text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-purple-500">{chatSettings.length}</p>
-                  <p className="text-xs text-muted-foreground">Чатов</p>
+                  <p className="text-3xl font-bold text-white">{chatSettings.length}</p>
+                  <p className="text-xs text-slate-400">Чатов</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/40 border-border/30 backdrop-blur-xl hover:bg-card/60 transition-all group">
-            <CardContent className="pt-6">
+          <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl hover:bg-slate-800/50 transition-all group overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="pt-6 relative">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-emerald-500/10 flex items-center justify-center group-hover:scale-110 transition-transform border border-emerald-500/20">
                   <div className="relative">
-                    <div className="w-3 h-3 rounded-full bg-green-500" />
-                    <div className="absolute inset-0 w-3 h-3 rounded-full bg-green-500 animate-ping opacity-75" />
+                    <div className="w-3 h-3 rounded-full bg-emerald-400" />
+                    <div className="absolute inset-0 w-3 h-3 rounded-full bg-emerald-400 animate-ping opacity-75" />
                   </div>
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-green-500">Online</p>
-                  <p className="text-xs text-muted-foreground">Бот активен</p>
+                  <p className="text-xl font-bold text-emerald-400">Online</p>
+                  <p className="text-xs text-slate-400">Бот активен</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column */}
-          <div className="space-y-8">
-            {/* Add New Phrase */}
-            <Card className="bg-card/40 border-border/30 backdrop-blur-xl overflow-hidden relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
-              <CardHeader className="relative z-10">
-                <CardTitle className="flex items-center gap-2 text-foreground">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                    <Plus className="w-4 h-4 text-primary-foreground" />
+        {/* Main Content with Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-slate-900/50 border border-white/5 p-1">
+            <TabsTrigger value="phrases" className="data-[state=active]:bg-[#0088cc] data-[state=active]:text-white">
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Быстрые фразы
+            </TabsTrigger>
+            <TabsTrigger value="chats" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white">
+              <Settings className="w-4 h-4 mr-2" />
+              Настройки чатов
+            </TabsTrigger>
+            <TabsTrigger value="history" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+              <History className="w-4 h-4 mr-2" />
+              История
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Phrases Tab */}
+          <TabsContent value="phrases" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Add New Phrase */}
+              <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl overflow-hidden relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+                <CardHeader className="relative z-10">
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+                      <Plus className="w-4 h-4 text-white" />
+                    </div>
+                    Новая фраза
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">
+                    Добавьте быструю команду для бота
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 relative z-10">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">Команда</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0088cc] text-sm font-mono font-bold">/p_</span>
+                        <Input
+                          value={newCommand.replace("/p_", "")}
+                          onChange={(e) => setNewCommand(e.target.value.replace("/p_", ""))}
+                          placeholder="название"
+                          className="pl-10 bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 focus:border-[#0088cc] focus:ring-[#0088cc]/20"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">Текст сообщения</label>
+                      <Textarea
+                        value={newPhrase}
+                        onChange={(e) => setNewPhrase(e.target.value)}
+                        placeholder="Введите текст, можете вставить премиум эмодзи сюда..."
+                        className="bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 min-h-[100px] focus:border-[#0088cc] focus:ring-[#0088cc]/20"
+                      />
+                      <p className="text-xs text-slate-500">
+                        💡 Совет: Скопируйте премиум эмодзи из Telegram и вставьте прямо в текст
+                      </p>
+                    </div>
                   </div>
-                  Новая фраза
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 relative z-10">
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Команда</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-mono">/p_</span>
+
+                  {/* Media Upload */}
+                  <div className="p-4 rounded-xl bg-slate-800/30 border border-dashed border-white/10 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm text-slate-300">
+                        <Image className="w-4 h-4 text-[#0088cc]" />
+                        <span>Медиафайл (опционально)</span>
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*,video/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="text-xs border-white/10 hover:bg-[#0088cc]/20 hover:border-[#0088cc]/50"
+                      >
+                        <Upload className="w-3 h-3 mr-1" />
+                        {isUploading ? "Загрузка..." : "Загрузить с ПК"}
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Select value={newMediaType} onValueChange={setNewMediaType}>
+                        <SelectTrigger className="bg-slate-800/50 border-white/10 text-white text-xs h-9">
+                          <SelectValue placeholder="Тип медиа" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-900 border-white/10">
+                          <SelectItem value="photo">📷 Фото</SelectItem>
+                          <SelectItem value="animation">🎬 GIF</SelectItem>
+                          <SelectItem value="video">🎥 Видео</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Input
-                        value={newCommand.replace("/p_", "")}
-                        onChange={(e) => setNewCommand(e.target.value.replace("/p_", ""))}
-                        placeholder="название"
-                        className="pl-10 bg-background/50 border-border/50"
+                        value={newMediaUrl}
+                        onChange={(e) => setNewMediaUrl(e.target.value)}
+                        placeholder="URL или загрузи файл"
+                        className="bg-slate-800/50 border-white/10 text-white text-xs h-9 placeholder:text-slate-500"
                       />
                     </div>
+                    {newMediaUrl && (
+                      <div className="text-xs text-emerald-400 flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        Файл загружен
+                      </div>
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Текст</label>
-                    <Textarea
-                      value={newPhrase}
-                      onChange={(e) => setNewPhrase(e.target.value)}
-                      placeholder="Текст сообщения..."
-                      className="bg-background/50 border-border/50 min-h-[80px]"
-                    />
-                  </div>
-                </div>
 
-                {/* Media Upload */}
-                <div className="p-4 rounded-xl bg-background/30 border border-dashed border-border/50 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Image className="w-4 h-4" />
-                      <span>Медиа</span>
+                  {/* Custom Emoji */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 space-y-3">
+                    <div className="flex items-center gap-2 text-sm text-purple-300">
+                      <Smile className="w-4 h-4" />
+                      <span>Premium эмодзи ID (опционально)</span>
                     </div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*,video/*"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                      className="text-xs"
-                    >
-                      <Upload className="w-3 h-3 mr-1" />
-                      {isUploading ? "Загрузка..." : "Загрузить"}
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Select value={newMediaType} onValueChange={setNewMediaType}>
-                      <SelectTrigger className="bg-background/50 border-border/50 text-xs h-9">
-                        <SelectValue placeholder="Тип" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="photo">📷 Фото</SelectItem>
-                        <SelectItem value="animation">🎬 GIF</SelectItem>
-                        <SelectItem value="video">🎥 Видео</SelectItem>
-                      </SelectContent>
-                    </Select>
                     <Input
-                      value={newMediaUrl}
-                      onChange={(e) => setNewMediaUrl(e.target.value)}
-                      placeholder="URL или загрузи"
-                      className="bg-background/50 border-border/50 text-xs h-9"
+                      value={newCustomEmojiId}
+                      onChange={(e) => setNewCustomEmojiId(e.target.value)}
+                      placeholder="ID эмодзи (напр. 5368742036629364794)"
+                      className="bg-slate-800/50 border-purple-500/20 text-white text-xs placeholder:text-slate-500 focus:border-purple-500"
                     />
+                    <p className="text-xs text-slate-400">
+                      Отправь эмодзи боту <span className="text-purple-400">@GetCustomEmojiBot</span> чтобы получить ID
+                    </p>
                   </div>
-                </div>
 
-                {/* Custom Emoji */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-purple-400">
-                    <Smile className="w-4 h-4" />
-                    <span>Премиум эмодзи (опционально)</span>
-                  </div>
-                  <Input
-                    value={newCustomEmojiId}
-                    onChange={(e) => setNewCustomEmojiId(e.target.value)}
-                    placeholder="ID эмодзи (напр. 5368742036629364794)"
-                    className="bg-background/50 border-border/50 text-xs"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Узнать ID: отправь эмодзи боту @GetCustomEmojiBot
-                  </p>
-                </div>
+                  <Button 
+                    onClick={addPhrase} 
+                    className="w-full bg-gradient-to-r from-[#0088cc] to-[#00a8e8] hover:from-[#0077b5] hover:to-[#0099cc] shadow-lg shadow-[#0088cc]/25 text-white font-medium"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    Добавить фразу
+                  </Button>
+                </CardContent>
+              </Card>
 
-                <Button 
-                  onClick={addPhrase} 
-                  className="w-full bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Добавить
-                </Button>
-              </CardContent>
-            </Card>
+              {/* Phrases List */}
+              <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0088cc] to-[#00a8e8] flex items-center justify-center">
+                      <MessageCircle className="w-4 h-4 text-white" />
+                    </div>
+                    Ваши фразы
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">
+                    Нажмите на фразу, чтобы скопировать команду
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {phrases.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500">
+                      <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                      <p>Пока нет фраз</p>
+                      <p className="text-xs mt-2">Добавьте первую фразу слева</p>
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[400px] pr-2">
+                      <div className="space-y-2">
+                        {phrases.map((phrase) => (
+                          <div
+                            key={phrase.id}
+                            className="group p-4 rounded-xl bg-slate-800/30 border border-white/5 hover:border-[#0088cc]/40 hover:bg-slate-800/50 transition-all cursor-pointer"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="space-y-2 flex-1 min-w-0" onClick={() => copyCommand(phrase.command, phrase.id)}>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <code className="text-sm font-mono text-[#0088cc] bg-[#0088cc]/10 px-2 py-1 rounded-lg border border-[#0088cc]/20">
+                                    /{phrase.command}
+                                  </code>
+                                  {copiedId === phrase.id ? (
+                                    <span className="flex items-center gap-1 text-xs text-emerald-400">
+                                      <Check className="w-3 h-3" /> Скопировано
+                                    </span>
+                                  ) : (
+                                    <Copy className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  )}
+                                  {phrase.custom_emoji_id && (
+                                    <span className="text-xs text-purple-400 flex items-center gap-1">
+                                      <Smile className="w-3 h-3" /> Premium
+                                    </span>
+                                  )}
+                                  {phrase.media_url && (
+                                    <span className="text-xs text-slate-400">
+                                      {phrase.media_type === 'animation' ? '🎬 GIF' : phrase.media_type === 'video' ? '🎥 Видео' : '📷 Фото'}
+                                    </span>
+                                  )}
+                                </div>
+                                <p 
+                                  className="text-sm text-slate-300 line-clamp-2 cursor-pointer hover:text-white transition-colors"
+                                  onClick={(e) => { e.stopPropagation(); copyText(phrase.phrase); }}
+                                  title="Нажмите, чтобы скопировать текст"
+                                >
+                                  {phrase.phrase}
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => { e.stopPropagation(); deletePhrase(phrase.id); }}
+                                className="opacity-0 group-hover:opacity-100 h-8 w-8 text-slate-500 hover:text-red-400 hover:bg-red-500/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
-            {/* Phrases List */}
-            <Card className="bg-card/40 border-border/30 backdrop-blur-xl">
+          {/* Chat Settings Tab */}
+          <TabsContent value="chats" className="space-y-6">
+            <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-foreground">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0088cc] to-[#00a8e8] flex items-center justify-center">
-                    <MessageCircle className="w-4 h-4 text-white" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <Settings className="w-4 h-4 text-white" />
                   </div>
-                  Ваши фразы
+                  Настройки по чатам
                 </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Включайте и выключайте функции бота для каждого чата отдельно
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                {phrases.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                    <p>Пока нет фраз</p>
+                {chatSettings.length === 0 ? (
+                  <div className="text-center py-12 text-slate-500">
+                    <Hash className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <p>Нет подключённых чатов</p>
+                    <p className="text-xs mt-2">Добавьте бота в чат и напишите /start</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {phrases.map((phrase) => (
+                  <div className="grid gap-4">
+                    {chatSettings.map((chat) => (
                       <div
-                        key={phrase.id}
-                        onClick={() => copyCommand(phrase.command, phrase.id)}
-                        className="group p-3 rounded-xl bg-background/40 border border-border/30 hover:border-primary/40 transition-all cursor-pointer"
+                        key={chat.id}
+                        className="p-5 rounded-xl bg-slate-800/30 border border-white/5 space-y-4"
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="space-y-1 flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <code className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded">
-                                /{phrase.command}
-                              </code>
-                              {copiedId === phrase.id ? (
-                                <Check className="w-3 h-3 text-green-500" />
-                              ) : (
-                                <Copy className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
-                              )}
-                              {phrase.custom_emoji_id && <Smile className="w-3 h-3 text-purple-500" />}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center border border-purple-500/20">
+                              <Hash className="w-5 h-5 text-purple-400" />
                             </div>
-                            <p className="text-xs text-foreground/80 line-clamp-1">{phrase.phrase}</p>
-                            {phrase.media_url && (
-                              <span className="text-xs text-muted-foreground">
-                                {phrase.media_type === 'animation' ? '🎬' : phrase.media_type === 'video' ? '🎥' : '📷'}
-                              </span>
-                            )}
+                            <div>
+                              <p className="font-medium text-white">{chat.chat_title || `Chat ${chat.chat_id}`}</p>
+                              <p className="text-xs text-slate-500">ID: {chat.chat_id}</p>
+                            </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => { e.stopPropagation(); deletePhrase(phrase.id); }}
-                            className="opacity-0 group-hover:opacity-100 h-8 w-8 text-muted-foreground hover:text-destructive"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* Translator Toggle */}
+                          <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-white/5">
+                            <div className="flex items-center gap-2">
+                              <Languages className="w-4 h-4 text-[#0088cc]" />
+                              <span className="text-sm text-slate-300">Переводчик</span>
+                            </div>
+                            <Switch
+                              checked={chat.translator_enabled ?? true}
+                              onCheckedChange={(checked) => updateChatSetting(chat.chat_id, 'translator_enabled', checked)}
+                              className="data-[state=checked]:bg-[#0088cc]"
+                            />
+                          </div>
+
+                          {/* Voice Toggle */}
+                          <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-white/5">
+                            <div className="flex items-center gap-2">
+                              <Volume2 className="w-4 h-4 text-orange-400" />
+                              <span className="text-sm text-slate-300">Голосовые</span>
+                            </div>
+                            <Switch
+                              checked={chat.voice_enabled ?? true}
+                              onCheckedChange={(checked) => updateChatSetting(chat.chat_id, 'voice_enabled', checked)}
+                              className="data-[state=checked]:bg-orange-500"
+                            />
+                          </div>
+
+                          {/* Quick Phrases Toggle */}
+                          <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-white/5">
+                            <div className="flex items-center gap-2">
+                              <Zap className="w-4 h-4 text-emerald-400" />
+                              <span className="text-sm text-slate-300">Быстрые фразы</span>
+                            </div>
+                            <Switch
+                              checked={chat.quick_phrases_enabled ?? true}
+                              onCheckedChange={(checked) => updateChatSetting(chat.chat_id, 'quick_phrases_enabled', checked)}
+                              className="data-[state=checked]:bg-emerald-500"
+                            />
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -541,68 +714,101 @@ const Dashboard = () => {
                 )}
               </CardContent>
             </Card>
-          </div>
 
-          {/* Right Column - Message History */}
-          <div className="space-y-8">
-            <Card className="bg-card/40 border-border/30 backdrop-blur-xl h-[700px] flex flex-col">
+            {/* Bot Premium Info */}
+            <Card className="bg-gradient-to-br from-purple-500/10 via-slate-900/50 to-pink-500/10 border-purple-500/20 backdrop-blur-xl">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-foreground">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                  Как получить Telegram Premium для бота?
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-slate-300 text-sm">
+                <div className="p-4 rounded-xl bg-slate-800/30 border border-purple-500/20">
+                  <p className="font-medium text-white mb-2">🎁 Подарить Premium боту:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-slate-400">
+                    <li>Откройте профиль бота в Telegram</li>
+                    <li>Нажмите "⋯" → "Gift Premium"</li>
+                    <li>Выберите период подписки и оплатите</li>
+                  </ol>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-800/30 border border-white/10">
+                  <p className="font-medium text-white mb-2">⚠️ Важно знать:</p>
+                  <ul className="list-disc list-inside space-y-1 text-slate-400">
+                    <li>Premium нужен для отправки кастомных эмодзи</li>
+                    <li>Стикеры и обычные эмодзи работают без Premium</li>
+                    <li>Подписка должна быть активна на аккаунте бота</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history" className="space-y-6">
+            <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
                     <History className="w-4 h-4 text-white" />
                   </div>
                   История сообщений
-                  <span className="ml-auto text-xs font-normal text-muted-foreground">
+                  <span className="ml-auto flex items-center gap-1 text-xs font-normal text-slate-400">
+                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     Realtime
-                    <span className="inline-block w-2 h-2 ml-1 rounded-full bg-green-500 animate-pulse" />
                   </span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 overflow-hidden">
-                <ScrollArea className="h-[580px] pr-4">
+              <CardContent>
+                <ScrollArea className="h-[600px] pr-4">
                   {messages.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
+                    <div className="text-center py-12 text-slate-500">
                       <History className="w-12 h-12 mx-auto mb-4 opacity-30" />
                       <p>Нет сообщений</p>
+                      <p className="text-xs mt-2">Сообщения появятся здесь в реальном времени</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {messages.map((msg) => (
                         <div
                           key={msg.id}
-                          className="p-3 rounded-xl bg-background/40 border border-border/30 space-y-2"
+                          className="p-4 rounded-xl bg-slate-800/30 border border-white/5 space-y-2 hover:bg-slate-800/50 transition-colors"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               {msg.is_voice ? (
-                                <Mic className="w-4 h-4 text-orange-500" />
+                                <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center">
+                                  <Mic className="w-3 h-3 text-orange-400" />
+                                </div>
                               ) : (
-                                <User className="w-4 h-4 text-[#0088cc]" />
+                                <div className="w-6 h-6 rounded-full bg-[#0088cc]/20 flex items-center justify-center">
+                                  <User className="w-3 h-3 text-[#0088cc]" />
+                                </div>
                               )}
-                              <span className="text-sm font-medium text-foreground">
+                              <span className="text-sm font-medium text-white">
                                 {msg.username || 'Аноним'}
                               </span>
                             </div>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-slate-500">
                               {formatTime(msg.created_at)}
                             </span>
                           </div>
                           
                           {msg.is_voice && msg.transcription ? (
                             <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground">🎤 Транскрипция:</p>
-                              <p className="text-sm text-foreground">{msg.transcription}</p>
+                              <p className="text-xs text-orange-400/70">🎤 Транскрипция:</p>
+                              <p className="text-sm text-slate-300">{msg.transcription}</p>
                             </div>
                           ) : msg.text ? (
-                            <p className="text-sm text-foreground">{msg.text}</p>
+                            <p className="text-sm text-slate-300">{msg.text}</p>
                           ) : null}
                           
                           {msg.translation && (
-                            <div className="pt-2 border-t border-border/30">
-                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <div className="pt-2 border-t border-white/5">
+                              <p className="text-xs text-[#0088cc]/70 flex items-center gap-1">
                                 <Globe className="w-3 h-3" /> Перевод:
                               </p>
-                              <p className="text-sm text-primary">{msg.translation}</p>
+                              <p className="text-sm text-[#0088cc]">{msg.translation}</p>
                             </div>
                           )}
                         </div>
@@ -612,28 +818,24 @@ const Dashboard = () => {
                 </ScrollArea>
               </CardContent>
             </Card>
+          </TabsContent>
+        </Tabs>
 
-            {/* Bot Commands */}
-            <Card className="bg-gradient-to-br from-[#0088cc]/10 via-card/40 to-[#00a8e8]/10 border-[#0088cc]/20 backdrop-blur-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-foreground text-base">
-                  <Settings className="w-5 h-5 text-[#0088cc]" />
-                  Команды бота
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-2">
-                  <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-2 py-1 rounded">/summary</code>
-                  <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-2 py-1 rounded">/summary_all</code>
-                  <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-2 py-1 rounded">/p_команда</code>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Globe className="w-3 h-3" /> RU ↔ EN
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        {/* Bot Commands Footer */}
+        <Card className="bg-gradient-to-r from-[#0088cc]/10 via-slate-900/50 to-[#00a8e8]/10 border-[#0088cc]/20 backdrop-blur-xl">
+          <CardContent className="py-4">
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <span className="text-sm text-slate-400">Команды:</span>
+              <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-3 py-1.5 rounded-lg border border-[#0088cc]/20">/start</code>
+              <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-3 py-1.5 rounded-lg border border-[#0088cc]/20">/summary</code>
+              <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-3 py-1.5 rounded-lg border border-[#0088cc]/20">/summary_all</code>
+              <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-3 py-1.5 rounded-lg border border-[#0088cc]/20">/p_команда</code>
+              <span className="flex items-center gap-1 text-xs text-slate-400">
+                <Globe className="w-3 h-3" /> RU ↔ EN авто
+              </span>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

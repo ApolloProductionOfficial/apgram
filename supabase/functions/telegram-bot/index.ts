@@ -14,6 +14,46 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// Получение настроек чата
+async function getChatSettings(chatId: number) {
+  const { data } = await supabase
+    .from('telegram_chat_settings')
+    .select('*')
+    .eq('chat_id', chatId)
+    .single();
+  
+  return data || {
+    translator_enabled: true,
+    voice_enabled: true,
+    quick_phrases_enabled: true,
+    summary_enabled: true
+  };
+}
+
+// Создание/обновление настроек чата
+async function ensureChatSettings(chatId: number, chatTitle?: string) {
+  const { data: existing } = await supabase
+    .from('telegram_chat_settings')
+    .select('id')
+    .eq('chat_id', chatId)
+    .single();
+  
+  if (!existing) {
+    await supabase.from('telegram_chat_settings').insert({
+      chat_id: chatId,
+      chat_title: chatTitle,
+      translator_enabled: true,
+      voice_enabled: true,
+      quick_phrases_enabled: true,
+      summary_enabled: true
+    });
+  } else if (chatTitle) {
+    await supabase.from('telegram_chat_settings')
+      .update({ chat_title: chatTitle })
+      .eq('chat_id', chatId);
+  }
+}
+
 // Отправка сообщения в Telegram
 async function sendMessage(chatId: number, text: string, replyToMessageId?: number, customEmojiId?: string) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
@@ -27,7 +67,6 @@ async function sendMessage(chatId: number, text: string, replyToMessageId?: numb
   
   // Если есть кастомный эмодзи, добавляем его как entity
   if (customEmojiId) {
-    // Добавляем placeholder эмодзи в начало текста
     body.text = `⭐ ${text}`;
     body.entities = [{
       type: 'custom_emoji',
@@ -45,47 +84,86 @@ async function sendMessage(chatId: number, text: string, replyToMessageId?: numb
 }
 
 // Отправка фото
-async function sendPhoto(chatId: number, photoUrl: string, caption?: string) {
+async function sendPhoto(chatId: number, photoUrl: string, caption?: string, customEmojiId?: string) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`;
+  
+  const body: any = {
+    chat_id: chatId,
+    photo: photoUrl,
+    caption,
+    parse_mode: 'HTML',
+  };
+  
+  if (customEmojiId && caption) {
+    body.caption = `⭐ ${caption}`;
+    body.caption_entities = [{
+      type: 'custom_emoji',
+      offset: 0,
+      length: 1,
+      custom_emoji_id: customEmojiId
+    }];
+  }
+  
   await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      photo: photoUrl,
-      caption,
-      parse_mode: 'HTML',
-    }),
+    body: JSON.stringify(body),
   });
 }
 
 // Отправка видео
-async function sendVideo(chatId: number, videoUrl: string, caption?: string) {
+async function sendVideo(chatId: number, videoUrl: string, caption?: string, customEmojiId?: string) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo`;
+  
+  const body: any = {
+    chat_id: chatId,
+    video: videoUrl,
+    caption,
+    parse_mode: 'HTML',
+  };
+  
+  if (customEmojiId && caption) {
+    body.caption = `⭐ ${caption}`;
+    body.caption_entities = [{
+      type: 'custom_emoji',
+      offset: 0,
+      length: 1,
+      custom_emoji_id: customEmojiId
+    }];
+  }
+  
   await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      video: videoUrl,
-      caption,
-      parse_mode: 'HTML',
-    }),
+    body: JSON.stringify(body),
   });
 }
 
 // Отправка GIF/анимации
-async function sendAnimation(chatId: number, animationUrl: string, caption?: string) {
+async function sendAnimation(chatId: number, animationUrl: string, caption?: string, customEmojiId?: string) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendAnimation`;
+  
+  const body: any = {
+    chat_id: chatId,
+    animation: animationUrl,
+    caption,
+    parse_mode: 'HTML',
+  };
+  
+  if (customEmojiId && caption) {
+    body.caption = `⭐ ${caption}`;
+    body.caption_entities = [{
+      type: 'custom_emoji',
+      offset: 0,
+      length: 1,
+      custom_emoji_id: customEmojiId
+    }];
+  }
+  
   await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      animation: animationUrl,
-      caption,
-      parse_mode: 'HTML',
-    }),
+    body: JSON.stringify(body),
   });
 }
 
@@ -93,7 +171,6 @@ async function sendAnimation(chatId: number, animationUrl: string, caption?: str
 async function sendVoice(chatId: number, audioBase64: string, replyToMessageId?: number) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice`;
   
-  // Конвертируем base64 в blob
   const binaryString = atob(audioBase64);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
@@ -123,7 +200,6 @@ async function getFileUrl(fileId: string): Promise<string> {
 
 // Перевод RU ↔ EN через Lovable AI
 async function translateRuEn(text: string): Promise<{ translation: string; isRussian: boolean }> {
-  // Простая проверка на русский текст
   const hasRussian = /[а-яё]/i.test(text);
   const targetLang = hasRussian ? 'English' : 'Russian';
   
@@ -153,7 +229,6 @@ async function translateRuEn(text: string): Promise<{ translation: string; isRus
 
 // Транскрипция аудио через ElevenLabs
 async function transcribeAudio(audioUrl: string): Promise<string> {
-  // Скачиваем аудио
   const audioResponse = await fetch(audioUrl);
   const audioBlob = await audioResponse.blob();
   
@@ -175,8 +250,7 @@ async function transcribeAudio(audioUrl: string): Promise<string> {
 
 // Генерация голоса через ElevenLabs
 async function textToSpeech(text: string, targetLang: string): Promise<string> {
-  // Выбираем голос в зависимости от языка
-  const voiceId = targetLang === 'Russian' ? 'onwK4e9ZLuTAKqWW03F9' : 'JBFqnCBsd6RMkjVDRZzb'; // Daniel для русского, George для английского
+  const voiceId = targetLang === 'Russian' ? 'onwK4e9ZLuTAKqWW03F9' : 'JBFqnCBsd6RMkjVDRZzb';
   
   const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
     method: 'POST',
@@ -193,7 +267,6 @@ async function textToSpeech(text: string, targetLang: string): Promise<string> {
   
   const arrayBuffer = await response.arrayBuffer();
   
-  // Конвертируем в base64
   const uint8Array = new Uint8Array(arrayBuffer);
   let binary = '';
   const chunkSize = 0x8000;
@@ -257,31 +330,46 @@ async function generateSummary(chatId: number, hours: number = 24): Promise<stri
 // Обработка команд
 async function handleCommand(message: any) {
   const chatId = message.chat.id;
+  const chatTitle = message.chat.title || message.chat.first_name;
   const text = message.text || '';
   const command = text.split(' ')[0].replace('@' + (message.via_bot?.username || ''), '');
   
   console.log('Processing command:', command);
   
+  // Сохраняем/обновляем настройки чата
+  await ensureChatSettings(chatId, chatTitle);
+  
+  // Получаем настройки чата
+  const settings = await getChatSettings(chatId);
+  
   switch (command) {
     case '/start':
-      await sendMessage(chatId, `👋 Привет! Я бот-переводчик с функциями:
+      await sendMessage(chatId, `👋 Привет! Я бот-помощник с функциями:
 
-• <b>Автоперевод</b> — пишите на любом языке, я переведу (рус↔другие)
+• <b>Автоперевод</b> — RU ↔ EN автоматически
 • <b>Голосовые</b> — транскрибирую и переведу аудио
 • <b>/summary</b> — выжимка за последние сутки
 • <b>/summary_all</b> — общий отчёт за всё время
-• <b>/phrases</b> — управление быстрыми фразами
+• <b>/p_команда</b> — быстрые фразы
 
-Добавьте меня в группу и дайте права на чтение сообщений!`);
+⚙️ Управление функциями доступно на панели управления.`);
       break;
       
     case '/summary':
+      if (!settings.summary_enabled) {
+        await sendMessage(chatId, '⚠️ Функция саммари отключена для этого чата.');
+        return;
+      }
       await sendMessage(chatId, '⏳ Генерирую саммари за последние 24 часа...');
       const dailySummary = await generateSummary(chatId, 24);
       await sendMessage(chatId, `📊 <b>Саммари за сутки:</b>\n\n${dailySummary}`);
       break;
       
     case '/summary_all':
+      if (!settings.summary_enabled) {
+        await sendMessage(chatId, '⚠️ Функция саммари отключена для этого чата.');
+        return;
+      }
       await sendMessage(chatId, '⏳ Анализирую всю историю чата...');
       const { data: allMessages } = await supabase
         .from('telegram_chat_messages')
@@ -330,13 +418,17 @@ async function handleCommand(message: any) {
     case '/phrases':
       await sendMessage(chatId, `📝 Управление быстрыми фразами доступно через веб-интерфейс.
 
-Перейдите на сайт и авторизуйтесь, чтобы добавить свои фразы.
-После этого используйте их командами вида: /phrase_название`);
+Используйте команды вида: /p_название`);
       break;
       
     default:
       // Проверяем, есть ли это быстрая фраза
       if (command.startsWith('/')) {
+        if (!settings.quick_phrases_enabled) {
+          console.log('Quick phrases disabled for chat:', chatId);
+          return;
+        }
+        
         const phraseCommand = command.substring(1);
         console.log('Looking for quick phrase:', phraseCommand);
         
@@ -355,13 +447,13 @@ async function handleCommand(message: any) {
           if (phrase.media_url) {
             switch (phrase.media_type) {
               case 'photo':
-                await sendPhoto(chatId, phrase.media_url, phrase.phrase);
+                await sendPhoto(chatId, phrase.media_url, phrase.phrase, phrase.custom_emoji_id);
                 break;
               case 'video':
-                await sendVideo(chatId, phrase.media_url, phrase.phrase);
+                await sendVideo(chatId, phrase.media_url, phrase.phrase, phrase.custom_emoji_id);
                 break;
               case 'animation':
-                await sendAnimation(chatId, phrase.media_url, phrase.phrase);
+                await sendAnimation(chatId, phrase.media_url, phrase.phrase, phrase.custom_emoji_id);
                 break;
               default:
                 await sendMessage(chatId, phrase.phrase, undefined, phrase.custom_emoji_id);
@@ -380,12 +472,19 @@ async function handleCommand(message: any) {
 // Обработка текстового сообщения
 async function handleTextMessage(message: any) {
   const chatId = message.chat.id;
+  const chatTitle = message.chat.title || message.chat.first_name;
   const text = message.text;
   const messageId = message.message_id;
   const username = message.from?.username || message.from?.first_name || 'Unknown';
   
   // Игнорируем команды
   if (text.startsWith('/')) return;
+  
+  // Сохраняем/обновляем настройки чата
+  await ensureChatSettings(chatId, chatTitle);
+  
+  // Получаем настройки чата
+  const settings = await getChatSettings(chatId);
   
   // Сохраняем сообщение
   await supabase.from('telegram_chat_messages').insert({
@@ -395,6 +494,12 @@ async function handleTextMessage(message: any) {
     username,
     text,
   });
+  
+  // Если переводчик выключен - не переводим
+  if (!settings.translator_enabled) {
+    console.log('Translator disabled for chat:', chatId);
+    return;
+  }
   
   // Переводим
   const { translation, isRussian } = await translateRuEn(text);
@@ -413,11 +518,23 @@ async function handleTextMessage(message: any) {
 // Обработка голосового сообщения
 async function handleVoiceMessage(message: any) {
   const chatId = message.chat.id;
+  const chatTitle = message.chat.title || message.chat.first_name;
   const messageId = message.message_id;
   const username = message.from?.username || message.from?.first_name || 'Unknown';
   const voice = message.voice || message.audio;
   
   if (!voice) return;
+  
+  // Сохраняем/обновляем настройки чата
+  await ensureChatSettings(chatId, chatTitle);
+  
+  // Получаем настройки чата
+  const settings = await getChatSettings(chatId);
+  
+  if (!settings.voice_enabled) {
+    console.log('Voice processing disabled for chat:', chatId);
+    return;
+  }
   
   await sendMessage(chatId, '🎤 Транскрибирую аудио...', messageId);
   
@@ -443,24 +560,29 @@ async function handleVoiceMessage(message: any) {
       transcription,
     });
     
-    // Переводим
-    const { translation, isRussian } = await translateRuEn(transcription);
-    
-    // Обновляем
-    await supabase.from('telegram_chat_messages')
-      .update({ translation })
-      .eq('chat_id', chatId)
-      .eq('message_id', messageId);
-    
-    const fromLang = isRussian ? 'RU' : 'EN';
-    const toLang = isRussian ? 'EN' : 'RU';
-    
-    // Отправляем текстовый перевод
-    await sendMessage(chatId, `🎤 <b>Транскрипция (${fromLang}):</b>\n${transcription}\n\n🌐 <b>Перевод (${toLang}):</b>\n${translation}`, messageId);
-    
-    // Генерируем голосовой перевод
-    const audioBase64 = await textToSpeech(translation, isRussian ? 'English' : 'Russian');
-    await sendVoice(chatId, audioBase64, messageId);
+    // Если переводчик включён - переводим
+    if (settings.translator_enabled) {
+      const { translation, isRussian } = await translateRuEn(transcription);
+      
+      // Обновляем
+      await supabase.from('telegram_chat_messages')
+        .update({ translation })
+        .eq('chat_id', chatId)
+        .eq('message_id', messageId);
+      
+      const fromLang = isRussian ? 'RU' : 'EN';
+      const toLang = isRussian ? 'EN' : 'RU';
+      
+      // Отправляем текстовый перевод
+      await sendMessage(chatId, `🎤 <b>Транскрипция (${fromLang}):</b>\n${transcription}\n\n🌐 <b>Перевод (${toLang}):</b>\n${translation}`, messageId);
+      
+      // Генерируем голосовой перевод
+      const audioBase64 = await textToSpeech(translation, isRussian ? 'English' : 'Russian');
+      await sendVoice(chatId, audioBase64, messageId);
+    } else {
+      // Только транскрипция без перевода
+      await sendMessage(chatId, `🎤 <b>Транскрипция:</b>\n${transcription}`, messageId);
+    }
     
   } catch (error) {
     console.error('Voice processing error:', error);
@@ -485,13 +607,13 @@ serve(async (req) => {
       });
     }
     
-    // Обработка разных типов сообщений
+    // Обработка в зависимости от типа сообщения
     if (message.text?.startsWith('/')) {
       await handleCommand(message);
-    } else if (message.text) {
-      await handleTextMessage(message);
     } else if (message.voice || message.audio) {
       await handleVoiceMessage(message);
+    } else if (message.text) {
+      await handleTextMessage(message);
     }
     
     return new Response(JSON.stringify({ ok: true }), {
@@ -499,9 +621,9 @@ serve(async (req) => {
     });
     
   } catch (error: unknown) {
-    console.error('Error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: message }), {
+    console.error('Error processing update:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
