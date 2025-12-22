@@ -158,32 +158,40 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
               представляет
             </motion.p>
             
-            {/* APLink logo with left-to-right reveal from shadow */}
-            <motion.div
-              className="relative mb-6"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ 
-                opacity: stage >= 1 ? 1 : 0, 
-                scale: stage >= 1 ? 1 : 0.8 
-              }}
-              transition={{ delay: 0.6, duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
-            >
+            {/* APLink logo - letter by letter from left to right */}
+            <div className="relative mb-6">
               {/* Sweeping glow effect */}
               <motion.div
-                className="absolute inset-0 blur-2xl bg-primary/40 rounded-full"
-                initial={{ x: "-150%", opacity: 0 }}
+                className="absolute inset-0 blur-3xl bg-primary/50 rounded-full"
+                initial={{ x: "-100%", opacity: 0 }}
                 animate={{ 
-                  x: stage >= 1 ? "150%" : "-150%",
-                  opacity: stage >= 1 ? [0, 1, 0] : 0
+                  x: stage >= 1 ? "100%" : "-100%",
+                  opacity: stage >= 1 ? [0, 0.8, 0] : 0
                 }}
-                transition={{ delay: 0.8, duration: 1.5, ease: "easeInOut" }}
+                transition={{ delay: 0.6, duration: 2, ease: "easeInOut" }}
               />
-              <h1 className="text-6xl sm:text-8xl font-bold relative z-10">
-                <span className="bg-gradient-to-r from-primary via-foreground to-primary bg-clip-text text-transparent bg-[length:200%_auto] animate-shimmer">
-                  APLink
-                </span>
+              <h1 className="text-6xl sm:text-8xl font-bold relative z-10 flex justify-center">
+                {"APLink".split("").map((letter, index) => (
+                  <motion.span
+                    key={index}
+                    className="text-primary inline-block"
+                    initial={{ opacity: 0, y: 20, scale: 0.5 }}
+                    animate={{ 
+                      opacity: stage >= 1 ? 1 : 0, 
+                      y: stage >= 1 ? 0 : 20,
+                      scale: stage >= 1 ? 1 : 0.5
+                    }}
+                    transition={{ 
+                      delay: 0.6 + index * 0.12, 
+                      duration: 0.4,
+                      ease: [0.34, 1.56, 0.64, 1]
+                    }}
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
               </h1>
-            </motion.div>
+            </div>
             
             <motion.p
               className="text-xl sm:text-2xl text-foreground/80 font-light tracking-wide"
