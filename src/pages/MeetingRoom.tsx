@@ -1145,84 +1145,18 @@ const MeetingRoom = () => {
       )}
       {/* Header - auto-hides */}
       <header 
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 sm:py-3 bg-card/80 backdrop-blur-xl border-b border-border/50 z-50 absolute top-0 left-0 right-0 gap-2"
+        className="flex flex-col px-4 py-2 sm:py-3 bg-card/80 backdrop-blur-xl border-b border-border/50 z-50 absolute top-0 left-0 right-0 gap-2"
       >
-        {/* Mobile: Buttons on top */}
-        <div className="flex sm:hidden w-full justify-center gap-2">
-          {/* Mobile recording button */}
-          <Button
-            onClick={toggleRecording}
-            variant={isRecording ? "destructive" : "outline"}
-            size="sm"
-            disabled={isTranscribing}
-            className={isRecording ? "" : "border-primary/50 hover:bg-primary/10"}
-          >
-            {isTranscribing ? (
-              <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            ) : isRecording ? (
-              <MicOff className="w-4 h-4" />
-            ) : (
-              <Mic className="w-4 h-4" />
-            )}
-          </Button>
-          {/* Mobile translator button */}
-          <Button
-            onClick={() => setShowTranslator(!showTranslator)}
-            variant={showTranslator ? "default" : "outline"}
-            size="sm"
-            className={showTranslator ? "" : "border-primary/50 hover:bg-primary/10"}
-          >
-            <Languages className="w-4 h-4" />
-          </Button>
-          <Button
-            onClick={copyLink}
-            variant="outline"
-            size="sm"
-            className="border-primary/50 hover:bg-primary/10 flex-1"
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4 mr-2 text-green-500" />
-                Скопировано
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4 mr-2" />
-                Ссылка
-              </>
-            )}
-          </Button>
-          {isAdmin && (
-            <Button
-              onClick={() => setShowIPPanel(!showIPPanel)}
-              variant="outline"
-              size="sm"
-              className="border-primary/50 hover:bg-primary/10"
-            >
-              <Globe className="w-4 h-4" />
-            </Button>
-          )}
-          {/* Mobile diagnostics button */}
-          <Button
-            onClick={copyDiagnostics}
-            variant="outline"
-            size="sm"
-            className="border-yellow-500/50 hover:bg-yellow-500/10 text-yellow-500"
-            title="Отчёт"
-          >
-            {diagnosticsCopied ? <Check className="w-4 h-4" /> : <Bug className="w-4 h-4" />}
-          </Button>
-        </div>
-        
-        <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-4">
+        {/* Top row: Logo and room name */}
+        <div className="flex items-center justify-between w-full">
           <button
             onClick={() => navigate('/')}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            <div className="relative w-12 h-12">
+            <div className="relative w-10 h-10 sm:w-12 sm:h-12">
               <div className="absolute inset-0 rounded-full bg-primary/40 blur-md animate-pulse" />
-              <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-primary/50 shadow-[0_0_20px_hsl(var(--primary)/0.6)]">
+              <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden ring-2 ring-primary/50 shadow-[0_0_20px_hsl(var(--primary)/0.6)]">
                 <video 
                   src={apolloLogo} 
                   autoPlay 
@@ -1235,39 +1169,39 @@ const MeetingRoom = () => {
                 />
               </div>
             </div>
-            <span className="hidden sm:inline font-semibold">APLink</span>
+            <span className="font-semibold text-sm sm:text-base">APLink</span>
           </button>
-          <div className="h-6 w-px bg-border/50 hidden sm:block" />
+          
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px]">{roomDisplayName}</span>
           </div>
         </div>
         
-        {/* Desktop: Buttons on right */}
-        <div className="hidden sm:flex gap-2">
+        {/* Bottom row: Control buttons with labels */}
+        <div className="flex w-full justify-center gap-2 flex-wrap">
           {/* Recording button */}
           <Button
             onClick={toggleRecording}
             variant={isRecording ? "destructive" : "outline"}
             size="sm"
             disabled={isTranscribing}
-            className={isRecording ? "" : "border-primary/50 hover:bg-primary/10"}
+            className={`flex items-center gap-1.5 ${isRecording ? "" : "border-primary/50 hover:bg-primary/10"}`}
           >
             {isTranscribing ? (
               <>
-                <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                Транскрибируем...
+                <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                <span className="text-xs">Обработка...</span>
               </>
             ) : isRecording ? (
               <>
-                <MicOff className="w-4 h-4 mr-2" />
-                Остановить
+                <MicOff className="w-4 h-4" />
+                <span className="text-xs">Стоп</span>
               </>
             ) : (
               <>
-                <Mic className="w-4 h-4 mr-2" />
-                Записать
+                <Mic className="w-4 h-4" />
+                <span className="text-xs">Запись</span>
               </>
             )}
           </Button>
@@ -1277,10 +1211,30 @@ const MeetingRoom = () => {
             onClick={() => setShowTranslator(!showTranslator)}
             variant={showTranslator ? "default" : "outline"}
             size="sm"
-            className={showTranslator ? "" : "border-primary/50 hover:bg-primary/10"}
+            className={`flex items-center gap-1.5 ${showTranslator ? "" : "border-primary/50 hover:bg-primary/10"}`}
           >
-            <Languages className="w-4 h-4 mr-2" />
-            Переводчик
+            <Languages className="w-4 h-4" />
+            <span className="text-xs">Переводчик</span>
+          </Button>
+          
+          {/* Copy link button */}
+          <Button
+            onClick={copyLink}
+            variant="outline"
+            size="sm"
+            className="border-primary/50 hover:bg-primary/10 flex items-center gap-1.5"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-xs">Скопировано</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                <span className="text-xs">Ссылка</span>
+              </>
+            )}
           </Button>
           
           {isAdmin && (
@@ -1288,43 +1242,22 @@ const MeetingRoom = () => {
               onClick={() => setShowIPPanel(!showIPPanel)}
               variant={showIPPanel ? "default" : "outline"}
               size="sm"
-              className={showIPPanel ? "" : "border-primary/50 hover:bg-primary/10"}
+              className={`flex items-center gap-1.5 ${showIPPanel ? "" : "border-primary/50 hover:bg-primary/10"}`}
             >
-              <Globe className="w-4 h-4 mr-2" />
-              IP Участников
+              <Globe className="w-4 h-4" />
+              <span className="text-xs hidden sm:inline">IP Участников</span>
             </Button>
           )}
-          <Button
-            onClick={copyLink}
-            variant="outline"
-            size="sm"
-            className="border-primary/50 hover:bg-primary/10"
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4 mr-2 text-green-500" />
-                Скопировано
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4 mr-2" />
-                Скопировать ссылку
-              </>
-            )}
-          </Button>
-          {/* Diagnostics report button */}
+          
+          {/* Diagnostics button */}
           <Button
             onClick={copyDiagnostics}
             variant="outline"
             size="sm"
-            className="border-yellow-500/50 hover:bg-yellow-500/10 text-yellow-500"
+            className="border-yellow-500/50 hover:bg-yellow-500/10 text-yellow-500 flex items-center gap-1.5"
             title="Скопировать отчёт диагностики"
           >
-            {diagnosticsCopied ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <Bug className="w-4 h-4" />
-            )}
+            {diagnosticsCopied ? <Check className="w-4 h-4" /> : <Bug className="w-4 h-4" />}
           </Button>
         </div>
       </header>
