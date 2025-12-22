@@ -71,6 +71,15 @@ interface AnalyticsStats {
   translationsByLanguage: { language: string; count: number }[];
 }
 
+interface RegisteredUser {
+  id: string;
+  user_id: string;
+  display_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  created_at: string;
+}
+
 const AdminPanel = () => {
   const navigate = useNavigate();
   const { user, isAdmin, isLoading } = useAuth();
@@ -78,7 +87,7 @@ const AdminPanel = () => {
   const [participants, setParticipants] = useState<MeetingParticipant[]>([]);
   const [geoData, setGeoData] = useState<Map<string, ParticipantGeoData>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'transcripts' | 'participants' | 'profile' | 'analytics'>('analytics');
+  const [activeTab, setActiveTab] = useState<'transcripts' | 'participants' | 'profile' | 'analytics' | 'users'>('analytics');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
@@ -88,6 +97,8 @@ const AdminPanel = () => {
   const [disabling2FA, setDisabling2FA] = useState(false);
   const [analyticsStats, setAnalyticsStats] = useState<AnalyticsStats | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   // Redirect if not admin
   useEffect(() => {
@@ -247,6 +258,31 @@ const AdminPanel = () => {
     };
 
     loadAnalytics();
+  }, [user, isAdmin, activeTab]);
+
+  // Load registered users
+  useEffect(() => {
+    if (!user || !isAdmin || activeTab !== 'users') return;
+    
+    const loadUsers = async () => {
+      setUsersLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setRegisteredUsers(data || []);
+      } catch (error) {
+        console.error('Error loading users:', error);
+        toast.error('Не удалось загрузить пользователей');
+      } finally {
+        setUsersLoading(false);
+      }
+    };
+
+    loadUsers();
   }, [user, isAdmin, activeTab]);
 
   // Check if user has 2FA enabled
@@ -410,6 +446,15 @@ const AdminPanel = () => {
             >
               <Users className="w-4 h-4" />
               IP-чекер
+            </Button>
+            <Button
+              variant={activeTab === 'users' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('users')}
+              className="gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Пользователи
             </Button>
             <Button
               variant={activeTab === 'profile' ? 'default' : 'outline'}
@@ -773,6 +818,58 @@ const AdminPanel = () => {
                   </Card>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        ) : activeTab === 'users' ? (
+          <div className="space-y-6">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Users className="w-6 h-6 text-primary" />
+              Зарегистрированные пользователи ({registeredUsers.length})
+            </h1>
+            
+            {usersLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : registeredUsers.length === 0 ? (
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Пока нет зарегистрированных пользователей</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {registeredUsers.map((u) => (
+                  <Card key={u.id} className="bg-card/50 backdrop-blur-sm border-border/50">
+                    <CardContent className="py-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <Avatar className="w-12 h-12">
+                            <AvatarImage src={u.avatar_url || ''} />
+                            <AvatarFallback className="bg-primary/20 text-primary">
+                              {u.display_name?.[0]?.toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-medium">{u.display_name || 'Без имени'}</h3>
+                            {u.username && (
+                              <span className="text-sm text-muted-foreground">@{u.username}</span>
+                            )}
+                            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              Регистрация: {formatDate(u.created_at)}
+                            </div>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          ID: {u.user_id.slice(0, 8)}...
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </div>
