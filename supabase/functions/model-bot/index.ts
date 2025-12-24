@@ -764,8 +764,44 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Handle GET request for webhook info
+  if (req.method === 'GET') {
+    return new Response(JSON.stringify({ 
+      ok: true, 
+      bot: 'Model Bot',
+      status: 'running',
+      version: '1.0.0'
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
-    const update = await req.json();
+    // Check if request has body
+    const contentLength = req.headers.get('content-length');
+    if (!contentLength || contentLength === '0') {
+      return new Response(JSON.stringify({ ok: true, message: 'No body' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const text = await req.text();
+    if (!text || text.trim() === '') {
+      return new Response(JSON.stringify({ ok: true, message: 'Empty body' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    let update;
+    try {
+      update = JSON.parse(text);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError, 'Body:', text.substring(0, 100));
+      return new Response(JSON.stringify({ ok: true, message: 'Invalid JSON' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     console.log('Model bot update:', JSON.stringify(update));
     
     const message = update.message || update.edited_message;

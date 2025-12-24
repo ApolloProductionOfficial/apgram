@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -48,7 +49,17 @@ import {
   Rabbit,
   ClipboardList,
   Edit3,
-  Save
+  Save,
+  Eye,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  ExternalLink,
+  RefreshCw,
+  ChevronUp,
+  ChevronDown,
+  GripVertical,
+  Link
 } from "lucide-react";
 import apolloLogo from "@/assets/cf-logo-final.png";
 import apolloLogoVideo from "@/assets/apollo-logo.mp4";
@@ -87,6 +98,50 @@ interface ChatSettings {
   quick_phrases_enabled?: boolean | null;
 }
 
+interface ModelApplication {
+  id: string;
+  telegram_user_id: number;
+  telegram_username: string | null;
+  full_name: string | null;
+  age: number | null;
+  country: string | null;
+  height: string | null;
+  weight: string | null;
+  hair_color: string | null;
+  platforms: string[] | null;
+  content_preferences: string[] | null;
+  desired_income: string | null;
+  about_yourself: string | null;
+  status: string;
+  created_at: string;
+  completed_at: string | null;
+}
+
+interface QuestionConfig {
+  id: string;
+  step: string;
+  question: string;
+  order: number;
+}
+
+const DEFAULT_QUESTIONS: QuestionConfig[] = [
+  { id: '1', step: 'full_name', question: 'Как вас зовут? Напишите ваше полное имя:', order: 1 },
+  { id: '2', step: 'age', question: 'Сколько вам полных лет? (только число)', order: 2 },
+  { id: '3', step: 'country', question: 'Выберите вашу страну проживания:', order: 3 },
+  { id: '4', step: 'height_weight', question: 'Укажите ваш рост и вес (например: 170 см / 55 кг):', order: 4 },
+  { id: '5', step: 'body_params', question: 'Укажите ваши параметры фигуры (грудь-талия-бёдра):', order: 5 },
+  { id: '6', step: 'hair_color', question: 'Выберите цвет волос:', order: 6 },
+  { id: '7', step: 'languages', question: 'Какими языками вы владеете?', order: 7 },
+  { id: '8', step: 'platforms', question: 'Есть ли у вас уже платформы, где вы работаете?', order: 8 },
+  { id: '9', step: 'content_types', question: 'Какой контент вы готовы создавать?', order: 9 },
+  { id: '10', step: 'experience', question: 'У вас есть опыт работы моделью?', order: 10 },
+  { id: '11', step: 'social_links', question: 'Отправьте ссылки на ваши соцсети:', order: 11 },
+  { id: '12', step: 'equipment', question: 'Какое оборудование у вас есть для работы?', order: 12 },
+  { id: '13', step: 'time_availability', question: 'Сколько времени вы готовы уделять работе?', order: 13 },
+  { id: '14', step: 'desired_income', question: 'Какой доход вы хотите получать в месяц?', order: 14 },
+  { id: '15', step: 'about_yourself', question: 'Расскажите о себе максимально подробно!', order: 15 },
+];
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut, isLoading } = useAuth();
@@ -103,8 +158,23 @@ const Dashboard = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [mainTab, setMainTab] = useState("telegram-help");
   const [subTab, setSubTab] = useState("phrases");
+  const [modelSubTab, setModelSubTab] = useState("applications");
   const [showSplash, setShowSplash] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Model applications state
+  const [applications, setApplications] = useState<ModelApplication[]>([]);
+  const [selectedApplication, setSelectedApplication] = useState<ModelApplication | null>(null);
+  const [isLoadingApplications, setIsLoadingApplications] = useState(false);
+  
+  // Questions editor state
+  const [questions, setQuestions] = useState<QuestionConfig[]>(DEFAULT_QUESTIONS);
+  const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
+  
+  // Webhook setup state
+  const [isSettingWebhook, setIsSettingWebhook] = useState(false);
+  const [webhookStatus, setWebhookStatus] = useState<'unknown' | 'success' | 'error'>('unknown');
+  const [modelBotToken, setModelBotToken] = useState("");
 
   useEffect(() => {
     // Редирект только если загрузка завершена И пользователя нет
@@ -126,6 +196,7 @@ const Dashboard = () => {
       fetchPhrases();
       fetchChatSettings();
       fetchMessages();
+      fetchApplications();
 
       // Realtime подписка на новые сообщения
       const channel = supabase
@@ -178,8 +249,98 @@ const Dashboard = () => {
       .order("created_at", { ascending: false });
 
     if (!error) {
-      setChatSettings(data || []);
+      // Filter out private chats (positive chat_id typically means private)
+      const groupChats = (data || []).filter(chat => chat.chat_id < 0);
+      setChatSettings(groupChats);
     }
+  };
+
+  const fetchApplications = async () => {
+    setIsLoadingApplications(true);
+    const { data, error } = await supabase
+      .from("telegram_model_applications")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setApplications(data as ModelApplication[]);
+    }
+    setIsLoadingApplications(false);
+  };
+
+  const updateApplicationStatus = async (id: string, newStatus: string) => {
+    const { error } = await supabase
+      .from("telegram_model_applications")
+      .update({ status: newStatus })
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Ошибка обновления статуса");
+    } else {
+      toast.success("Статус обновлён");
+      fetchApplications();
+      if (selectedApplication?.id === id) {
+        setSelectedApplication(prev => prev ? { ...prev, status: newStatus } : null);
+      }
+    }
+  };
+
+  const deleteChatSetting = async (chatId: number) => {
+    const { error } = await supabase
+      .from("telegram_chat_settings")
+      .delete()
+      .eq("chat_id", chatId);
+
+    if (error) {
+      toast.error("Ошибка удаления чата");
+    } else {
+      toast.success("Чат удалён");
+      setChatSettings(prev => prev.filter(c => c.chat_id !== chatId));
+    }
+  };
+
+  const setupWebhook = async () => {
+    if (!modelBotToken.trim()) {
+      toast.error("Введите токен бота");
+      return;
+    }
+    
+    setIsSettingWebhook(true);
+    try {
+      const webhookUrl = "https://ykwiqymksnndugphhgmc.supabase.co/functions/v1/model-bot";
+      const response = await fetch(`https://api.telegram.org/bot${modelBotToken}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);
+      const result = await response.json();
+      
+      if (result.ok) {
+        setWebhookStatus('success');
+        toast.success("Webhook успешно настроен!");
+      } else {
+        setWebhookStatus('error');
+        toast.error(`Ошибка: ${result.description}`);
+      }
+    } catch (error) {
+      setWebhookStatus('error');
+      toast.error("Ошибка настройки webhook");
+    } finally {
+      setIsSettingWebhook(false);
+    }
+  };
+
+  const moveQuestion = (index: number, direction: 'up' | 'down') => {
+    const newQuestions = [...questions];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= questions.length) return;
+    
+    [newQuestions[index], newQuestions[newIndex]] = [newQuestions[newIndex], newQuestions[index]];
+    newQuestions.forEach((q, i) => q.order = i + 1);
+    setQuestions(newQuestions);
+    toast.success("Порядок изменён");
+  };
+
+  const updateQuestionText = (id: string, newText: string) => {
+    setQuestions(prev => prev.map(q => q.id === id ? { ...q, question: newText } : q));
+    setEditingQuestion(null);
+    toast.success("Вопрос обновлён");
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -989,6 +1150,14 @@ const Dashboard = () => {
                               <p className="text-xs text-slate-500">ID: {chat.chat_id}</p>
                             </div>
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteChatSetting(chat.chat_id)}
+                            className="text-slate-500 hover:text-red-400 hover:bg-red-500/10"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1141,55 +1310,338 @@ const Dashboard = () => {
 
             {/* Model Application Tab */}
             <TabsContent value="model-application" className="space-y-6">
-              <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-white">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                      <ClipboardList className="w-4 h-4 text-white" />
-                    </div>
-                    Настройки анкеты моделей
-                  </CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Редактирование вопросов и настройка бота Model Profile
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Webhook URL */}
-                  <div className="p-4 rounded-xl bg-slate-800/30 border border-purple-500/20 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm text-purple-300">
-                        <Bot className="w-4 h-4" />
-                        <span>Webhook URL для Model Bot</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          navigator.clipboard.writeText("https://ykwiqymksnndugphhgmc.supabase.co/functions/v1/model-bot");
-                          toast.success("Webhook URL скопирован!");
-                        }}
-                        className="text-xs border-purple-500/30 hover:bg-purple-500/20"
-                      >
-                        <Copy className="w-3 h-3 mr-1" />
-                        Копировать
-                      </Button>
-                    </div>
-                    <code className="block text-xs text-purple-400 bg-purple-500/10 p-2 rounded-lg break-all">
-                      https://ykwiqymksnndugphhgmc.supabase.co/functions/v1/model-bot
-                    </code>
-                    <p className="text-xs text-slate-500">
-                      Установите этот URL как webhook в настройках @BotFather для бота анкеты моделей
-                    </p>
-                  </div>
+              {/* Sub-tabs for Model Applications */}
+              <Tabs value={modelSubTab} onValueChange={setModelSubTab} className="space-y-4">
+                <TabsList className="bg-slate-800/50 border border-white/5 p-1 gap-1">
+                  <TabsTrigger 
+                    value="applications" 
+                    className="text-xs data-[state=active]:bg-purple-500 data-[state=active]:text-white"
+                  >
+                    <ClipboardList className="w-3 h-3 mr-1" />
+                    Заявки ({applications.filter(a => a.status === 'pending').length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="questions" 
+                    className="text-xs data-[state=active]:bg-pink-500 data-[state=active]:text-white"
+                  >
+                    <Edit3 className="w-3 h-3 mr-1" />
+                    Редактор вопросов
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="webhook" 
+                    className="text-xs data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                  >
+                    <Link className="w-3 h-3 mr-1" />
+                    Webhook
+                  </TabsTrigger>
+                </TabsList>
 
-                  {/* Placeholder for questionnaire editor */}
-                  <div className="text-center py-12 text-slate-500">
-                    <Edit3 className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                    <p>Редактор вопросов анкеты</p>
-                    <p className="text-xs mt-2">Функционал редактирования вопросов будет добавлен позже</p>
-                  </div>
-                </CardContent>
-              </Card>
+                {/* Applications List */}
+                <TabsContent value="applications" className="space-y-4">
+                  <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-white">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                          <ClipboardList className="w-4 h-4 text-white" />
+                        </div>
+                        Заявки моделей
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={fetchApplications}
+                          className="ml-auto"
+                        >
+                          <RefreshCw className={`w-4 h-4 ${isLoadingApplications ? 'animate-spin' : ''}`} />
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {applications.length === 0 ? (
+                        <div className="text-center py-12 text-slate-500">
+                          <ClipboardList className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                          <p>Нет заявок</p>
+                          <p className="text-xs mt-2">Заявки появятся здесь после заполнения анкеты</p>
+                        </div>
+                      ) : (
+                        <div className="grid gap-4">
+                          {applications.map((app) => (
+                            <div
+                              key={app.id}
+                              className="p-4 rounded-xl bg-slate-800/30 border border-white/5 hover:border-purple-500/30 transition-all cursor-pointer"
+                              onClick={() => setSelectedApplication(app)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                                    <User className="w-5 h-5 text-purple-400" />
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-white">{app.full_name || 'Без имени'}</p>
+                                    <p className="text-xs text-slate-500">@{app.telegram_username || 'unknown'} • {app.age || '?'} лет</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      app.status === 'pending' ? 'border-yellow-500/50 text-yellow-400' :
+                                      app.status === 'approved' ? 'border-emerald-500/50 text-emerald-400' :
+                                      app.status === 'rejected' ? 'border-red-500/50 text-red-400' :
+                                      'border-slate-500/50 text-slate-400'
+                                    }
+                                  >
+                                    {app.status === 'pending' ? '⏳ На рассмотрении' :
+                                     app.status === 'approved' ? '✅ Одобрена' :
+                                     app.status === 'rejected' ? '❌ Отклонена' :
+                                     app.status === 'in_progress' ? '📝 Заполняется' : app.status}
+                                  </Badge>
+                                  <Eye className="w-4 h-4 text-slate-500" />
+                                </div>
+                              </div>
+                              {app.desired_income && (
+                                <p className="text-xs text-slate-400 mt-2">💰 Желаемый доход: {app.desired_income}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Application Detail Modal */}
+                  {selectedApplication && (
+                    <Card className="bg-slate-900/50 border-purple-500/20 backdrop-blur-xl">
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between text-white">
+                          <span>Детали заявки</span>
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(null)}>
+                            <XCircle className="w-4 h-4" />
+                          </Button>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div><span className="text-slate-500">Имя:</span> <span className="text-white">{selectedApplication.full_name}</span></div>
+                          <div><span className="text-slate-500">Возраст:</span> <span className="text-white">{selectedApplication.age}</span></div>
+                          <div><span className="text-slate-500">Страна:</span> <span className="text-white">{selectedApplication.country}</span></div>
+                          <div><span className="text-slate-500">Telegram:</span> <span className="text-white">@{selectedApplication.telegram_username}</span></div>
+                          <div><span className="text-slate-500">Рост/Вес:</span> <span className="text-white">{selectedApplication.height} / {selectedApplication.weight}</span></div>
+                          <div><span className="text-slate-500">Волосы:</span> <span className="text-white">{selectedApplication.hair_color}</span></div>
+                          <div><span className="text-slate-500">Доход:</span> <span className="text-white">{selectedApplication.desired_income}</span></div>
+                          <div><span className="text-slate-500">Платформы:</span> <span className="text-white">{selectedApplication.platforms?.join(', ') || 'Нет'}</span></div>
+                        </div>
+                        {selectedApplication.about_yourself && (
+                          <div>
+                            <p className="text-slate-500 text-sm mb-1">О себе:</p>
+                            <p className="text-white text-sm bg-slate-800/50 p-3 rounded-lg">{selectedApplication.about_yourself}</p>
+                          </div>
+                        )}
+                        <div className="flex gap-2 pt-4">
+                          <Button
+                            onClick={() => updateApplicationStatus(selectedApplication.id, 'approved')}
+                            className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" /> Одобрить
+                          </Button>
+                          <Button
+                            onClick={() => updateApplicationStatus(selectedApplication.id, 'rejected')}
+                            variant="destructive"
+                            className="flex-1"
+                          >
+                            <XCircle className="w-4 h-4 mr-2" /> Отклонить
+                          </Button>
+                          {selectedApplication.telegram_username && (
+                            <Button
+                              variant="outline"
+                              onClick={() => window.open(`https://t.me/${selectedApplication.telegram_username}`, '_blank')}
+                              className="border-[#0088cc]/30 hover:bg-[#0088cc]/20"
+                            >
+                              <ExternalLink className="w-4 h-4 mr-2" /> Telegram
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
+
+                {/* Questions Editor */}
+                <TabsContent value="questions" className="space-y-4">
+                  <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-white">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
+                          <Edit3 className="w-4 h-4 text-white" />
+                        </div>
+                        Редактор вопросов анкеты
+                      </CardTitle>
+                      <CardDescription className="text-slate-400">
+                        Меняйте порядок и текст вопросов
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {questions.sort((a, b) => a.order - b.order).map((q, index) => (
+                          <div
+                            key={q.id}
+                            className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-white/5 hover:border-pink-500/30 transition-all"
+                          >
+                            <div className="flex flex-col gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => moveQuestion(index, 'up')}
+                                disabled={index === 0}
+                              >
+                                <ChevronUp className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => moveQuestion(index, 'down')}
+                                disabled={index === questions.length - 1}
+                              >
+                                <ChevronDown className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <div className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400 font-bold text-sm">
+                              {q.order}
+                            </div>
+                            {editingQuestion === q.id ? (
+                              <div className="flex-1 flex gap-2">
+                                <Input
+                                  defaultValue={q.question}
+                                  className="bg-slate-800/50 border-pink-500/30"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      updateQuestionText(q.id, (e.target as HTMLInputElement).value);
+                                    }
+                                    if (e.key === 'Escape') {
+                                      setEditingQuestion(null);
+                                    }
+                                  }}
+                                  autoFocus
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                    const input = (e.currentTarget.previousSibling as HTMLInputElement);
+                                    updateQuestionText(q.id, input.value);
+                                  }}
+                                >
+                                  <Save className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex-1 flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm text-white">{q.question}</p>
+                                  <p className="text-xs text-slate-500">{q.step}</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setEditingQuestion(q.id)}
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Webhook Setup */}
+                <TabsContent value="webhook" className="space-y-4">
+                  <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-white">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                          <Link className="w-4 h-4 text-white" />
+                        </div>
+                        Настройка Webhook
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Webhook URL */}
+                      <div className="p-4 rounded-xl bg-slate-800/30 border border-purple-500/20 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-sm text-purple-300">
+                            <Bot className="w-4 h-4" />
+                            <span>Webhook URL</span>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText("https://ykwiqymksnndugphhgmc.supabase.co/functions/v1/model-bot");
+                              toast.success("Webhook URL скопирован!");
+                            }}
+                            className="text-xs border-purple-500/30 hover:bg-purple-500/20"
+                          >
+                            <Copy className="w-3 h-3 mr-1" />
+                            Копировать
+                          </Button>
+                        </div>
+                        <code className="block text-xs text-purple-400 bg-purple-500/10 p-2 rounded-lg break-all">
+                          https://ykwiqymksnndugphhgmc.supabase.co/functions/v1/model-bot
+                        </code>
+                      </div>
+
+                      {/* Auto Setup */}
+                      <div className="p-4 rounded-xl bg-slate-800/30 border border-emerald-500/20 space-y-3">
+                        <div className="flex items-center gap-2 text-sm text-emerald-300">
+                          <Zap className="w-4 h-4" />
+                          <span>Автоматическая настройка</span>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Вставьте токен бота от @BotFather и нажмите кнопку для автоматической настройки webhook
+                        </p>
+                        <div className="flex gap-2">
+                          <Input
+                            value={modelBotToken}
+                            onChange={(e) => setModelBotToken(e.target.value)}
+                            placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+                            className="bg-slate-800/50 border-emerald-500/30 font-mono text-sm"
+                            type="password"
+                          />
+                          <Button
+                            onClick={setupWebhook}
+                            disabled={isSettingWebhook}
+                            className="bg-emerald-500 hover:bg-emerald-600"
+                          >
+                            {isSettingWebhook ? (
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Link className="w-4 h-4 mr-2" />
+                                Настроить
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        {webhookStatus === 'success' && (
+                          <div className="flex items-center gap-2 text-emerald-400 text-sm">
+                            <CheckCircle className="w-4 h-4" />
+                            Webhook успешно настроен!
+                          </div>
+                        )}
+                        {webhookStatus === 'error' && (
+                          <div className="flex items-center gap-2 text-red-400 text-sm">
+                            <AlertCircle className="w-4 h-4" />
+                            Ошибка настройки webhook
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
             {/* PimpBunny Tab */}
