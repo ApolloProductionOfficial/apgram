@@ -81,6 +81,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          notification_chat_ids: number[] | null
           owner_contact: string | null
           owner_telegram_chat_id: number | null
           updated_at: string
@@ -91,6 +92,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          notification_chat_ids?: number[] | null
           owner_contact?: string | null
           owner_telegram_chat_id?: number | null
           updated_at?: string
@@ -101,6 +103,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          notification_chat_ids?: number[] | null
           owner_contact?: string | null
           owner_telegram_chat_id?: number | null
           updated_at?: string
@@ -518,11 +521,13 @@ export type Database = {
           id: string
           language_skills: string | null
           platforms: string[] | null
+          portfolio_photos: string[] | null
           social_media_experience: string[] | null
           social_media_links: string | null
           status: string
           step: string
           strong_points: string | null
+          tabu_preferences: string[] | null
           telegram_user_id: number
           telegram_username: string | null
           time_availability: string | null
@@ -546,11 +551,13 @@ export type Database = {
           id?: string
           language_skills?: string | null
           platforms?: string[] | null
+          portfolio_photos?: string[] | null
           social_media_experience?: string[] | null
           social_media_links?: string | null
           status?: string
           step?: string
           strong_points?: string | null
+          tabu_preferences?: string[] | null
           telegram_user_id: number
           telegram_username?: string | null
           time_availability?: string | null
@@ -574,11 +581,13 @@ export type Database = {
           id?: string
           language_skills?: string | null
           platforms?: string[] | null
+          portfolio_photos?: string[] | null
           social_media_experience?: string[] | null
           social_media_links?: string | null
           status?: string
           step?: string
           strong_points?: string | null
+          tabu_preferences?: string[] | null
           telegram_user_id?: number
           telegram_username?: string | null
           time_availability?: string | null

@@ -958,16 +958,18 @@ const Dashboard = () => {
               
               <TabsTrigger 
                 value="onlyfans" 
-                className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-orange-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
+                className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-teal-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-2xl bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
-                  <DollarSign className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 rounded-2xl bg-teal-500/20 flex items-center justify-center border border-teal-500/30">
+                  <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm0-14c-3.309 0-6 2.691-6 6s2.691 6 6 6 6-2.691 6-6-2.691-6-6-6zm0 10c-2.206 0-4-1.794-4-4s1.794-4 4-4 4 1.794 4 4-1.794 4-4 4z"/>
+                  </svg>
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">OnlyFans</p>
                   <p className="text-xs text-slate-400 mt-1">Управление аккаунтами</p>
                 </div>
-                <Badge variant="outline" className="text-xs border-orange-500/30 text-orange-400 mt-2">Новое</Badge>
+                <Badge variant="outline" className="text-xs border-teal-500/30 text-teal-400 mt-2">Новое</Badge>
               </TabsTrigger>
 
               <TabsTrigger 
@@ -1940,8 +1942,10 @@ const Dashboard = () => {
               <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-white">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
-                      <DollarSign className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm0-14c-3.309 0-6 2.691-6 6s2.691 6 6 6 6-2.691 6-6-2.691-6-6-6zm0 10c-2.206 0-4-1.794-4-4s1.794-4 4-4 4 1.794 4 4-1.794 4-4 4z"/>
+                      </svg>
                     </div>
                     OnlyFans
                   </CardTitle>
@@ -1951,7 +1955,9 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-12 text-slate-500">
-                    <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <svg className="w-12 h-12 mx-auto mb-4 opacity-30" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm0-14c-3.309 0-6 2.691-6 6s2.691 6 6 6 6-2.691 6-6-2.691-6-6-6zm0 10c-2.206 0-4-1.794-4-4s1.794-4 4-4 4 1.794 4 4-1.794 4-4 4z"/>
+                    </svg>
                     <p>Раздел OnlyFans</p>
                     <p className="text-xs mt-2">Функционал будет добавлен по вашему запросу</p>
                   </div>

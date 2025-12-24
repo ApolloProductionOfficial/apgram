@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bot, MessageCircle, Globe, Mic, Zap, FileText, Command } from "lucide-react";
+import { Bot, MessageCircle, Globe, Mic, Zap, FileText, Command, AlertCircle } from "lucide-react";
 
 export const BotCommandsHelp = () => {
   const commands = [
@@ -103,6 +103,25 @@ export const BotCommandsHelp = () => {
             <li>• Бот автоматически переводит сообщения RU↔EN</li>
             <li>• Голосовые сообщения автоматически транскрибируются</li>
           </ul>
+        </div>
+
+        {/* Support Contact */}
+        <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle className="w-4 h-4 text-yellow-400" />
+            <h4 className="text-sm font-medium text-yellow-400">Нужна помощь?</h4>
+          </div>
+          <p className="text-xs text-slate-400">
+            Если у вас есть проблемы или вопросы — пишите напрямую владельцу: 
+            <a 
+              href="https://t.me/Apollo_Produciton" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[#0088cc] hover:underline ml-1 font-medium"
+            >
+              @Apollo_Produciton
+            </a>
+          </p>
         </div>
       </CardContent>
     </Card>
