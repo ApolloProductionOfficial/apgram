@@ -82,6 +82,7 @@ import { TeamNotificationSettings } from "@/components/TeamNotificationSettings"
 import { ModelPhotosGallery } from "@/components/ModelPhotosGallery";
 import { QuestionsEditor } from "@/components/QuestionsEditor";
 import { QuestionnairePreview } from "@/components/QuestionnairePreview";
+import { BotEditor } from "@/components/BotEditor";
 import { ApplicationFunnel } from "@/components/ApplicationFunnel";
 import { SendMessageDialog } from "@/components/SendMessageDialog";
 
@@ -1441,11 +1442,11 @@ const Dashboard = () => {
                     Заявки ({applications.filter(a => a.status === 'pending').length})
                   </TabsTrigger>
                   <TabsTrigger 
-                    value="questions" 
-                    className="text-xs data-[state=active]:bg-pink-500 data-[state=active]:text-white"
+                    value="bot-editor" 
+                    className="text-xs data-[state=active]:bg-violet-500 data-[state=active]:text-white"
                   >
-                    <Edit3 className="w-3 h-3 mr-1" />
-                    Редактор вопросов
+                    <Bot className="w-3 h-3 mr-1" />
+                    Редактор бота
                   </TabsTrigger>
                   <TabsTrigger 
                     value="webhook" 
@@ -1800,12 +1801,9 @@ const Dashboard = () => {
                   )}
                 </TabsContent>
 
-                {/* Questions Editor */}
-                <TabsContent value="questions" className="space-y-4">
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <QuestionsEditor />
-                    <QuestionnairePreview />
-                  </div>
+                {/* Bot Editor - combined welcome + questions */}
+                <TabsContent value="bot-editor" className="space-y-4">
+                  <BotEditor />
                 </TabsContent>
 
                 {/* Webhook Setup */}
