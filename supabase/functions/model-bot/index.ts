@@ -6,9 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
-const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY')!;
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!;
+const MODEL_BOT_TOKEN = Deno.env.get('MODEL_BOT_TOKEN')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -22,28 +20,6 @@ const CONTENT_TYPES = [
   { id: 'fetish', name: 'Фетиш контент', emoji: '🎭' },
   { id: 'webcam', name: 'Вебкам трансляции', emoji: '📺' },
   { id: 'chat', name: 'Только чат/общение', emoji: '💬' },
-];
-
-// Шаги анкеты
-const APPLICATION_STEPS = [
-  'welcome',
-  'full_name',
-  'age',
-  'country',
-  'height_weight',
-  'body_params',
-  'hair_color',
-  'languages',
-  'platforms',
-  'content_types',
-  'experience',
-  'social_links',
-  'equipment',
-  'time_availability',
-  'desired_income',
-  'about_yourself',
-  'strong_points',
-  'complete'
 ];
 
 // Получение настроек приветствия
@@ -62,79 +38,9 @@ async function getWelcomeSettings() {
   };
 }
 
-// Получение настроек чата
-async function getChatSettings(chatId: number) {
-  const { data } = await supabase
-    .from('telegram_chat_settings')
-    .select('*')
-    .eq('chat_id', chatId)
-    .single();
-  
-  return data || {
-    translator_enabled: true,
-    voice_enabled: true,
-    quick_phrases_enabled: true,
-    summary_enabled: true
-  };
-}
-
-// Создание/обновление настроек чата (только для групп и каналов, не для личных чатов)
-async function ensureChatSettings(chatId: number, chatTitle?: string, chatType?: string) {
-  // Не сохраняем настройки для личных чатов
-  if (chatType === 'private') {
-    return;
-  }
-  
-  const { data: existing } = await supabase
-    .from('telegram_chat_settings')
-    .select('id')
-    .eq('chat_id', chatId)
-    .single();
-  
-  if (!existing) {
-    await supabase.from('telegram_chat_settings').insert({
-      chat_id: chatId,
-      chat_title: chatTitle,
-      translator_enabled: true,
-      voice_enabled: true,
-      quick_phrases_enabled: true,
-      summary_enabled: true
-    });
-  } else if (chatTitle) {
-    await supabase.from('telegram_chat_settings')
-      .update({ chat_title: chatTitle })
-      .eq('chat_id', chatId);
-  }
-}
-
-// Парсинг текста с маркерами эмодзи: [emoji:ID] -> custom_emoji entity
-function parseTextWithEmojis(text: string): { text: string; entities: any[] } {
-  const emojiRegex = /\[emoji:(\d+)\]/g;
-  const entities: any[] = [];
-  let processedText = '';
-  let lastIndex = 0;
-  let match;
-  
-  while ((match = emojiRegex.exec(text)) !== null) {
-    processedText += text.slice(lastIndex, match.index);
-    const offset = [...processedText].length;
-    processedText += '⭐';
-    entities.push({
-      type: 'custom_emoji',
-      offset: offset,
-      length: 1,
-      custom_emoji_id: match[1]
-    });
-    lastIndex = match.index + match[0].length;
-  }
-  
-  processedText += text.slice(lastIndex);
-  return { text: processedText, entities };
-}
-
 // Отправка сообщения с inline кнопками
 async function sendMessageWithButtons(chatId: number, text: string, buttons: any[][], replyToMessageId?: number) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const url = `https://api.telegram.org/bot${MODEL_BOT_TOKEN}/sendMessage`;
   
   const body: any = {
     chat_id: chatId,
@@ -164,7 +70,7 @@ async function sendMessageWithButtons(chatId: number, text: string, buttons: any
 
 // Редактирование сообщения
 async function editMessage(chatId: number, messageId: number, text: string, buttons?: any[][]) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`;
+  const url = `https://api.telegram.org/bot${MODEL_BOT_TOKEN}/editMessageText`;
   
   const body: any = {
     chat_id: chatId,
@@ -186,7 +92,7 @@ async function editMessage(chatId: number, messageId: number, text: string, butt
 
 // Ответ на callback query
 async function answerCallbackQuery(callbackQueryId: string, text?: string) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`;
+  const url = `https://api.telegram.org/bot${MODEL_BOT_TOKEN}/answerCallbackQuery`;
   
   await fetch(url, {
     method: 'POST',
@@ -199,29 +105,15 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string) {
 }
 
 // Отправка сообщения в Telegram
-async function sendMessage(chatId: number, text: string, replyToMessageId?: number, customEmojiId?: string) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  
-  const parsed = parseTextWithEmojis(text);
+async function sendMessage(chatId: number, text: string, replyToMessageId?: number) {
+  const url = `https://api.telegram.org/bot${MODEL_BOT_TOKEN}/sendMessage`;
   
   const body: any = {
     chat_id: chatId,
-    text: parsed.text,
+    text: text,
     reply_to_message_id: replyToMessageId,
     parse_mode: 'HTML',
   };
-  
-  if (parsed.entities.length > 0) {
-    body.entities = parsed.entities;
-  } else if (customEmojiId) {
-    body.text = `⭐ ${parsed.text}`;
-    body.entities = [{
-      type: 'custom_emoji',
-      offset: 0,
-      length: 1,
-      custom_emoji_id: customEmojiId
-    }];
-  }
   
   const response = await fetch(url, {
     method: 'POST',
@@ -235,62 +127,16 @@ async function sendMessage(chatId: number, text: string, replyToMessageId?: numb
   }
 }
 
-// Отправка фото
-async function sendPhoto(chatId: number, photoUrl: string, caption?: string, customEmojiId?: string) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`;
-  
-  const parsed = caption ? parseTextWithEmojis(caption) : { text: caption, entities: [] };
-  
-  const body: any = {
-    chat_id: chatId,
-    photo: photoUrl,
-    caption: parsed.text,
-    parse_mode: 'HTML',
-  };
-  
-  if (parsed.entities.length > 0) {
-    body.caption_entities = parsed.entities;
-  } else if (customEmojiId && caption) {
-    body.caption = `⭐ ${parsed.text}`;
-    body.caption_entities = [{
-      type: 'custom_emoji',
-      offset: 0,
-      length: 1,
-      custom_emoji_id: customEmojiId
-    }];
-  }
-  
-  await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-}
-
 // Отправка видео
-async function sendVideo(chatId: number, videoUrl: string, caption?: string, customEmojiId?: string) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo`;
-  
-  const parsed = caption ? parseTextWithEmojis(caption) : { text: caption, entities: [] };
+async function sendVideo(chatId: number, videoUrl: string, caption?: string) {
+  const url = `https://api.telegram.org/bot${MODEL_BOT_TOKEN}/sendVideo`;
   
   const body: any = {
     chat_id: chatId,
     video: videoUrl,
-    caption: parsed.text,
+    caption: caption,
     parse_mode: 'HTML',
   };
-  
-  if (parsed.entities.length > 0) {
-    body.caption_entities = parsed.entities;
-  } else if (customEmojiId && caption) {
-    body.caption = `⭐ ${parsed.text}`;
-    body.caption_entities = [{
-      type: 'custom_emoji',
-      offset: 0,
-      length: 1,
-      custom_emoji_id: customEmojiId
-    }];
-  }
   
   await fetch(url, {
     method: 'POST',
@@ -300,29 +146,15 @@ async function sendVideo(chatId: number, videoUrl: string, caption?: string, cus
 }
 
 // Отправка GIF/анимации
-async function sendAnimation(chatId: number, animationUrl: string, caption?: string, customEmojiId?: string) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendAnimation`;
-  
-  const parsed = caption ? parseTextWithEmojis(caption) : { text: caption, entities: [] };
+async function sendAnimation(chatId: number, animationUrl: string, caption?: string) {
+  const url = `https://api.telegram.org/bot${MODEL_BOT_TOKEN}/sendAnimation`;
   
   const body: any = {
     chat_id: chatId,
     animation: animationUrl,
-    caption: parsed.text,
+    caption: caption,
     parse_mode: 'HTML',
   };
-  
-  if (parsed.entities.length > 0) {
-    body.caption_entities = parsed.entities;
-  } else if (customEmojiId && caption) {
-    body.caption = `⭐ ${parsed.text}`;
-    body.caption_entities = [{
-      type: 'custom_emoji',
-      offset: 0,
-      length: 1,
-      custom_emoji_id: customEmojiId
-    }];
-  }
   
   await fetch(url, {
     method: 'POST',
@@ -331,171 +163,28 @@ async function sendAnimation(chatId: number, animationUrl: string, caption?: str
   });
 }
 
-// Отправка голосового сообщения
-async function sendVoice(chatId: number, audioBase64: string, replyToMessageId?: number) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice`;
+// Отправка фото
+async function sendPhoto(chatId: number, photoUrl: string, caption?: string) {
+  const url = `https://api.telegram.org/bot${MODEL_BOT_TOKEN}/sendPhoto`;
   
-  const binaryString = atob(audioBase64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  
-  const formData = new FormData();
-  formData.append('chat_id', chatId.toString());
-  formData.append('voice', new Blob([bytes], { type: 'audio/ogg' }), 'voice.ogg');
-  if (replyToMessageId) {
-    formData.append('reply_to_message_id', replyToMessageId.toString());
-  }
+  const body: any = {
+    chat_id: chatId,
+    photo: photoUrl,
+    caption: caption,
+    parse_mode: 'HTML',
+  };
   
   await fetch(url, {
     method: 'POST',
-    body: formData,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
-}
-
-// Получение файла из Telegram
-async function getFileUrl(fileId: string): Promise<string> {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${fileId}`;
-  const response = await fetch(url);
-  const data = await response.json();
-  return `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${data.result.file_path}`;
-}
-
-// Перевод RU ↔ EN через Lovable AI
-async function translateRuEn(text: string): Promise<{ translation: string; isRussian: boolean }> {
-  const hasRussian = /[а-яё]/i.test(text);
-  const targetLang = hasRussian ? 'English' : 'Russian';
-  
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a translator. Translate the text to ${targetLang}. Return ONLY the translation, nothing else.`
-        },
-        { role: 'user', content: text }
-      ],
-    }),
-  });
-
-  const data = await response.json();
-  const translation = data.choices?.[0]?.message?.content || text;
-  
-  return { translation: translation.trim(), isRussian: hasRussian };
-}
-
-// Транскрипция аудио через ElevenLabs
-async function transcribeAudio(audioUrl: string): Promise<string> {
-  const audioResponse = await fetch(audioUrl);
-  const audioBlob = await audioResponse.blob();
-  
-  const formData = new FormData();
-  formData.append('file', audioBlob, 'audio.ogg');
-  formData.append('model_id', 'scribe_v1');
-  
-  const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
-    method: 'POST',
-    headers: {
-      'xi-api-key': ELEVENLABS_API_KEY,
-    },
-    body: formData,
-  });
-  
-  const data = await response.json();
-  return data.text || '';
-}
-
-// Генерация голоса через ElevenLabs
-async function textToSpeech(text: string, targetLang: string): Promise<string> {
-  const voiceId = targetLang === 'Russian' ? 'onwK4e9ZLuTAKqWW03F9' : 'JBFqnCBsd6RMkjVDRZzb';
-  
-  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-    method: 'POST',
-    headers: {
-      'xi-api-key': ELEVENLABS_API_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      text,
-      model_id: 'eleven_multilingual_v2',
-      output_format: 'mp3_44100_128',
-    }),
-  });
-  
-  const arrayBuffer = await response.arrayBuffer();
-  
-  const uint8Array = new Uint8Array(arrayBuffer);
-  let binary = '';
-  const chunkSize = 0x8000;
-  for (let i = 0; i < uint8Array.length; i += chunkSize) {
-    const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
-    binary += String.fromCharCode.apply(null, Array.from(chunk));
-  }
-  
-  return btoa(binary);
-}
-
-// Генерация саммари за период
-async function generateSummary(chatId: number, hours: number = 24): Promise<string> {
-  const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
-  
-  const { data: messages } = await supabase
-    .from('telegram_chat_messages')
-    .select('*')
-    .eq('chat_id', chatId)
-    .gte('created_at', since)
-    .order('created_at', { ascending: true });
-  
-  if (!messages || messages.length === 0) {
-    return 'За последние сутки сообщений не было.';
-  }
-  
-  const transcript = messages.map(m => {
-    const text = m.transcription || m.text || '[медиа]';
-    return `${m.username || 'Аноним'}: ${text}`;
-  }).join('\n');
-  
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages: [
-        {
-          role: 'system',
-          content: `Ты помощник, который делает выжимку из переписки.
-Проанализируй диалог и создай краткий отчёт на русском языке:
-1. Основные темы обсуждения
-2. Ключевые решения и выводы
-3. Важные договорённости (если есть)
-4. Нерешённые вопросы (если есть)
-
-Будь кратким, но информативным.`
-        },
-        { role: 'user', content: `Переписка за последние ${hours} часов:\n\n${transcript}` }
-      ],
-    }),
-  });
-  
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || 'Не удалось создать саммари.';
 }
 
 // ===================== АНКЕТА МОДЕЛИ =====================
 
 // Получить или создать анкету
 async function getOrCreateApplication(chatId: number, userId: number, username?: string) {
-  // Ищем активную анкету
   const { data: existing } = await supabase
     .from('telegram_model_applications')
     .select('*')
@@ -510,7 +199,6 @@ async function getOrCreateApplication(chatId: number, userId: number, username?:
     return existing;
   }
   
-  // Создаём новую
   const { data: newApp } = await supabase
     .from('telegram_model_applications')
     .insert({
@@ -538,7 +226,6 @@ async function updateApplication(id: string, updates: any) {
 async function sendApplicationWelcome(chatId: number) {
   const settings = await getWelcomeSettings();
   
-  // Отправляем медиа с приветствием
   if (settings.welcome_media_url) {
     switch (settings.welcome_media_type) {
       case 'video':
@@ -557,7 +244,6 @@ async function sendApplicationWelcome(chatId: number) {
     await sendMessage(chatId, settings.welcome_message);
   }
   
-  // Затем кнопку для начала анкеты
   await sendMessageWithButtons(chatId, 
     '👇 <b>Нажмите кнопку ниже, чтобы начать заполнение анкеты:</b>', 
     [[{ text: '📝 Заполнить анкету', callback_data: 'app_start' }]]
@@ -779,7 +465,6 @@ async function handleApplicationCallback(callbackQuery: any) {
   let application = await getOrCreateApplication(chatId, userId, username);
   
   if (data === 'app_start' || data === 'app_restart') {
-    // Начинаем новую анкету
     if (data === 'app_restart') {
       const { data: newApp } = await supabase
         .from('telegram_model_applications')
@@ -948,20 +633,20 @@ async function handleApplicationCallback(callbackQuery: any) {
   }
 }
 
-// Обработка текстовых ответов анкеты
-async function handleApplicationTextInput(message: any) {
+// Обработка текстового ввода в анкете
+async function handleApplicationTextInput(message: any): Promise<boolean> {
   const chatId = message.chat.id;
-  const userId = message.from.id;
-  const username = message.from.username;
+  const userId = message.from?.id;
+  const username = message.from?.username;
   const text = message.text;
   
   const application = await getOrCreateApplication(chatId, userId, username);
   
   if (!application || application.status !== 'in_progress') {
-    return false; // Не в процессе заполнения анкеты
+    return false;
   }
   
-  console.log('Processing application text for step:', application.step);
+  console.log('Processing text input for step:', application.step);
   
   switch (application.step) {
     case 'full_name':
@@ -972,7 +657,7 @@ async function handleApplicationTextInput(message: any) {
     case 'age':
       const age = parseInt(text);
       if (isNaN(age) || age < 18 || age > 100) {
-        await sendMessage(chatId, '❌ Пожалуйста, введите корректный возраст (число от 18 до 100):');
+        await sendMessage(chatId, '⚠️ Пожалуйста, введите корректный возраст (от 18 лет). Только число:');
         return true;
       }
       await updateApplication(application.id, { age, step: 'country' });
@@ -985,11 +670,10 @@ async function handleApplicationTextInput(message: any) {
       return true;
       
     case 'height_weight':
-      // Парсим рост и вес из текста
       const parts = text.split('/').map((s: string) => s.trim());
       await updateApplication(application.id, { 
-        height: parts[0] || text, 
-        weight: parts[1] || '',
+        height: parts[0] || text,
+        weight: parts[1] || null,
         step: 'body_params' 
       });
       await sendApplicationQuestion(chatId, 'body_params', application);
@@ -1006,7 +690,6 @@ async function handleApplicationTextInput(message: any) {
       return true;
       
     case 'platforms':
-      // Теперь это текстовый ввод
       const platformsArray = text.toLowerCase() === 'нет' ? [] : [text];
       await updateApplication(application.id, { platforms: platformsArray, step: 'content_types' });
       await sendApplicationQuestion(chatId, 'content_types', application);
@@ -1018,7 +701,6 @@ async function handleApplicationTextInput(message: any) {
       return true;
       
     case 'equipment_details':
-      // Добавляем детали оборудования к существующему
       const currentEquipment = application.equipment || '';
       await updateApplication(application.id, { 
         equipment: `${currentEquipment} — ${text}`,
@@ -1034,7 +716,6 @@ async function handleApplicationTextInput(message: any) {
       
     case 'strong_points':
       await updateApplication(application.id, { strong_points: text, step: 'complete' });
-      // Перезагружаем анкету с обновлёнными данными
       const updatedApp = await getOrCreateApplication(chatId, userId, username);
       await completeApplication(chatId, updatedApp);
       return true;
@@ -1043,278 +724,38 @@ async function handleApplicationTextInput(message: any) {
   return false;
 }
 
-// ===================== ОБРАБОТЧИКИ =====================
-
 // Обработка команд
 async function handleCommand(message: any) {
   const chatId = message.chat.id;
-  const chatTitle = message.chat.title || message.chat.first_name;
-  const chatType = message.chat.type;
   const text = message.text || '';
   const command = text.split(' ')[0].replace('@' + (message.via_bot?.username || ''), '');
   
-  console.log('Processing command:', command);
-  
-  // Сохраняем настройки только для групп и каналов
-  await ensureChatSettings(chatId, chatTitle, chatType);
-  const settings = await getChatSettings(chatId);
+  console.log('Model bot processing command:', command);
   
   switch (command) {
     case '/start':
-      // В личных чатах показываем справку о боте HELP (анкета через другого бота)
-      if (message.chat.type === 'private') {
-        await sendMessage(chatId, `👋 <b>Привет! Я Apollo HELP Bot</b>
-
-Я бот-помощник для групп и каналов с функциями:
-• <b>Автоперевод</b> — RU ↔ EN автоматически
-• <b>Голосовые</b> — транскрибирую и переведу аудио
-• <b>/summary</b> — выжимка за последние сутки
-• <b>/p_команда</b> — быстрые фразы
-
-📝 <b>Для заполнения анкеты модели используйте отдельного бота:</b>
-@ApolloModelBot
-
-⚙️ Добавьте меня в группу для активации функций.`);
-      } else {
-        await sendMessage(chatId, `👋 Привет! Я бот-помощник с функциями:
-
-• <b>Автоперевод</b> — RU ↔ EN автоматически
-• <b>Голосовые</b> — транскрибирую и переведу аудио
-• <b>/summary</b> — выжимка за последние сутки
-• <b>/summary_all</b> — общий отчёт за всё время
-• <b>/p_команда</b> — быстрые фразы
-
-⚙️ Управление функциями доступно на панели управления.`);
-      }
-      break;
-      
     case '/apply':
       await sendApplicationWelcome(chatId);
       break;
       
-    case '/summary':
-      if (!settings.summary_enabled) {
-        await sendMessage(chatId, '⚠️ Функция саммари отключена для этого чата.');
-        return;
-      }
-      await sendMessage(chatId, '⏳ Генерирую саммари за последние 24 часа...');
-      const dailySummary = await generateSummary(chatId, 24);
-      await sendMessage(chatId, `📊 <b>Саммари за сутки:</b>\n\n${dailySummary}`);
-      break;
-      
-    case '/summary_all':
-      if (!settings.summary_enabled) {
-        await sendMessage(chatId, '⚠️ Функция саммари отключена для этого чата.');
-        return;
-      }
-      await sendMessage(chatId, '⏳ Анализирую всю историю чата...');
-      const { data: allMessages } = await supabase
-        .from('telegram_chat_messages')
-        .select('*')
-        .eq('chat_id', chatId)
-        .order('created_at', { ascending: true })
-        .limit(500);
-      
-      if (!allMessages || allMessages.length === 0) {
-        await sendMessage(chatId, 'История чата пуста.');
-        break;
-      }
-      
-      const fullTranscript = allMessages.map(m => {
-        const txt = m.transcription || m.text || '[медиа]';
-        return `${m.username || 'Аноним'}: ${txt}`;
-      }).join('\n');
-      
-      const allSummaryResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            {
-              role: 'system',
-              content: `Проанализируй всю историю переписки и создай подробный отчёт на русском:
-1. Общая тематика обсуждений
-2. Ключевые участники и их роли
-3. Основные решения и выводы за всё время
-4. Важные договорённости
-5. Открытые вопросы и задачи`
-            },
-            { role: 'user', content: `Полная история чата (${allMessages.length} сообщений):\n\n${fullTranscript}` }
-          ],
-        }),
-      });
-      
-      const allSummaryData = await allSummaryResponse.json();
-      await sendMessage(chatId, `📋 <b>Полный отчёт:</b>\n\n${allSummaryData.choices?.[0]?.message?.content || 'Ошибка'}`);
-      break;
-      
-    case '/phrases':
-      await sendMessage(chatId, `📝 Управление быстрыми фразами доступно через веб-интерфейс.
-
-Используйте команды вида: /p_название`);
-      break;
-      
     default:
-      // Проверяем быстрые фразы
-      if (command.startsWith('/')) {
-        if (!settings.quick_phrases_enabled) {
-          console.log('Quick phrases disabled for chat:', chatId);
-          return;
-        }
-        
-        const phraseCommand = command.substring(1);
-        console.log('Looking for quick phrase:', phraseCommand);
-        
-        const { data: phrases, error: phraseError } = await supabase
-          .from('telegram_quick_phrases')
-          .select('phrase, media_url, media_type, custom_emoji_id')
-          .eq('command', phraseCommand)
-          .limit(1);
-        
-        console.log('Phrase query result:', phrases, 'error:', phraseError);
-        
-        if (phrases && phrases.length > 0) {
-          const phrase = phrases[0];
-          
-          if (phrase.media_url) {
-            switch (phrase.media_type) {
-              case 'photo':
-                await sendPhoto(chatId, phrase.media_url, phrase.phrase, phrase.custom_emoji_id);
-                break;
-              case 'video':
-                await sendVideo(chatId, phrase.media_url, phrase.phrase, phrase.custom_emoji_id);
-                break;
-              case 'animation':
-                await sendAnimation(chatId, phrase.media_url, phrase.phrase, phrase.custom_emoji_id);
-                break;
-              default:
-                await sendMessage(chatId, phrase.phrase, undefined, phrase.custom_emoji_id);
-            }
-          } else {
-            await sendMessage(chatId, phrase.phrase, undefined, phrase.custom_emoji_id);
-          }
-        } else {
-          console.log('No phrase found for command:', phraseCommand);
-        }
-      }
+      await sendMessage(chatId, `👋 <b>Привет!</b>
+
+Я бот агентства <b>Apollo Production</b> для заполнения анкеты модели.
+
+Используйте /start или /apply чтобы начать заполнение анкеты.`);
   }
 }
 
 // Обработка текстового сообщения
 async function handleTextMessage(message: any) {
-  const chatId = message.chat.id;
-  const chatTitle = message.chat.title || message.chat.first_name;
-  const chatType = message.chat.type;
   const text = message.text;
-  const messageId = message.message_id;
-  const username = message.from?.username || message.from?.first_name || 'Unknown';
   
-  // Игнорируем команды
   if (text.startsWith('/')) return;
   
-  // В личных чатах игнорируем текст (анкета через отдельного бота)
-  if (chatType === 'private') {
-    return;
-  }
-  
-  // Сохраняем настройки только для групп/каналов
-  await ensureChatSettings(chatId, chatTitle, chatType);
-  const settings = await getChatSettings(chatId);
-  
-  // Сохраняем сообщение
-  await supabase.from('telegram_chat_messages').insert({
-    chat_id: chatId,
-    message_id: messageId,
-    user_id: message.from?.id,
-    username,
-    text,
-  });
-  
-  if (!settings.translator_enabled) {
-    console.log('Translator disabled for chat:', chatId);
-    return;
-  }
-  
-  const { translation, isRussian } = await translateRuEn(text);
-  
-  await supabase.from('telegram_chat_messages')
-    .update({ translation })
-    .eq('chat_id', chatId)
-    .eq('message_id', messageId);
-  
-  const fromLang = isRussian ? 'RU' : 'EN';
-  const toLang = isRussian ? 'EN' : 'RU';
-  await sendMessage(chatId, `🌐 <b>${fromLang} → ${toLang}</b>\n\n${translation}`, messageId);
-}
-
-// Обработка голосового сообщения
-async function handleVoiceMessage(message: any) {
-  const chatId = message.chat.id;
-  const chatTitle = message.chat.title || message.chat.first_name;
-  const chatType = message.chat.type;
-  const messageId = message.message_id;
-  const username = message.from?.username || message.from?.first_name || 'Unknown';
-  const voice = message.voice || message.audio;
-  
-  if (!voice) return;
-  
-  // Голосовые только в группах
-  if (chatType === 'private') return;
-  
-  await ensureChatSettings(chatId, chatTitle, chatType);
-  const settings = await getChatSettings(chatId);
-  
-  if (!settings.voice_enabled) {
-    console.log('Voice processing disabled for chat:', chatId);
-    return;
-  }
-  
-  await sendMessage(chatId, '🎤 Транскрибирую аудио...', messageId);
-  
-  try {
-    const fileUrl = await getFileUrl(voice.file_id);
-    const transcription = await transcribeAudio(fileUrl);
-    
-    if (!transcription) {
-      await sendMessage(chatId, '❌ Не удалось распознать аудио', messageId);
-      return;
-    }
-    
-    await supabase.from('telegram_chat_messages').insert({
-      chat_id: chatId,
-      message_id: messageId,
-      user_id: message.from?.id,
-      username,
-      is_voice: true,
-      transcription,
-    });
-    
-    if (settings.translator_enabled) {
-      const { translation, isRussian } = await translateRuEn(transcription);
-      
-      await supabase.from('telegram_chat_messages')
-        .update({ translation })
-        .eq('chat_id', chatId)
-        .eq('message_id', messageId);
-      
-      const fromLang = isRussian ? 'RU' : 'EN';
-      const toLang = isRussian ? 'EN' : 'RU';
-      
-      await sendMessage(chatId, `🎤 <b>Транскрипция (${fromLang}):</b>\n${transcription}\n\n🌐 <b>Перевод (${toLang}):</b>\n${translation}`, messageId);
-      
-      const audioBase64 = await textToSpeech(translation, isRussian ? 'English' : 'Russian');
-      await sendVoice(chatId, audioBase64, messageId);
-    } else {
-      await sendMessage(chatId, `🎤 <b>Транскрипция:</b>\n${transcription}`, messageId);
-    }
-    
-  } catch (error) {
-    console.error('Voice processing error:', error);
-    await sendMessage(chatId, '❌ Ошибка обработки голосового сообщения', messageId);
+  const isApplicationInput = await handleApplicationTextInput(message);
+  if (!isApplicationInput) {
+    await sendMessage(message.chat.id, '👆 Используйте /start чтобы начать заполнение анкеты.');
   }
 }
 
@@ -1325,12 +766,11 @@ serve(async (req) => {
 
   try {
     const update = await req.json();
-    console.log('Telegram update:', JSON.stringify(update));
+    console.log('Model bot update:', JSON.stringify(update));
     
     const message = update.message || update.edited_message;
     const callbackQuery = update.callback_query;
     
-    // Обработка callback от inline кнопок
     if (callbackQuery) {
       if (callbackQuery.data.startsWith('app_')) {
         await handleApplicationCallback(callbackQuery);
@@ -1346,11 +786,8 @@ serve(async (req) => {
       });
     }
     
-    // Обработка в зависимости от типа сообщения
     if (message.text?.startsWith('/')) {
       await handleCommand(message);
-    } else if (message.voice || message.audio) {
-      await handleVoiceMessage(message);
     } else if (message.text) {
       await handleTextMessage(message);
     }

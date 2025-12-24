@@ -649,11 +649,11 @@ const AdminPanel = () => {
                 playsInline
                 className="w-8 h-8 object-cover rounded-full"
               />
-              <span className="font-semibold">APLink</span>
+              <span className="font-semibold">Apollo Production</span>
             </Button>
             <Badge variant="secondary" className="gap-1">
               <Shield className="w-3 h-3" />
-              {admin.title || 'Админ-панель'}
+              Личный кабинет
             </Badge>
           </div>
           
