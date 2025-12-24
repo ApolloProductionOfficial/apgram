@@ -44,7 +44,11 @@ import {
   Clock,
   Play,
   FileText,
-  Command
+  Command,
+  Rabbit,
+  ClipboardList,
+  Edit3,
+  Save
 } from "lucide-react";
 import apolloLogo from "@/assets/cf-logo-final.png";
 import apolloLogoVideo from "@/assets/apollo-logo.mp4";
@@ -97,7 +101,8 @@ const Dashboard = () => {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState("phrases");
+  const [mainTab, setMainTab] = useState("telegram-help");
+  const [subTab, setSubTab] = useState("phrases");
   const [showSplash, setShowSplash] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -424,7 +429,7 @@ const Dashboard = () => {
             />
             
             <motion.p
-              className="text-xs sm:text-sm text-primary/70 mb-3 tracking-[0.4em] uppercase font-medium"
+              className="text-xs sm:text-sm text-primary/70 mb-3 tracking-[0.3em] uppercase font-medium"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.5 }}
@@ -449,11 +454,11 @@ const Dashboard = () => {
                 animate={{ x: "100%", opacity: [0, 0.6, 0] }}
                 transition={{ delay: 1, duration: 2, ease: "easeInOut" }}
               />
-              <h1 className="text-4xl sm:text-6xl md:text-7xl font-black relative z-10 flex flex-wrap justify-center tracking-tight">
-                {"APOLLO".split("").map((letter, index) => (
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-black relative z-10 flex flex-wrap justify-center tracking-tight">
+                {"APOLLO PRODUCTION".split("").map((letter, index) => (
                   <motion.span
                     key={index}
-                    className="inline-block relative bg-gradient-to-r from-primary via-foreground to-primary bg-clip-text text-transparent bg-[length:200%_auto]"
+                    className={`inline-block relative bg-gradient-to-r from-primary via-foreground to-primary bg-clip-text text-transparent bg-[length:200%_auto] ${letter === " " ? "w-3" : ""}`}
                     initial={{ 
                       opacity: 0, 
                       x: -20,
@@ -466,26 +471,26 @@ const Dashboard = () => {
                       backgroundPosition: ["200% 0", "-200% 0"],
                     }}
                     transition={{ 
-                      opacity: { delay: 1 + index * 0.1, duration: 0.4 },
-                      x: { delay: 1 + index * 0.1, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
-                      filter: { delay: 1 + index * 0.1, duration: 0.4 },
+                      opacity: { delay: 1 + index * 0.05, duration: 0.4 },
+                      x: { delay: 1 + index * 0.05, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+                      filter: { delay: 1 + index * 0.05, duration: 0.4 },
                       backgroundPosition: { delay: 2, duration: 4, repeat: Infinity, ease: "linear" },
                     }}
                   >
-                    {letter}
+                    {letter === " " ? "\u00A0" : letter}
                   </motion.span>
                 ))}
               </h1>
             </div>
             
-            {/* BOT MANAGER subtitle */}
+            {/* Subtitle */}
             <motion.p
-              className="text-xl sm:text-2xl md:text-3xl text-foreground/90 font-semibold tracking-widest"
+              className="text-lg sm:text-xl md:text-2xl text-foreground/90 font-semibold tracking-widest"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.6, duration: 0.5 }}
             >
-              BOT MANAGER
+              Личный кабинет агентства
             </motion.p>
 
             {/* Decorative line bottom */}
@@ -560,10 +565,10 @@ const Dashboard = () => {
               </div>
               <div className="flex flex-col">
                 <span className="text-base sm:text-lg font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                  Apollo Bot Manager
+                  APOLLO PRODUCTION
                 </span>
                 <span className="text-[10px] sm:text-xs text-muted-foreground">
-                  Telegram Bot · Apollo Production
+                  Личный кабинет агентства
                 </span>
               </div>
             </div>
@@ -700,74 +705,61 @@ const Dashboard = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="bg-slate-900/50 border border-white/5 p-1.5 gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
+          {/* Main Section Tabs */}
+          <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-6">
+            <TabsList className="bg-slate-900/50 border border-white/5 p-1.5 gap-1 w-full flex-wrap">
+              <TabsTrigger 
+                value="telegram-help" 
+                className="relative flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0088cc] data-[state=active]:to-[#00a8e8] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-[#0088cc]/30 transition-all duration-300"
+              >
+                <Bot className="w-4 h-4 mr-2" />
+                Telegram Bot HELP
+              </TabsTrigger>
+              
+              <TabsTrigger 
+                value="model-application" 
+                className="relative flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/30 transition-all duration-300"
+              >
+                <ClipboardList className="w-4 h-4 mr-2" />
+                Анкета моделей
+              </TabsTrigger>
+              
+              <TabsTrigger 
+                value="pimpbunny" 
+                className="relative flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-pink-500/30 transition-all duration-300"
+              >
+                <Rabbit className="w-4 h-4 mr-2" />
+                PimpBunny
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Telegram Bot HELP Tab */}
+            <TabsContent value="telegram-help" className="space-y-6">
+              {/* Sub-tabs for Telegram Bot */}
+              <Tabs value={subTab} onValueChange={setSubTab} className="space-y-4">
+                <TabsList className="bg-slate-800/50 border border-white/5 p-1 gap-1">
                   <TabsTrigger 
                     value="phrases" 
-                    className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0088cc] data-[state=active]:to-[#00a8e8] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-[#0088cc]/30 transition-all duration-300"
+                    className="text-xs data-[state=active]:bg-[#0088cc] data-[state=active]:text-white"
                   >
-                    <MessageCircle className="w-4 h-4 mr-2" />
+                    <MessageCircle className="w-3 h-3 mr-1" />
                     Быстрые фразы
-                    {activeTab === "phrases" && (
-                      <motion.div
-                        className="absolute inset-0 rounded-md bg-gradient-to-r from-[#0088cc]/20 to-[#00a8e8]/20"
-                        layoutId="activeTab"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                      />
-                    )}
                   </TabsTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white">
-                  <p>Создание шаблонных сообщений для быстрой отправки по команде</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
                   <TabsTrigger 
                     value="chats" 
-                    className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/30 transition-all duration-300"
+                    className="text-xs data-[state=active]:bg-purple-500 data-[state=active]:text-white"
                   >
-                    <Settings className="w-4 h-4 mr-2" />
+                    <Settings className="w-3 h-3 mr-1" />
                     Настройки чатов
-                    {activeTab === "chats" && (
-                      <motion.div
-                        className="absolute inset-0 rounded-md bg-gradient-to-r from-purple-500/20 to-pink-500/20"
-                        layoutId="activeTab"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                      />
-                    )}
                   </TabsTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white">
-                  <p>Включение/выключение функций бота для каждого чата</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
                   <TabsTrigger 
                     value="history" 
-                    className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/30 transition-all duration-300"
+                    className="text-xs data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
                   >
-                    <History className="w-4 h-4 mr-2" />
+                    <History className="w-3 h-3 mr-1" />
                     История
-                    {activeTab === "history" && (
-                      <motion.div
-                        className="absolute inset-0 rounded-md bg-gradient-to-r from-emerald-500/20 to-teal-500/20"
-                        layoutId="activeTab"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                      />
-                    )}
                   </TabsTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white">
-                  <p>Лента сообщений в реальном времени со всех чатов</p>
-                </TooltipContent>
-              </Tooltip>
-            </TabsList>
+                </TabsList>
 
             {/* Phrases Tab */}
             <TabsContent value="phrases" className="space-y-6">
@@ -1067,83 +1059,162 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-          </TabsContent>
+              </TabsContent>
 
-          {/* History Tab */}
-          <TabsContent value="history" className="space-y-6">
-            <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                    <History className="w-4 h-4 text-white" />
-                  </div>
-                  История сообщений
-                  <span className="ml-auto flex items-center gap-1 text-xs font-normal text-slate-400">
-                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Realtime
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[600px] pr-4">
-                  {messages.length === 0 ? (
-                    <div className="text-center py-12 text-slate-500">
-                      <History className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                      <p>Нет сообщений</p>
-                      <p className="text-xs mt-2">Сообщения появятся здесь в реальном времени</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {messages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className="p-4 rounded-xl bg-slate-800/30 border border-white/5 space-y-2 hover:bg-slate-800/50 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {msg.is_voice ? (
-                                <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center">
-                                  <Mic className="w-3 h-3 text-orange-400" />
+              {/* History Sub-Tab */}
+              <TabsContent value="history" className="space-y-6">
+                <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-white">
+                      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                        <History className="w-4 h-4 text-white" />
+                      </div>
+                      История сообщений
+                      <span className="ml-auto flex items-center gap-1 text-xs font-normal text-slate-400">
+                        <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        Realtime
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-[600px] pr-4">
+                      {messages.length === 0 ? (
+                        <div className="text-center py-12 text-slate-500">
+                          <History className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                          <p>Нет сообщений</p>
+                          <p className="text-xs mt-2">Сообщения появятся здесь в реальном времени</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {messages.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className="p-4 rounded-xl bg-slate-800/30 border border-white/5 space-y-2 hover:bg-slate-800/50 transition-colors"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  {msg.is_voice ? (
+                                    <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center">
+                                      <Mic className="w-3 h-3 text-orange-400" />
+                                    </div>
+                                  ) : (
+                                    <div className="w-6 h-6 rounded-full bg-[#0088cc]/20 flex items-center justify-center">
+                                      <User className="w-3 h-3 text-[#0088cc]" />
+                                    </div>
+                                  )}
+                                  <span className="text-sm font-medium text-white">
+                                    {msg.username || 'Аноним'}
+                                  </span>
                                 </div>
-                              ) : (
-                                <div className="w-6 h-6 rounded-full bg-[#0088cc]/20 flex items-center justify-center">
-                                  <User className="w-3 h-3 text-[#0088cc]" />
+                                <span className="text-xs text-slate-500">
+                                  {formatTime(msg.created_at)}
+                                </span>
+                              </div>
+                              
+                              {msg.is_voice && msg.transcription ? (
+                                <div className="space-y-1">
+                                  <p className="text-xs text-orange-400/70">🎤 Транскрипция:</p>
+                                  <p className="text-sm text-slate-300">{msg.transcription}</p>
+                                </div>
+                              ) : msg.text ? (
+                                <p className="text-sm text-slate-300">{msg.text}</p>
+                              ) : null}
+                              
+                              {msg.translation && (
+                                <div className="pt-2 border-t border-white/5">
+                                  <p className="text-xs text-[#0088cc]/70 flex items-center gap-1">
+                                    <Globe className="w-3 h-3" /> Перевод:
+                                  </p>
+                                  <p className="text-sm text-[#0088cc]">{msg.translation}</p>
                                 </div>
                               )}
-                              <span className="text-sm font-medium text-white">
-                                {msg.username || 'Аноним'}
-                              </span>
                             </div>
-                            <span className="text-xs text-slate-500">
-                              {formatTime(msg.created_at)}
-                            </span>
-                          </div>
-                          
-                          {msg.is_voice && msg.transcription ? (
-                            <div className="space-y-1">
-                              <p className="text-xs text-orange-400/70">🎤 Транскрипция:</p>
-                              <p className="text-sm text-slate-300">{msg.transcription}</p>
-                            </div>
-                          ) : msg.text ? (
-                            <p className="text-sm text-slate-300">{msg.text}</p>
-                          ) : null}
-                          
-                          {msg.translation && (
-                            <div className="pt-2 border-t border-white/5">
-                              <p className="text-xs text-[#0088cc]/70 flex items-center gap-1">
-                                <Globe className="w-3 h-3" /> Перевод:
-                              </p>
-                              <p className="text-sm text-[#0088cc]">{msg.translation}</p>
-                            </div>
-                          )}
+                          ))}
                         </div>
-                      ))}
+                      )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              </Tabs>
+            </TabsContent>
+
+            {/* Model Application Tab */}
+            <TabsContent value="model-application" className="space-y-6">
+              <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                      <ClipboardList className="w-4 h-4 text-white" />
                     </div>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    Настройки анкеты моделей
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">
+                    Редактирование вопросов и настройка бота Model Profile
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Webhook URL */}
+                  <div className="p-4 rounded-xl bg-slate-800/30 border border-purple-500/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm text-purple-300">
+                        <Bot className="w-4 h-4" />
+                        <span>Webhook URL для Model Bot</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText("https://ykwiqymksnndugphhgmc.supabase.co/functions/v1/model-bot");
+                          toast.success("Webhook URL скопирован!");
+                        }}
+                        className="text-xs border-purple-500/30 hover:bg-purple-500/20"
+                      >
+                        <Copy className="w-3 h-3 mr-1" />
+                        Копировать
+                      </Button>
+                    </div>
+                    <code className="block text-xs text-purple-400 bg-purple-500/10 p-2 rounded-lg break-all">
+                      https://ykwiqymksnndugphhgmc.supabase.co/functions/v1/model-bot
+                    </code>
+                    <p className="text-xs text-slate-500">
+                      Установите этот URL как webhook в настройках @BotFather для бота анкеты моделей
+                    </p>
+                  </div>
+
+                  {/* Placeholder for questionnaire editor */}
+                  <div className="text-center py-12 text-slate-500">
+                    <Edit3 className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <p>Редактор вопросов анкеты</p>
+                    <p className="text-xs mt-2">Функционал редактирования вопросов будет добавлен позже</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* PimpBunny Tab */}
+            <TabsContent value="pimpbunny" className="space-y-6">
+              <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
+                      <Rabbit className="w-4 h-4 text-white" />
+                    </div>
+                    PimpBunny
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">
+                    Настройки и управление PimpBunny
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12 text-slate-500">
+                    <Rabbit className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <p>Раздел PimpBunny</p>
+                    <p className="text-xs mt-2">Функционал будет добавлен позже</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </motion.div>
         {/* Bot Commands in Header area - moved from footer */}

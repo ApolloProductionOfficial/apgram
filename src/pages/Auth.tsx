@@ -170,11 +170,11 @@ const Auth = () => {
               Apollo Production
             </motion.p>
             
-            <h1 className="text-3xl sm:text-5xl font-black relative z-10 flex flex-wrap justify-center tracking-tight mb-2">
-              {"APOLLO".split("").map((letter, index) => (
+            <h1 className="text-2xl sm:text-4xl font-black relative z-10 flex flex-wrap justify-center tracking-tight mb-2">
+              {"APOLLO PRODUCTION".split("").map((letter, index) => (
                 <motion.span
                   key={index}
-                  className="inline-block relative bg-gradient-to-r from-primary via-foreground to-primary bg-clip-text text-transparent bg-[length:200%_auto]"
+                  className={`inline-block relative bg-gradient-to-r from-primary via-foreground to-primary bg-clip-text text-transparent bg-[length:200%_auto] ${letter === " " ? "w-2" : ""}`}
                   initial={{ opacity: 0, x: -20, filter: "blur(8px)" }}
                   animate={{ 
                     opacity: 1, 
@@ -183,24 +183,24 @@ const Auth = () => {
                     backgroundPosition: ["200% 0", "-200% 0"],
                   }}
                   transition={{ 
-                    opacity: { delay: 0.8 + index * 0.1, duration: 0.4 },
-                    x: { delay: 0.8 + index * 0.1, duration: 0.4 },
-                    filter: { delay: 0.8 + index * 0.1, duration: 0.4 },
+                    opacity: { delay: 0.8 + index * 0.05, duration: 0.4 },
+                    x: { delay: 0.8 + index * 0.05, duration: 0.4 },
+                    filter: { delay: 0.8 + index * 0.05, duration: 0.4 },
                     backgroundPosition: { delay: 1.8, duration: 4, repeat: Infinity, ease: "linear" },
                   }}
                 >
-                  {letter}
+                  {letter === " " ? "\u00A0" : letter}
                 </motion.span>
               ))}
             </h1>
             
             <motion.p
-              className="text-lg sm:text-xl text-foreground/90 font-semibold tracking-widest"
+              className="text-base sm:text-lg text-foreground/90 font-semibold tracking-widest"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.4, duration: 0.5 }}
             >
-              BOT MANAGER
+              Личный кабинет агентства
             </motion.p>
 
             <motion.div
@@ -293,10 +293,10 @@ const Auth = () => {
           </div>
           <div>
             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-              Apollo Bot Manager
+              APOLLO PRODUCTION
             </CardTitle>
             <CardDescription className="text-muted-foreground mt-2">
-              Войдите в панель управления
+              Войдите в личный кабинет агентства
             </CardDescription>
           </div>
         </CardHeader>
