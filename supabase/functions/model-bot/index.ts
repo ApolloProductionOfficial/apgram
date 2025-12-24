@@ -52,6 +52,16 @@ async function getNextStep(currentStep: string): Promise<string | null> {
   return questions[currentIndex + 1].step;
 }
 
+// Get previous question step
+async function getPreviousStep(currentStep: string): Promise<string | null> {
+  const questions = await getQuestions();
+  const currentIndex = questions.findIndex(q => q.step === currentStep);
+  if (currentIndex <= 0) {
+    return null; // No previous question
+  }
+  return questions[currentIndex - 1].step;
+}
+
 // Get total questions count
 async function getTotalQuestions(): Promise<number> {
   const questions = await getQuestions();
@@ -329,6 +339,9 @@ async function updateApplication(id: string, updates: any) {
 async function sendApplicationWelcome(chatId: number) {
   const settings = await getWelcomeSettings();
   
+  // Add button to the welcome message
+  const welcomeButton = [[{ text: '📝 Заполнить анкету', callback_data: 'app_start' }]];
+  
   if (settings.welcome_media_url) {
     switch (settings.welcome_media_type) {
       case 'video':
@@ -343,14 +356,12 @@ async function sendApplicationWelcome(chatId: number) {
       default:
         await sendVideo(chatId, settings.welcome_media_url, settings.welcome_message);
     }
+    // Send button right after media
+    await sendMessageWithButtons(chatId, '👇', welcomeButton);
   } else {
-    await sendMessage(chatId, settings.welcome_message);
+    // Send welcome text with button
+    await sendMessageWithButtons(chatId, settings.welcome_message, welcomeButton);
   }
-  
-  await sendMessageWithButtons(chatId, 
-    '👇 <b>Нажмите кнопку ниже, чтобы начать заполнение анкеты:</b>', 
-    [[{ text: '📝 Заполнить анкету', callback_data: 'app_start' }]]
-  );
 }
 
 // Отправить вопрос анкеты (ДИНАМИЧЕСКИ ИЗ БД)
@@ -365,12 +376,20 @@ async function sendApplicationQuestion(chatId: number, step: string, application
   
   const totalQuestions = await getTotalQuestions();
   const questionNum = await getQuestionNumber(step);
+  const prevStep = await getPreviousStep(step);
   const header = `📋 <b>Шаг ${questionNum}/${totalQuestions}</b>\n\n`;
   const questionText = header + question.question + (question.description ? `\n\n<i>${question.description}</i>` : '');
   
+  // Back button (only if not first question)
+  const backButton = prevStep ? [{ text: '⬅️ Назад', callback_data: `app_back_${prevStep}` }] : null;
+  
   switch (question.question_type) {
     case 'text':
-      await sendMessage(chatId, questionText);
+      if (backButton) {
+        await sendMessageWithButtons(chatId, questionText, [backButton]);
+      } else {
+        await sendMessage(chatId, questionText);
+      }
       break;
       
     case 'buttons':
@@ -385,6 +404,11 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       // Add "Other" option for country
       if (step === 'country') {
         buttons.push([{ text: '🌐 Другая страна', callback_data: 'app_country_other' }]);
+      }
+      
+      // Add back button
+      if (backButton) {
+        buttons.push(backButton);
       }
       
       await sendMessageWithButtons(chatId, questionText, buttons);
@@ -411,6 +435,7 @@ async function sendApplicationQuestion(chatId: number, step: string, application
         });
         multiButtons.push([{ text: `➡️ Далее (стр. 2/${totalPages})`, callback_data: `app_multi_page_${step}_2` }]);
         multiButtons.push([{ text: '✅ Готово', callback_data: `app_multi_done_${step}` }]);
+        if (backButton) multiButtons.push(backButton);
         
         await sendMessageWithButtons(chatId, questionText + '\n\n<b>Страница 1/' + totalPages + '</b>', multiButtons);
       } else {
@@ -422,21 +447,29 @@ async function sendApplicationQuestion(chatId: number, step: string, application
           }];
         });
         multiButtons.push([{ text: '✅ Готово', callback_data: `app_multi_done_${step}` }]);
+        if (backButton) multiButtons.push(backButton);
         
         await sendMessageWithButtons(chatId, questionText, multiButtons);
       }
       break;
       
     case 'photos':
-      await sendMessage(chatId, questionText + '\n\n📷 <b>Отправляйте фото по одному.</b> Когда закончите — нажмите кнопку ниже:');
-      await sendMessageWithButtons(chatId, '👇 Отправьте фото или нажмите, когда закончите:', [
+      const photoButtons = [
         [{ text: '✅ Готово — у меня все фото', callback_data: 'app_photos_done' }],
         [{ text: '⏭️ Пропустить фото', callback_data: 'app_photos_skip' }]
-      ]);
+      ];
+      if (backButton) photoButtons.push(backButton);
+      
+      await sendMessage(chatId, questionText + '\n\n📷 <b>Отправляйте фото по одному.</b> Когда закончите — нажмите кнопку ниже:');
+      await sendMessageWithButtons(chatId, '👇 Отправьте фото или нажмите, когда закончите:', photoButtons);
       break;
       
     default:
-      await sendMessage(chatId, questionText);
+      if (backButton) {
+        await sendMessageWithButtons(chatId, questionText, [backButton]);
+      } else {
+        await sendMessage(chatId, questionText);
+      }
   }
 }
 
@@ -576,6 +609,15 @@ async function handleApplicationCallback(callbackQuery: any) {
       await updateApplication(application.id, { step: firstQuestion.step });
     }
     await sendApplicationQuestion(chatId, firstQuestion.step, application);
+    return;
+  }
+  
+  // Handle back button (app_back_{step})
+  const backMatch = data.match(/^app_back_(.+)$/);
+  if (backMatch) {
+    const targetStep = backMatch[1];
+    await updateApplication(application.id, { step: targetStep });
+    await sendApplicationQuestion(chatId, targetStep, application);
     return;
   }
   
