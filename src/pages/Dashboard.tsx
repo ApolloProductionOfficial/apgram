@@ -70,8 +70,8 @@ import {
 import apolloLogo from "@/assets/cf-logo-final.png";
 import apolloLogoVideo from "@/assets/apollo-logo.mp4";
 import backgroundVideo from "@/assets/background-video-new.mp4";
-import onlyfansLogo from "@/assets/onlyfans-neon-logo.png";
-import pimpbunnyLogo from "@/assets/pimpbunny-logo.png";
+import onlyfansLogo from "@/assets/onlyfans-icon.png";
+import pimpbunnyLogo from "@/assets/pimpbunny-ears.png";
 import CustomCursor from "@/components/CustomCursor";
 import { ApplicationStats } from "@/components/ApplicationStats";
 import { BotCommandsHelp } from "@/components/BotCommandsHelp";
@@ -975,8 +975,8 @@ const Dashboard = () => {
                 value="onlyfans" 
                 className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-teal-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden">
-                  <img src={onlyfansLogo} alt="OnlyFans" className="w-16 h-16 object-contain drop-shadow-[0_0_12px_rgba(6,182,228,0.8)]" />
+                <div className="w-24 h-24 flex items-center justify-center">
+                  <img src={onlyfansLogo} alt="OnlyFans" className="w-20 h-20 object-contain drop-shadow-[0_0_20px_rgba(6,182,228,0.9)]" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">OnlyFans</p>
@@ -989,8 +989,8 @@ const Dashboard = () => {
                 value="pimpbunny" 
                 className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-pink-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden">
-                  <img src={pimpbunnyLogo} alt="PimpBunny" className="w-16 h-16 object-contain drop-shadow-[0_0_12px_rgba(236,72,153,0.8)]" />
+                <div className="w-24 h-24 flex items-center justify-center">
+                  <img src={pimpbunnyLogo} alt="PimpBunny" className="w-20 h-20 object-contain drop-shadow-[0_0_20px_rgba(236,72,153,0.9)]" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">PimpBunny</p>
