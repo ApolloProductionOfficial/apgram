@@ -398,39 +398,19 @@ const Dashboard = () => {
     }
   };
 
-  const exportApplicationsToCSV = () => {
-    const headers = [
-      'ID', 'Telegram Username', 'Имя', 'Возраст', 'Страна', 
-      'Рост', 'Вес', 'Цвет волос', 'Платформы', 'Контент', 
-      'Желаемый доход', 'О себе', 'Статус', 'Дата заявки'
-    ];
+  const exportAllApplicationsToWord = async () => {
+    if (filteredApplications.length === 0) {
+      toast.error("Нет заявок для экспорта");
+      return;
+    }
     
-    const csvContent = [
-      headers.join(';'),
-      ...filteredApplications.map(app => [
-        app.id,
-        app.telegram_username || '',
-        app.full_name || '',
-        app.age || '',
-        app.country || '',
-        app.height || '',
-        app.weight || '',
-        app.hair_color || '',
-        (app.platforms || []).join(', '),
-        (app.content_preferences || []).join(', '),
-        app.desired_income || '',
-        (app.about_yourself || '').replace(/;/g, ',').replace(/\n/g, ' '),
-        app.status,
-        new Date(app.created_at).toLocaleDateString('ru-RU')
-      ].map(v => `"${v}"`).join(';'))
-    ].join('\n');
-
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `model_applications_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    toast.success("CSV файл скачан!");
+    toast.info(`Экспортирую ${filteredApplications.length} заявок...`);
+    
+    for (const app of filteredApplications) {
+      await exportApplicationToWord(app);
+    }
+    
+    toast.success(`Экспортировано ${filteredApplications.length} заявок в Word!`);
   };
 
   const updateApplicationStatus = async (id: string, newStatus: string) => {
@@ -1494,11 +1474,11 @@ const Dashboard = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={exportApplicationsToCSV}
+                            onClick={exportAllApplicationsToWord}
                             className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
                           >
                             <Download className="w-4 h-4 mr-2" />
-                            Экспорт CSV
+                            Экспорт Word
                           </Button>
                           <Button
                             variant="ghost"

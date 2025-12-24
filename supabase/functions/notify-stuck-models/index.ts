@@ -93,7 +93,8 @@ serve(async (req) => {
       const hoursStuck = Math.floor((Date.now() - new Date(app.updated_at).getTime()) / (1000 * 60 * 60));
       const stepLabel = STEP_LABELS[app.step] || app.step;
       
-      const message = `⚠️ <b>Модель застряла на анкете!</b>
+      // Сообщение для команды
+      const teamMessage = `⚠️ <b>Модель застряла на анкете!</b>
 
 👤 <b>Имя:</b> ${app.full_name || 'Не указано'}
 📱 <b>Telegram:</b> ${app.telegram_username ? `@${app.telegram_username}` : `ID: ${app.telegram_user_id}`}
@@ -102,6 +103,7 @@ serve(async (req) => {
 
 💡 <i>Напишите модели и узнайте, что случилось — возможно ей нужна помощь!</i>`;
 
+      // Отправляем уведомление команде
       for (const chatId of chatIds) {
         try {
           const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -109,7 +111,7 @@ serve(async (req) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               chat_id: chatId,
-              text: message,
+              text: teamMessage,
               parse_mode: 'HTML',
               reply_markup: app.telegram_username ? {
                 inline_keyboard: [[
@@ -121,11 +123,43 @@ serve(async (req) => {
           
           const result = await response.json();
           notificationResults.push({ chatId, appId: app.id, success: result.ok });
-          console.log(`Notification sent to ${chatId} for app ${app.id}:`, result.ok);
+          console.log(`Team notification sent to ${chatId} for app ${app.id}:`, result.ok);
         } catch (err) {
-          console.error(`Failed to send notification to ${chatId}:`, err);
+          console.error(`Failed to send team notification to ${chatId}:`, err);
           notificationResults.push({ chatId, appId: app.id, success: false, error: String(err) });
         }
+      }
+
+      // Отправляем напоминание самой модели
+      try {
+        const modelMessage = `👋 <b>Привет!</b>
+
+Заметили, что вы начали заполнять анкету, но ещё не закончили 🤔
+
+❓ <b>Что-то не устроило? Возникли вопросы?</b>
+
+Вы можете написать напрямую нашему владельцу @Apollo_Production — он детальнее выслушает ваши сомнения и даст рекомендации!
+
+Мы будем рады помочь 💜`;
+
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: app.chat_id,
+            text: modelMessage,
+            parse_mode: 'HTML',
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '📝 Продолжить анкету', callback_data: 'app_continue' }],
+                [{ text: '💬 Написать владельцу', url: 'https://t.me/Apollo_Production' }]
+              ]
+            }
+          }),
+        });
+        console.log(`Reminder sent to model ${app.telegram_username || app.chat_id}`);
+      } catch (err) {
+        console.error(`Failed to send reminder to model:`, err);
       }
     }
 

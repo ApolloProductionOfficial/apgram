@@ -143,6 +143,12 @@ export function TeamNotificationSettings({
       return;
     }
     
+    const chatIdNum = Number(ownerChatId.trim());
+    if (isNaN(chatIdNum) || chatIdNum <= 0) {
+      toast.error("Chat ID должен быть положительным числом");
+      return;
+    }
+    
     setIsSaving(true);
     try {
       const { data: existing } = await supabase
@@ -154,27 +160,33 @@ export function TeamNotificationSettings({
       if (existing) {
         const { error } = await supabase
           .from("bot_welcome_settings")
-          .update({ owner_telegram_chat_id: parseInt(ownerChatId) })
+          .update({ owner_telegram_chat_id: chatIdNum })
           .eq("id", existing.id);
 
         if (error) {
           console.error('Save owner error:', error);
-          toast.error("Ошибка сохранения");
+          toast.error(`Ошибка сохранения: ${error.message}`);
         } else {
           toast.success("Chat ID сохранён! Уведомления будут приходить вам.");
         }
       } else {
         const { error } = await supabase
           .from("bot_welcome_settings")
-          .insert({ owner_telegram_chat_id: parseInt(ownerChatId) });
+          .insert({ 
+            owner_telegram_chat_id: chatIdNum,
+            welcome_message: 'Добро пожаловать!'
+          });
 
         if (error) {
           console.error('Insert owner error:', error);
-          toast.error("Ошибка сохранения");
+          toast.error(`Ошибка сохранения: ${error.message}`);
         } else {
           toast.success("Chat ID сохранён!");
         }
       }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast.error("Неожиданная ошибка при сохранении");
     } finally {
       setIsSaving(false);
     }
