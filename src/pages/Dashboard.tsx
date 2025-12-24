@@ -525,7 +525,7 @@ const Dashboard = () => {
         body: {
           chat_id: app.chat_id,
           message: reminderText,
-          inline_keyboard: [[{ text: '📝 Продолжить заполнение', callback_data: 'app_start' }]]
+          inline_keyboard: [[{ text: '📝 Продолжить заполнение', callback_data: 'app_continue' }]]
         }
       });
       
