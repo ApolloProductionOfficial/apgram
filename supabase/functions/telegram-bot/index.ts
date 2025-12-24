@@ -14,6 +14,53 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// URL для приветственного видео
+const WELCOME_VIDEO_URL = 'https://ykwiqymksnndugphhgmc.supabase.co/storage/v1/object/public/bot-media/welcome-model.mp4';
+
+// Платформы которые предлагаем
+const PLATFORMS = [
+  { id: 'onlyfans', name: 'OnlyFans', emoji: '🔥' },
+  { id: 'fansly', name: 'Fansly', emoji: '💎' },
+  { id: 'stripchat', name: 'Stripchat', emoji: '🎥' },
+  { id: 'chaturbate', name: 'Chaturbate', emoji: '📹' },
+  { id: 'bongacams', name: 'BongaCams', emoji: '🌐' },
+  { id: 'livejasmin', name: 'LiveJasmin', emoji: '💋' },
+  { id: 'cam4', name: 'CAM4', emoji: '🎬' },
+  { id: 'myfreecams', name: 'MyFreeCams', emoji: '✨' },
+];
+
+// Типы контента
+const CONTENT_TYPES = [
+  { id: 'solo', name: 'Соло контент', emoji: '👤' },
+  { id: 'bg', name: 'B/G (с партнёром)', emoji: '👫' },
+  { id: 'gg', name: 'G/G (лесби)', emoji: '👩‍❤️‍👩' },
+  { id: 'fetish', name: 'Фетиш контент', emoji: '🎭' },
+  { id: 'webcam', name: 'Вебкам трансляции', emoji: '📺' },
+  { id: 'chat', name: 'Только чат/общение', emoji: '💬' },
+];
+
+// Шаги анкеты
+const APPLICATION_STEPS = [
+  'welcome',
+  'full_name',
+  'age',
+  'country',
+  'height_weight',
+  'body_params',
+  'hair_color',
+  'languages',
+  'platforms',
+  'content_types',
+  'experience',
+  'social_links',
+  'equipment',
+  'time_availability',
+  'desired_income',
+  'about_yourself',
+  'strong_points',
+  'complete'
+];
+
 // Получение настроек чата
 async function getChatSettings(chatId: number) {
   const { data } = await supabase
@@ -63,36 +110,92 @@ function parseTextWithEmojis(text: string): { text: string; entities: any[] } {
   let match;
   
   while ((match = emojiRegex.exec(text)) !== null) {
-    // Добавляем текст до эмодзи
     processedText += text.slice(lastIndex, match.index);
-    
-    // Позиция эмодзи в обработанном тексте (в UTF-16 code units)
     const offset = [...processedText].length;
-    
-    // Добавляем placeholder для эмодзи (любой символ, заменится)
     processedText += '⭐';
-    
     entities.push({
       type: 'custom_emoji',
       offset: offset,
       length: 1,
       custom_emoji_id: match[1]
     });
-    
     lastIndex = match.index + match[0].length;
   }
   
-  // Добавляем остаток текста
   processedText += text.slice(lastIndex);
-  
   return { text: processedText, entities };
+}
+
+// Отправка сообщения с inline кнопками
+async function sendMessageWithButtons(chatId: number, text: string, buttons: any[][], replyToMessageId?: number) {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  
+  const body: any = {
+    chat_id: chatId,
+    text: text,
+    parse_mode: 'HTML',
+    reply_markup: {
+      inline_keyboard: buttons
+    }
+  };
+  
+  if (replyToMessageId) {
+    body.reply_to_message_id = replyToMessageId;
+  }
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  
+  const result = await response.json();
+  if (!result.ok) {
+    console.error('sendMessageWithButtons error:', result);
+  }
+  return result;
+}
+
+// Редактирование сообщения
+async function editMessage(chatId: number, messageId: number, text: string, buttons?: any[][]) {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`;
+  
+  const body: any = {
+    chat_id: chatId,
+    message_id: messageId,
+    text: text,
+    parse_mode: 'HTML',
+  };
+  
+  if (buttons) {
+    body.reply_markup = { inline_keyboard: buttons };
+  }
+  
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+// Ответ на callback query
+async function answerCallbackQuery(callbackQueryId: string, text?: string) {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`;
+  
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      callback_query_id: callbackQueryId,
+      text: text,
+    }),
+  });
 }
 
 // Отправка сообщения в Telegram
 async function sendMessage(chatId: number, text: string, replyToMessageId?: number, customEmojiId?: string) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
   
-  // Парсим текст с маркерами эмодзи [emoji:ID]
   const parsed = parseTextWithEmojis(text);
   
   const body: any = {
@@ -102,11 +205,9 @@ async function sendMessage(chatId: number, text: string, replyToMessageId?: numb
     parse_mode: 'HTML',
   };
   
-  // Если есть эмодзи в тексте или отдельный customEmojiId
   if (parsed.entities.length > 0) {
     body.entities = parsed.entities;
   } else if (customEmojiId) {
-    // Устаревший способ (один эмодзи в начале)
     body.text = `⭐ ${parsed.text}`;
     body.entities = [{
       type: 'custom_emoji',
@@ -384,6 +485,552 @@ async function generateSummary(chatId: number, hours: number = 24): Promise<stri
   return data.choices?.[0]?.message?.content || 'Не удалось создать саммари.';
 }
 
+// ===================== АНКЕТА МОДЕЛИ =====================
+
+// Получить или создать анкету
+async function getOrCreateApplication(chatId: number, userId: number, username?: string) {
+  // Ищем активную анкету
+  const { data: existing } = await supabase
+    .from('telegram_model_applications')
+    .select('*')
+    .eq('chat_id', chatId)
+    .eq('telegram_user_id', userId)
+    .eq('status', 'in_progress')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  
+  if (existing) {
+    return existing;
+  }
+  
+  // Создаём новую
+  const { data: newApp } = await supabase
+    .from('telegram_model_applications')
+    .insert({
+      chat_id: chatId,
+      telegram_user_id: userId,
+      telegram_username: username,
+      step: 'welcome',
+      status: 'in_progress'
+    })
+    .select()
+    .single();
+  
+  return newApp;
+}
+
+// Обновить анкету
+async function updateApplication(id: string, updates: any) {
+  await supabase
+    .from('telegram_model_applications')
+    .update(updates)
+    .eq('id', id);
+}
+
+// Отправить приветствие анкеты
+async function sendApplicationWelcome(chatId: number) {
+  const platformsList = PLATFORMS.map(p => `${p.emoji} <b>${p.name}</b>`).join('\n');
+  
+  const welcomeText = `🌟 <b>Добро пожаловать в Apollo Production!</b>
+
+Мы — ведущее агентство по работе с моделями на топовых платформах:
+
+${platformsList}
+
+💰 <b>Что мы предлагаем:</b>
+• Доход от $3,000 до $50,000+ в месяц
+• Полное обучение и поддержка 24/7
+• Продвижение и раскрутка аккаунтов
+• Помощь с контентом и стратегией
+• Выгодные условия сотрудничества
+
+📋 Заполните анкету, чтобы мы могли предложить вам лучшие условия!`;
+
+  // Сначала отправляем видео
+  await sendVideo(chatId, WELCOME_VIDEO_URL, welcomeText);
+  
+  // Затем кнопку для начала анкеты
+  await sendMessageWithButtons(chatId, 
+    '👇 <b>Нажмите кнопку ниже, чтобы начать заполнение анкеты:</b>', 
+    [[{ text: '📝 Заполнить анкету', callback_data: 'app_start' }]]
+  );
+}
+
+// Отправить следующий вопрос анкеты
+async function sendApplicationQuestion(chatId: number, step: string, application: any) {
+  console.log('Sending application question for step:', step);
+  
+  switch (step) {
+    case 'full_name':
+      await sendMessage(chatId, '👤 <b>Шаг 1/15</b>\n\nКак вас зовут? Напишите ваше <b>полное имя</b>:');
+      break;
+      
+    case 'age':
+      await sendMessage(chatId, '🎂 <b>Шаг 2/15</b>\n\nСколько вам <b>полных лет</b>? (только число)');
+      break;
+      
+    case 'country':
+      await sendMessageWithButtons(chatId,
+        '🌍 <b>Шаг 3/15</b>\n\nВыберите вашу <b>страну проживания</b>:',
+        [
+          [{ text: '🇷🇺 Россия', callback_data: 'app_country_russia' }, { text: '🇺🇦 Украина', callback_data: 'app_country_ukraine' }],
+          [{ text: '🇧🇾 Беларусь', callback_data: 'app_country_belarus' }, { text: '🇰🇿 Казахстан', callback_data: 'app_country_kazakhstan' }],
+          [{ text: '🇺🇿 Узбекистан', callback_data: 'app_country_uzbekistan' }, { text: '🇲🇩 Молдова', callback_data: 'app_country_moldova' }],
+          [{ text: '🇵🇱 Польша', callback_data: 'app_country_poland' }, { text: '🇬🇪 Грузия', callback_data: 'app_country_georgia' }],
+          [{ text: '🌐 Другая страна', callback_data: 'app_country_other' }]
+        ]
+      );
+      break;
+      
+    case 'height_weight':
+      await sendMessage(chatId, '📏 <b>Шаг 4/15</b>\n\nУкажите ваш <b>рост и вес</b>.\n\nПример: 170 см / 55 кг');
+      break;
+      
+    case 'body_params':
+      await sendMessage(chatId, '📐 <b>Шаг 5/15</b>\n\nУкажите ваши <b>параметры фигуры</b> (грудь-талия-бёдра).\n\nПример: 90-60-90');
+      break;
+      
+    case 'hair_color':
+      await sendMessageWithButtons(chatId,
+        '💇 <b>Шаг 6/15</b>\n\nВыберите <b>цвет волос</b>:',
+        [
+          [{ text: '👱‍♀️ Блондинка', callback_data: 'app_hair_blonde' }, { text: '👩 Брюнетка', callback_data: 'app_hair_brunette' }],
+          [{ text: '👩‍🦰 Рыжая', callback_data: 'app_hair_red' }, { text: '🧑‍🦳 Русая', callback_data: 'app_hair_light_brown' }],
+          [{ text: '🎨 Цветные', callback_data: 'app_hair_colored' }]
+        ]
+      );
+      break;
+      
+    case 'languages':
+      await sendMessage(chatId, '🌐 <b>Шаг 7/15</b>\n\nКакими <b>языками</b> вы владеете?\n\nПример: Русский (родной), English (B2)');
+      break;
+      
+    case 'platforms':
+      const platformButtons = PLATFORMS.map(p => [{ 
+        text: `${application.platforms?.includes(p.id) ? '✅' : ''} ${p.emoji} ${p.name}`, 
+        callback_data: `app_platform_${p.id}` 
+      }]);
+      platformButtons.push([{ text: '✅ Готово', callback_data: 'app_platforms_done' }]);
+      
+      await sendMessageWithButtons(chatId,
+        '🎯 <b>Шаг 8/15</b>\n\nВыберите <b>платформы</b>, на которых хотите работать (можно выбрать несколько):\n\n' +
+        (application.platforms?.length > 0 ? `Выбрано: ${application.platforms.join(', ')}` : 'Пока ничего не выбрано'),
+        platformButtons
+      );
+      break;
+      
+    case 'content_types':
+      const contentButtons = CONTENT_TYPES.map(c => [{ 
+        text: `${application.content_preferences?.includes(c.id) ? '✅' : ''} ${c.emoji} ${c.name}`, 
+        callback_data: `app_content_${c.id}` 
+      }]);
+      contentButtons.push([{ text: '✅ Готово', callback_data: 'app_content_done' }]);
+      
+      await sendMessageWithButtons(chatId,
+        '🎭 <b>Шаг 9/15</b>\n\nКакой <b>контент</b> вы готовы создавать? (можно выбрать несколько):',
+        contentButtons
+      );
+      break;
+      
+    case 'experience':
+      await sendMessageWithButtons(chatId,
+        '⭐ <b>Шаг 10/15</b>\n\nУ вас есть <b>опыт</b> работы моделью или в сфере взрослого контента?',
+        [
+          [{ text: '🆕 Нет опыта', callback_data: 'app_exp_none' }],
+          [{ text: '📱 Есть соцсети', callback_data: 'app_exp_social' }],
+          [{ text: '💰 Уже работаю моделью', callback_data: 'app_exp_model' }],
+          [{ text: '🌟 Опытная модель', callback_data: 'app_exp_pro' }]
+        ]
+      );
+      break;
+      
+    case 'social_links':
+      await sendMessage(chatId, '📱 <b>Шаг 11/15</b>\n\nОтправьте ссылки на ваши <b>соцсети</b> (Instagram, TikTok, Twitter и т.д.).\n\nЕсли нет — напишите "нет"');
+      break;
+      
+    case 'equipment':
+      await sendMessageWithButtons(chatId,
+        '📷 <b>Шаг 12/15</b>\n\nКакое <b>оборудование</b> у вас есть для работы?',
+        [
+          [{ text: '📱 Только телефон', callback_data: 'app_equip_phone' }],
+          [{ text: '💻 Телефон + ноутбук', callback_data: 'app_equip_laptop' }],
+          [{ text: '📷 Проф. камера + свет', callback_data: 'app_equip_pro' }],
+          [{ text: '🎬 Полная студия', callback_data: 'app_equip_studio' }]
+        ]
+      );
+      break;
+      
+    case 'time_availability':
+      await sendMessageWithButtons(chatId,
+        '⏰ <b>Шаг 13/15</b>\n\nСколько <b>времени</b> вы готовы уделять работе?',
+        [
+          [{ text: '🕐 2-3 часа/день', callback_data: 'app_time_part' }],
+          [{ text: '🕓 4-6 часов/день', callback_data: 'app_time_half' }],
+          [{ text: '🕗 8+ часов/день (Full-time)', callback_data: 'app_time_full' }],
+          [{ text: '📅 Только по выходным', callback_data: 'app_time_weekend' }]
+        ]
+      );
+      break;
+      
+    case 'desired_income':
+      await sendMessageWithButtons(chatId,
+        '💰 <b>Шаг 14/15</b>\n\nКакой <b>доход</b> вы хотите получать в месяц?',
+        [
+          [{ text: '💵 $1,000-3,000', callback_data: 'app_income_1k' }],
+          [{ text: '💵💵 $3,000-5,000', callback_data: 'app_income_3k' }],
+          [{ text: '💵💵💵 $5,000-10,000', callback_data: 'app_income_5k' }],
+          [{ text: '💎 $10,000+', callback_data: 'app_income_10k' }]
+        ]
+      );
+      break;
+      
+    case 'about_yourself':
+      await sendMessage(chatId, '✨ <b>Шаг 15/15</b>\n\nРасскажите немного <b>о себе</b>: ваши увлечения, почему хотите работать моделью, что вас мотивирует.');
+      break;
+      
+    case 'strong_points':
+      await sendMessage(chatId, '💪 <b>Последний вопрос!</b>\n\nВ чём ваши <b>сильные стороны</b>? Чем вы можете выделиться среди других моделей?');
+      break;
+  }
+}
+
+// Завершить анкету
+async function completeApplication(chatId: number, application: any) {
+  await updateApplication(application.id, {
+    status: 'pending',
+    completed_at: new Date().toISOString()
+  });
+  
+  const summary = `
+📋 <b>Ваша анкета успешно отправлена!</b>
+
+👤 Имя: ${application.full_name || 'Не указано'}
+🎂 Возраст: ${application.age || 'Не указан'}
+🌍 Страна: ${application.country || 'Не указана'}
+📏 Рост/вес: ${application.height || 'Не указано'} / ${application.weight || 'Не указан'}
+💇 Волосы: ${application.hair_color || 'Не указано'}
+🎯 Платформы: ${application.platforms?.join(', ') || 'Не выбраны'}
+💰 Желаемый доход: ${application.desired_income || 'Не указан'}
+
+⏳ Наш менеджер свяжется с вами в течение 24 часов!
+
+📞 Если у вас есть вопросы — напишите нам: @Apollo_Production
+`;
+
+  await sendMessage(chatId, summary);
+  
+  await sendMessageWithButtons(chatId,
+    '🎉 <b>Спасибо за заполнение анкеты!</b>\n\nЧто бы вы хотели сделать дальше?',
+    [
+      [{ text: '📝 Заполнить заново', callback_data: 'app_restart' }],
+      [{ text: '💬 Связаться с менеджером', url: 'https://t.me/Apollo_Production' }]
+    ]
+  );
+}
+
+// Обработка callback от кнопок анкеты
+async function handleApplicationCallback(callbackQuery: any) {
+  const chatId = callbackQuery.message.chat.id;
+  const userId = callbackQuery.from.id;
+  const username = callbackQuery.from.username;
+  const data = callbackQuery.data;
+  const messageId = callbackQuery.message.message_id;
+  
+  console.log('Application callback:', data);
+  
+  await answerCallbackQuery(callbackQuery.id);
+  
+  let application = await getOrCreateApplication(chatId, userId, username);
+  
+  if (data === 'app_start' || data === 'app_restart') {
+    // Начинаем новую анкету
+    if (data === 'app_restart') {
+      const { data: newApp } = await supabase
+        .from('telegram_model_applications')
+        .insert({
+          chat_id: chatId,
+          telegram_user_id: userId,
+          telegram_username: username,
+          step: 'full_name',
+          status: 'in_progress'
+        })
+        .select()
+        .single();
+      application = newApp;
+    } else {
+      await updateApplication(application.id, { step: 'full_name' });
+    }
+    await sendApplicationQuestion(chatId, 'full_name', application);
+    return;
+  }
+  
+  // Обработка выбора страны
+  if (data.startsWith('app_country_')) {
+    const countryMap: Record<string, string> = {
+      'app_country_russia': 'Россия',
+      'app_country_ukraine': 'Украина',
+      'app_country_belarus': 'Беларусь',
+      'app_country_kazakhstan': 'Казахстан',
+      'app_country_uzbekistan': 'Узбекистан',
+      'app_country_moldova': 'Молдова',
+      'app_country_poland': 'Польша',
+      'app_country_georgia': 'Грузия',
+      'app_country_other': 'Другая'
+    };
+    
+    if (data === 'app_country_other') {
+      await updateApplication(application.id, { step: 'country_input' });
+      await sendMessage(chatId, '🌍 Напишите название вашей страны:');
+    } else {
+      await updateApplication(application.id, { 
+        country: countryMap[data] || 'Не указана',
+        step: 'height_weight' 
+      });
+      await sendApplicationQuestion(chatId, 'height_weight', application);
+    }
+    return;
+  }
+  
+  // Обработка выбора цвета волос
+  if (data.startsWith('app_hair_')) {
+    const hairMap: Record<string, string> = {
+      'app_hair_blonde': 'Блондинка',
+      'app_hair_brunette': 'Брюнетка',
+      'app_hair_red': 'Рыжая',
+      'app_hair_light_brown': 'Русая',
+      'app_hair_colored': 'Цветные'
+    };
+    
+    await updateApplication(application.id, { 
+      hair_color: hairMap[data] || 'Не указано',
+      step: 'languages' 
+    });
+    await sendApplicationQuestion(chatId, 'languages', application);
+    return;
+  }
+  
+  // Обработка выбора платформ
+  if (data.startsWith('app_platform_')) {
+    const platformId = data.replace('app_platform_', '');
+    const currentPlatforms = application.platforms || [];
+    
+    let newPlatforms;
+    if (currentPlatforms.includes(platformId)) {
+      newPlatforms = currentPlatforms.filter((p: string) => p !== platformId);
+    } else {
+      newPlatforms = [...currentPlatforms, platformId];
+    }
+    
+    await updateApplication(application.id, { platforms: newPlatforms });
+    
+    // Обновляем application для отображения
+    application.platforms = newPlatforms;
+    
+    // Редактируем сообщение с кнопками
+    const platformButtons = PLATFORMS.map(p => [{ 
+      text: `${newPlatforms.includes(p.id) ? '✅' : ''} ${p.emoji} ${p.name}`, 
+      callback_data: `app_platform_${p.id}` 
+    }]);
+    platformButtons.push([{ text: '✅ Готово', callback_data: 'app_platforms_done' }]);
+    
+    await editMessage(chatId, messageId,
+      '🎯 <b>Шаг 8/15</b>\n\nВыберите <b>платформы</b>, на которых хотите работать (можно выбрать несколько):\n\n' +
+      (newPlatforms.length > 0 ? `Выбрано: ${newPlatforms.join(', ')}` : 'Пока ничего не выбрано'),
+      platformButtons
+    );
+    return;
+  }
+  
+  if (data === 'app_platforms_done') {
+    await updateApplication(application.id, { step: 'content_types' });
+    await sendApplicationQuestion(chatId, 'content_types', application);
+    return;
+  }
+  
+  // Обработка выбора типов контента
+  if (data.startsWith('app_content_')) {
+    if (data === 'app_content_done') {
+      await updateApplication(application.id, { step: 'experience' });
+      await sendApplicationQuestion(chatId, 'experience', application);
+      return;
+    }
+    
+    const contentId = data.replace('app_content_', '');
+    const currentContent = application.content_preferences || [];
+    
+    let newContent;
+    if (currentContent.includes(contentId)) {
+      newContent = currentContent.filter((c: string) => c !== contentId);
+    } else {
+      newContent = [...currentContent, contentId];
+    }
+    
+    await updateApplication(application.id, { content_preferences: newContent });
+    application.content_preferences = newContent;
+    
+    const contentButtons = CONTENT_TYPES.map(c => [{ 
+      text: `${newContent.includes(c.id) ? '✅' : ''} ${c.emoji} ${c.name}`, 
+      callback_data: `app_content_${c.id}` 
+    }]);
+    contentButtons.push([{ text: '✅ Готово', callback_data: 'app_content_done' }]);
+    
+    await editMessage(chatId, messageId,
+      '🎭 <b>Шаг 9/15</b>\n\nКакой <b>контент</b> вы готовы создавать? (можно выбрать несколько):',
+      contentButtons
+    );
+    return;
+  }
+  
+  // Обработка опыта
+  if (data.startsWith('app_exp_')) {
+    const expMap: Record<string, string[]> = {
+      'app_exp_none': ['Нет опыта'],
+      'app_exp_social': ['Есть соцсети'],
+      'app_exp_model': ['Уже работаю моделью'],
+      'app_exp_pro': ['Опытная модель']
+    };
+    
+    await updateApplication(application.id, { 
+      social_media_experience: expMap[data] || [],
+      step: 'social_links' 
+    });
+    await sendApplicationQuestion(chatId, 'social_links', application);
+    return;
+  }
+  
+  // Обработка оборудования
+  if (data.startsWith('app_equip_')) {
+    const equipMap: Record<string, string> = {
+      'app_equip_phone': 'Только телефон',
+      'app_equip_laptop': 'Телефон + ноутбук',
+      'app_equip_pro': 'Проф. камера + свет',
+      'app_equip_studio': 'Полная студия'
+    };
+    
+    await updateApplication(application.id, { 
+      equipment: equipMap[data] || 'Не указано',
+      step: 'time_availability' 
+    });
+    await sendApplicationQuestion(chatId, 'time_availability', application);
+    return;
+  }
+  
+  // Обработка времени
+  if (data.startsWith('app_time_')) {
+    const timeMap: Record<string, string> = {
+      'app_time_part': '2-3 часа/день',
+      'app_time_half': '4-6 часов/день',
+      'app_time_full': '8+ часов/день',
+      'app_time_weekend': 'Только по выходным'
+    };
+    
+    await updateApplication(application.id, { 
+      time_availability: timeMap[data] || 'Не указано',
+      step: 'desired_income' 
+    });
+    await sendApplicationQuestion(chatId, 'desired_income', application);
+    return;
+  }
+  
+  // Обработка дохода
+  if (data.startsWith('app_income_')) {
+    const incomeMap: Record<string, string> = {
+      'app_income_1k': '$1,000-3,000',
+      'app_income_3k': '$3,000-5,000',
+      'app_income_5k': '$5,000-10,000',
+      'app_income_10k': '$10,000+'
+    };
+    
+    await updateApplication(application.id, { 
+      desired_income: incomeMap[data] || 'Не указано',
+      step: 'about_yourself' 
+    });
+    await sendApplicationQuestion(chatId, 'about_yourself', application);
+    return;
+  }
+}
+
+// Обработка текстовых ответов анкеты
+async function handleApplicationTextInput(message: any) {
+  const chatId = message.chat.id;
+  const userId = message.from.id;
+  const username = message.from.username;
+  const text = message.text;
+  
+  const application = await getOrCreateApplication(chatId, userId, username);
+  
+  if (!application || application.status !== 'in_progress') {
+    return false; // Не в процессе заполнения анкеты
+  }
+  
+  console.log('Processing application text for step:', application.step);
+  
+  switch (application.step) {
+    case 'full_name':
+      await updateApplication(application.id, { full_name: text, step: 'age' });
+      await sendApplicationQuestion(chatId, 'age', application);
+      return true;
+      
+    case 'age':
+      const age = parseInt(text);
+      if (isNaN(age) || age < 18 || age > 100) {
+        await sendMessage(chatId, '❌ Пожалуйста, введите корректный возраст (число от 18 до 100):');
+        return true;
+      }
+      await updateApplication(application.id, { age, step: 'country' });
+      await sendApplicationQuestion(chatId, 'country', application);
+      return true;
+      
+    case 'country_input':
+      await updateApplication(application.id, { country: text, step: 'height_weight' });
+      await sendApplicationQuestion(chatId, 'height_weight', application);
+      return true;
+      
+    case 'height_weight':
+      // Парсим рост и вес из текста
+      const parts = text.split('/').map((s: string) => s.trim());
+      await updateApplication(application.id, { 
+        height: parts[0] || text, 
+        weight: parts[1] || '',
+        step: 'body_params' 
+      });
+      await sendApplicationQuestion(chatId, 'body_params', application);
+      return true;
+      
+    case 'body_params':
+      await updateApplication(application.id, { body_params: text, step: 'hair_color' });
+      await sendApplicationQuestion(chatId, 'hair_color', application);
+      return true;
+      
+    case 'languages':
+      await updateApplication(application.id, { language_skills: text, step: 'platforms' });
+      await sendApplicationQuestion(chatId, 'platforms', application);
+      return true;
+      
+    case 'social_links':
+      await updateApplication(application.id, { social_media_links: text, step: 'equipment' });
+      await sendApplicationQuestion(chatId, 'equipment', application);
+      return true;
+      
+    case 'about_yourself':
+      await updateApplication(application.id, { about_yourself: text, step: 'strong_points' });
+      await sendApplicationQuestion(chatId, 'strong_points', application);
+      return true;
+      
+    case 'strong_points':
+      await updateApplication(application.id, { strong_points: text, step: 'complete' });
+      // Перезагружаем анкету с обновлёнными данными
+      const updatedApp = await getOrCreateApplication(chatId, userId, username);
+      await completeApplication(chatId, updatedApp);
+      return true;
+  }
+  
+  return false;
+}
+
+// ===================== ОБРАБОТЧИКИ =====================
+
 // Обработка команд
 async function handleCommand(message: any) {
   const chatId = message.chat.id;
@@ -393,23 +1040,30 @@ async function handleCommand(message: any) {
   
   console.log('Processing command:', command);
   
-  // Сохраняем/обновляем настройки чата
   await ensureChatSettings(chatId, chatTitle);
-  
-  // Получаем настройки чата
   const settings = await getChatSettings(chatId);
   
   switch (command) {
     case '/start':
-      await sendMessage(chatId, `👋 Привет! Я бот-помощник с функциями:
+      // В личных чатах показываем анкету
+      if (message.chat.type === 'private') {
+        await sendApplicationWelcome(chatId);
+      } else {
+        await sendMessage(chatId, `👋 Привет! Я бот-помощник с функциями:
 
 • <b>Автоперевод</b> — RU ↔ EN автоматически
 • <b>Голосовые</b> — транскрибирую и переведу аудио
 • <b>/summary</b> — выжимка за последние сутки
 • <b>/summary_all</b> — общий отчёт за всё время
 • <b>/p_команда</b> — быстрые фразы
+• <b>/apply</b> — заполнить анкету модели
 
 ⚙️ Управление функциями доступно на панели управления.`);
+      }
+      break;
+      
+    case '/apply':
+      await sendApplicationWelcome(chatId);
       break;
       
     case '/summary':
@@ -479,7 +1133,7 @@ async function handleCommand(message: any) {
       break;
       
     default:
-      // Проверяем, есть ли это быстрая фраза
+      // Проверяем быстрые фразы
       if (command.startsWith('/')) {
         if (!settings.quick_phrases_enabled) {
           console.log('Quick phrases disabled for chat:', chatId);
@@ -500,7 +1154,6 @@ async function handleCommand(message: any) {
         if (phrases && phrases.length > 0) {
           const phrase = phrases[0];
           
-          // Если есть медиа - отправляем с подписью
           if (phrase.media_url) {
             switch (phrase.media_type) {
               case 'photo':
@@ -516,7 +1169,6 @@ async function handleCommand(message: any) {
                 await sendMessage(chatId, phrase.phrase, undefined, phrase.custom_emoji_id);
             }
           } else {
-            // Текст с возможным кастомным эмодзи
             await sendMessage(chatId, phrase.phrase, undefined, phrase.custom_emoji_id);
           }
         } else {
@@ -537,10 +1189,13 @@ async function handleTextMessage(message: any) {
   // Игнорируем команды
   if (text.startsWith('/')) return;
   
-  // Сохраняем/обновляем настройки чата
-  await ensureChatSettings(chatId, chatTitle);
+  // Проверяем, заполняет ли пользователь анкету
+  if (message.chat.type === 'private') {
+    const isApplicationInput = await handleApplicationTextInput(message);
+    if (isApplicationInput) return;
+  }
   
-  // Получаем настройки чата
+  await ensureChatSettings(chatId, chatTitle);
   const settings = await getChatSettings(chatId);
   
   // Сохраняем сообщение
@@ -552,16 +1207,13 @@ async function handleTextMessage(message: any) {
     text,
   });
   
-  // Если переводчик выключен - не переводим
   if (!settings.translator_enabled) {
     console.log('Translator disabled for chat:', chatId);
     return;
   }
   
-  // Переводим
   const { translation, isRussian } = await translateRuEn(text);
   
-  // Обновляем с переводом
   await supabase.from('telegram_chat_messages')
     .update({ translation })
     .eq('chat_id', chatId)
@@ -582,10 +1234,7 @@ async function handleVoiceMessage(message: any) {
   
   if (!voice) return;
   
-  // Сохраняем/обновляем настройки чата
   await ensureChatSettings(chatId, chatTitle);
-  
-  // Получаем настройки чата
   const settings = await getChatSettings(chatId);
   
   if (!settings.voice_enabled) {
@@ -596,10 +1245,7 @@ async function handleVoiceMessage(message: any) {
   await sendMessage(chatId, '🎤 Транскрибирую аудио...', messageId);
   
   try {
-    // Получаем URL файла
     const fileUrl = await getFileUrl(voice.file_id);
-    
-    // Транскрибируем
     const transcription = await transcribeAudio(fileUrl);
     
     if (!transcription) {
@@ -607,7 +1253,6 @@ async function handleVoiceMessage(message: any) {
       return;
     }
     
-    // Сохраняем
     await supabase.from('telegram_chat_messages').insert({
       chat_id: chatId,
       message_id: messageId,
@@ -617,11 +1262,9 @@ async function handleVoiceMessage(message: any) {
       transcription,
     });
     
-    // Если переводчик включён - переводим
     if (settings.translator_enabled) {
       const { translation, isRussian } = await translateRuEn(transcription);
       
-      // Обновляем
       await supabase.from('telegram_chat_messages')
         .update({ translation })
         .eq('chat_id', chatId)
@@ -630,14 +1273,11 @@ async function handleVoiceMessage(message: any) {
       const fromLang = isRussian ? 'RU' : 'EN';
       const toLang = isRussian ? 'EN' : 'RU';
       
-      // Отправляем текстовый перевод
       await sendMessage(chatId, `🎤 <b>Транскрипция (${fromLang}):</b>\n${transcription}\n\n🌐 <b>Перевод (${toLang}):</b>\n${translation}`, messageId);
       
-      // Генерируем голосовой перевод
       const audioBase64 = await textToSpeech(translation, isRussian ? 'English' : 'Russian');
       await sendVoice(chatId, audioBase64, messageId);
     } else {
-      // Только транскрипция без перевода
       await sendMessage(chatId, `🎤 <b>Транскрипция:</b>\n${transcription}`, messageId);
     }
     
@@ -657,6 +1297,17 @@ serve(async (req) => {
     console.log('Telegram update:', JSON.stringify(update));
     
     const message = update.message || update.edited_message;
+    const callbackQuery = update.callback_query;
+    
+    // Обработка callback от inline кнопок
+    if (callbackQuery) {
+      if (callbackQuery.data.startsWith('app_')) {
+        await handleApplicationCallback(callbackQuery);
+      }
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
     if (!message) {
       return new Response(JSON.stringify({ ok: true }), {
