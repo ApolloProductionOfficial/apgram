@@ -304,54 +304,103 @@ const Dashboard = () => {
     return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Splash Screen
+  // Splash Screen - APLink Style
   if (showSplash || isLoading || isLoadingData) {
     return (
       <AnimatePresence>
         <motion.div 
-          className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center"
+          className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center relative overflow-hidden"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex flex-col items-center gap-6">
+          {/* Background grid pattern */}
+          <div 
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: `linear-gradient(rgba(0, 180, 216, 0.1) 1px, transparent 1px),
+                               linear-gradient(90deg, rgba(0, 180, 216, 0.1) 1px, transparent 1px)`,
+              backgroundSize: '50px 50px'
+            }}
+          />
+          
+          {/* Ambient glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#00b4d8]/10 rounded-full blur-[100px]" />
+          
+          <div className="flex flex-col items-center gap-8 z-10">
+            {/* Logo with glow ring */}
             <motion.div 
               className="relative"
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-2xl shadow-[#0088cc]/50">
-                <img src={apolloLogo} alt="Apollo" className="w-full h-full object-cover" />
-              </div>
+              {/* Outer glow ring */}
               <motion.div 
-                className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-[#0088cc]/30 to-purple-500/20 blur-2xl"
-                animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute -inset-6 rounded-full"
+                style={{
+                  background: 'radial-gradient(circle, rgba(0, 180, 216, 0.4) 0%, rgba(0, 180, 216, 0.1) 50%, transparent 70%)',
+                }}
+                animate={{ 
+                  scale: [1, 1.1, 1],
+                  opacity: [0.5, 0.8, 0.5]
+                }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
+              
+              {/* Rotating border ring */}
+              <motion.div 
+                className="absolute -inset-3 rounded-full border-2 border-[#00b4d8]/30"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              />
+              
+              {/* Second rotating ring */}
+              <motion.div 
+                className="absolute -inset-5 rounded-full border border-[#00b4d8]/20"
+                animate={{ rotate: -360 }}
+                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+              />
+              
+              {/* Logo container */}
+              <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-[#00b4d8]/50 shadow-[0_0_40px_rgba(0,180,216,0.5)]">
+                <img src={apolloLogo} alt="APLink" className="w-full h-full object-cover" />
+              </div>
             </motion.div>
             
+            {/* Text */}
             <motion.div 
               className="text-center"
-              initial={{ y: 20, opacity: 0 }}
+              initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
             >
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-[#0088cc] to-purple-400 bg-clip-text text-transparent">
-                Apollo Bot Manager
+              <h1 className="text-5xl font-bold tracking-tight">
+                <span className="text-slate-300">AP</span>
+                <span className="text-[#00b4d8]">Link</span>
               </h1>
-              <p className="text-slate-400 text-sm mt-2">Telegram Automation</p>
+              <motion.p 
+                className="text-slate-500 text-lg mt-2 tracking-wide"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                by Apollo Production
+              </motion.p>
             </motion.div>
             
+            {/* Loading indicator */}
             <motion.div 
-              className="flex items-center gap-2"
+              className="flex items-center gap-3 mt-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 0.8 }}
             >
-              <div className="w-2 h-2 rounded-full bg-[#0088cc] animate-bounce" style={{ animationDelay: '0ms' }} />
-              <div className="w-2 h-2 rounded-full bg-[#0088cc] animate-bounce" style={{ animationDelay: '150ms' }} />
-              <div className="w-2 h-2 rounded-full bg-[#0088cc] animate-bounce" style={{ animationDelay: '300ms' }} />
+              <motion.div 
+                className="w-8 h-0.5 bg-gradient-to-r from-transparent via-[#00b4d8] to-transparent"
+                animate={{ scaleX: [0, 1, 0], opacity: [0, 1, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
             </motion.div>
           </div>
         </motion.div>
