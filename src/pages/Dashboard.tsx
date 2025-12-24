@@ -46,7 +46,7 @@ import {
   FileText,
   Command
 } from "lucide-react";
-import apolloLogo from "@/assets/cf-logo-new.png";
+import apolloLogo from "@/assets/cf-logo-final.png";
 import CustomCursor from "@/components/CustomCursor";
 
 interface QuickPhrase {
