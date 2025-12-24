@@ -5,6 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { Globe, LogIn, UserPlus, LogOut, User, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,16 +69,34 @@ const Header = () => {
       <div className="container mx-auto px-6 md:px-8 lg:px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-shrink-0">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-primary/30 shadow-lg shadow-primary/20">
-              <video 
-                src={apolloLogo} 
-                autoPlay 
-                loop 
-                muted 
-                playsInline
-                preload="metadata"
-                className="w-full h-full object-cover scale-110"
+            {/* Logo with animated glow ring - APLink style */}
+            <div className="relative">
+              {/* Outer glow */}
+              <div className="absolute -inset-1 rounded-full bg-primary/30 blur-md animate-pulse-glow" />
+              {/* Rotating ring 1 */}
+              <motion.div 
+                className="absolute -inset-1.5 rounded-full border border-primary/30"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
               />
+              {/* Rotating ring 2 */}
+              <motion.div 
+                className="absolute -inset-2.5 rounded-full border border-primary/20"
+                animate={{ rotate: -360 }}
+                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+              />
+              {/* Logo container */}
+              <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-2 ring-primary/40 shadow-lg shadow-primary/30 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:shadow-primary/50">
+                <video 
+                  src={apolloLogo} 
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  preload="auto"
+                  className="w-full h-full object-cover scale-110"
+                />
+              </div>
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-sm sm:text-base md:text-lg font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
