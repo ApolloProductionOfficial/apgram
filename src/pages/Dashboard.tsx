@@ -62,12 +62,18 @@ import {
   Link,
   Search,
   Download,
-  Bell
+  Bell,
+  BarChart3,
+  Camera,
+  DollarSign
 } from "lucide-react";
 import apolloLogo from "@/assets/cf-logo-final.png";
 import apolloLogoVideo from "@/assets/apollo-logo.mp4";
 import backgroundVideo from "@/assets/background-video-new.mp4";
 import CustomCursor from "@/components/CustomCursor";
+import { ApplicationStats } from "@/components/ApplicationStats";
+import { BotCommandsHelp } from "@/components/BotCommandsHelp";
+import { exportApplicationToWord } from "@/utils/exportToWord";
 
 interface QuickPhrase {
   id: string;
@@ -160,8 +166,8 @@ const Dashboard = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [mainTab, setMainTab] = useState("telegram-help");
-  const [subTab, setSubTab] = useState("phrases");
-  const [modelSubTab, setModelSubTab] = useState("applications");
+  const [subTab, setSubTab] = useState("help");
+  const [modelSubTab, setModelSubTab] = useState("stats");
   const [showSplash, setShowSplash] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -913,7 +919,7 @@ const Dashboard = () => {
         >
           {/* Main Section Tabs - Large Cards Style */}
           <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-6">
-            <TabsList className="bg-transparent border-0 p-0 gap-4 w-full grid grid-cols-1 md:grid-cols-3 h-auto">
+            <TabsList className="bg-transparent border-0 p-0 gap-4 w-full grid grid-cols-1 md:grid-cols-4 h-auto">
               <TabsTrigger 
                 value="telegram-help" 
                 className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-[#0088cc] data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
@@ -951,6 +957,20 @@ const Dashboard = () => {
               </TabsTrigger>
               
               <TabsTrigger 
+                value="onlyfans" 
+                className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-orange-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
+                  <DollarSign className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-center">
+                  <p className="font-bold text-lg text-white">OnlyFans</p>
+                  <p className="text-xs text-slate-400 mt-1">Управление аккаунтами</p>
+                </div>
+                <Badge variant="outline" className="text-xs border-orange-500/30 text-orange-400 mt-2">Новое</Badge>
+              </TabsTrigger>
+
+              <TabsTrigger 
                 value="pimpbunny" 
                 className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-pink-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
@@ -970,6 +990,13 @@ const Dashboard = () => {
               {/* Sub-tabs for Telegram Bot */}
               <Tabs value={subTab} onValueChange={setSubTab} className="space-y-4">
                 <TabsList className="bg-slate-800/50 border border-white/5 p-1 gap-1">
+                  <TabsTrigger 
+                    value="help" 
+                    className="text-xs data-[state=active]:bg-yellow-500 data-[state=active]:text-black"
+                  >
+                    <Command className="w-3 h-3 mr-1" />
+                    Справка
+                  </TabsTrigger>
                   <TabsTrigger 
                     value="phrases" 
                     className="text-xs data-[state=active]:bg-[#0088cc] data-[state=active]:text-white"
@@ -992,6 +1019,11 @@ const Dashboard = () => {
                     История
                   </TabsTrigger>
                 </TabsList>
+
+            {/* Help Tab */}
+            <TabsContent value="help" className="space-y-6">
+              <BotCommandsHelp />
+            </TabsContent>
 
             {/* Phrases Tab */}
             <TabsContent value="phrases" className="space-y-6">
@@ -1385,6 +1417,13 @@ const Dashboard = () => {
               <Tabs value={modelSubTab} onValueChange={setModelSubTab} className="space-y-4">
                 <TabsList className="bg-slate-800/50 border border-white/5 p-1 gap-1">
                   <TabsTrigger 
+                    value="stats" 
+                    className="text-xs data-[state=active]:bg-yellow-500 data-[state=active]:text-black"
+                  >
+                    <BarChart3 className="w-3 h-3 mr-1" />
+                    Статистика
+                  </TabsTrigger>
+                  <TabsTrigger 
                     value="applications" 
                     className="text-xs data-[state=active]:bg-purple-500 data-[state=active]:text-white"
                   >
@@ -1406,6 +1445,11 @@ const Dashboard = () => {
                     Webhook
                   </TabsTrigger>
                 </TabsList>
+
+                {/* Stats Tab */}
+                <TabsContent value="stats" className="space-y-4">
+                  <ApplicationStats applications={applications} />
+                </TabsContent>
 
                 {/* Applications List */}
                 <TabsContent value="applications" className="space-y-4">
@@ -1519,29 +1563,125 @@ const Dashboard = () => {
                     <Card className="bg-slate-900/50 border-purple-500/20 backdrop-blur-xl">
                       <CardHeader>
                         <CardTitle className="flex items-center justify-between text-white">
-                          <span>Детали заявки</span>
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(null)}>
-                            <XCircle className="w-4 h-4" />
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <span>Детали заявки</span>
+                            <Badge className={
+                              selectedApplication.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                              selectedApplication.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' :
+                              selectedApplication.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
+                              'bg-slate-500/20 text-slate-400'
+                            }>
+                              {selectedApplication.status === 'pending' ? '⏳ На рассмотрении' :
+                               selectedApplication.status === 'approved' ? '✅ Одобрена' :
+                               selectedApplication.status === 'rejected' ? '❌ Отклонена' :
+                               '📝 Заполняется'}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => exportApplicationToWord(selectedApplication as any)}
+                              className="border-blue-500/30 text-blue-400 hover:bg-blue-500/20"
+                            >
+                              <FileText className="w-4 h-4 mr-1" />
+                              Word
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(null)}>
+                              <XCircle className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div><span className="text-slate-500">Имя:</span> <span className="text-white">{selectedApplication.full_name}</span></div>
-                          <div><span className="text-slate-500">Возраст:</span> <span className="text-white">{selectedApplication.age}</span></div>
-                          <div><span className="text-slate-500">Страна:</span> <span className="text-white">{selectedApplication.country}</span></div>
-                          <div><span className="text-slate-500">Telegram:</span> <span className="text-white">@{selectedApplication.telegram_username}</span></div>
-                          <div><span className="text-slate-500">Рост/Вес:</span> <span className="text-white">{selectedApplication.height} / {selectedApplication.weight}</span></div>
-                          <div><span className="text-slate-500">Волосы:</span> <span className="text-white">{selectedApplication.hair_color}</span></div>
-                          <div><span className="text-slate-500">Доход:</span> <span className="text-white">{selectedApplication.desired_income}</span></div>
-                          <div><span className="text-slate-500">Платформы:</span> <span className="text-white">{selectedApplication.platforms?.join(', ') || 'Нет'}</span></div>
+                        {/* Basic Info */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-1">Имя</span>
+                            <span className="text-white font-medium">{selectedApplication.full_name || 'Не указано'}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-1">Возраст</span>
+                            <span className="text-white font-medium">{selectedApplication.age || '?'}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-1">Страна</span>
+                            <span className="text-white font-medium">{selectedApplication.country || 'Не указана'}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-1">Telegram</span>
+                            <span className="text-[#0088cc] font-medium">@{selectedApplication.telegram_username || 'unknown'}</span>
+                          </div>
                         </div>
-                        {selectedApplication.about_yourself && (
-                          <div>
-                            <p className="text-slate-500 text-sm mb-1">О себе:</p>
-                            <p className="text-white text-sm bg-slate-800/50 p-3 rounded-lg">{selectedApplication.about_yourself}</p>
+
+                        {/* Physical */}
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-1">Рост / Вес</span>
+                            <span className="text-white font-medium">{selectedApplication.height || '?'} / {selectedApplication.weight || '?'}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-1">Цвет волос</span>
+                            <span className="text-white font-medium">{selectedApplication.hair_color || 'Не указан'}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-1">Желаемый доход</span>
+                            <span className="text-emerald-400 font-medium">{selectedApplication.desired_income || 'Не указан'}</span>
+                          </div>
+                        </div>
+
+                        {/* Platforms & Content */}
+                        {(selectedApplication.platforms && selectedApplication.platforms.length > 0) && (
+                          <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-2">Платформы</span>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedApplication.platforms.map((p, i) => (
+                                <Badge key={i} variant="outline" className="border-purple-500/30 text-purple-400">{p}</Badge>
+                              ))}
+                            </div>
                           </div>
                         )}
+
+                        {(selectedApplication.content_preferences && selectedApplication.content_preferences.length > 0) && (
+                          <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-2">Готова создавать</span>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedApplication.content_preferences.map((c, i) => (
+                                <Badge key={i} variant="outline" className="border-pink-500/30 text-pink-400">{c}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* About */}
+                        {selectedApplication.about_yourself && (
+                          <div className="p-4 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-2">О себе</span>
+                            <p className="text-white text-sm whitespace-pre-wrap">{selectedApplication.about_yourself}</p>
+                          </div>
+                        )}
+
+                        {/* Photos placeholder */}
+                        <div className="p-4 rounded-lg bg-slate-800/30 border border-dashed border-white/10">
+                          <div className="flex items-center gap-2 text-slate-400 mb-2">
+                            <Camera className="w-4 h-4" />
+                            <span className="text-xs">Портфолио фотографий</span>
+                          </div>
+                          <p className="text-xs text-slate-500">Фото модели будут отображаться здесь после загрузки</p>
+                        </div>
+
+                        {/* Date */}
+                        <div className="text-xs text-slate-500 pt-2 border-t border-white/5">
+                          Заявка от {new Date(selectedApplication.created_at).toLocaleDateString('ru-RU', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+
+                        {/* Actions */}
                         <div className="flex gap-2 pt-4">
                           <Button
                             onClick={() => updateApplicationStatus(selectedApplication.id, 'approved')}
@@ -1793,6 +1933,30 @@ const Dashboard = () => {
                   </Card>
                 </TabsContent>
               </Tabs>
+            </TabsContent>
+
+            {/* OnlyFans Tab */}
+            <TabsContent value="onlyfans" className="space-y-6">
+              <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+                      <DollarSign className="w-4 h-4 text-white" />
+                    </div>
+                    OnlyFans
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">
+                    Управление аккаунтами и статистика
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12 text-slate-500">
+                    <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <p>Раздел OnlyFans</p>
+                    <p className="text-xs mt-2">Функционал будет добавлен по вашему запросу</p>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* PimpBunny Tab */}
