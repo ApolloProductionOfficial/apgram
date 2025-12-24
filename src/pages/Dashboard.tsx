@@ -70,10 +70,14 @@ import {
 import apolloLogo from "@/assets/cf-logo-final.png";
 import apolloLogoVideo from "@/assets/apollo-logo.mp4";
 import backgroundVideo from "@/assets/background-video-new.mp4";
+import onlyfansLogo from "@/assets/onlyfans-logo.png";
 import CustomCursor from "@/components/CustomCursor";
 import { ApplicationStats } from "@/components/ApplicationStats";
 import { BotCommandsHelp } from "@/components/BotCommandsHelp";
 import { exportApplicationToWord } from "@/utils/exportToWord";
+import { OnlyFansSection } from "@/components/OnlyFansSection";
+import { TeamNotificationSettings } from "@/components/TeamNotificationSettings";
+import { ModelPhotosGallery } from "@/components/ModelPhotosGallery";
 
 interface QuickPhrase {
   id: string;
@@ -116,11 +120,20 @@ interface ModelApplication {
   country: string | null;
   height: string | null;
   weight: string | null;
+  body_params: string | null;
   hair_color: string | null;
+  language_skills: string | null;
   platforms: string[] | null;
+  social_media_experience: string[] | null;
   content_preferences: string[] | null;
+  tabu_preferences: string[] | null;
+  equipment: string | null;
+  time_availability: string | null;
+  social_media_links: string | null;
+  strong_points: string | null;
   desired_income: string | null;
   about_yourself: string | null;
+  portfolio_photos: string[] | null;
   status: string;
   created_at: string;
   completed_at: string | null;
@@ -960,10 +973,8 @@ const Dashboard = () => {
                 value="onlyfans" 
                 className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-teal-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-2xl bg-teal-500/20 flex items-center justify-center border border-teal-500/30">
-                  <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm0-14c-3.309 0-6 2.691-6 6s2.691 6 6 6 6-2.691 6-6-2.691-6-6-6zm0 10c-2.206 0-4-1.794-4-4s1.794-4 4-4 4 1.794 4 4-1.794 4-4 4z"/>
-                  </svg>
+                <div className="w-16 h-16 rounded-2xl bg-teal-500/20 flex items-center justify-center border border-teal-500/30 overflow-hidden p-2">
+                  <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">OnlyFans</p>
@@ -1663,14 +1674,67 @@ const Dashboard = () => {
                           </div>
                         )}
 
-                        {/* Photos placeholder */}
-                        <div className="p-4 rounded-lg bg-slate-800/30 border border-dashed border-white/10">
-                          <div className="flex items-center gap-2 text-slate-400 mb-2">
-                            <Camera className="w-4 h-4" />
-                            <span className="text-xs">Портфолио фотографий</span>
+                        {/* TABU */}
+                        {(selectedApplication as any).tabu_preferences && (selectedApplication as any).tabu_preferences.length > 0 && (
+                          <div className="p-3 rounded-lg bg-red-900/20 border border-red-500/20">
+                            <span className="text-red-400 text-xs block mb-2">🚫 ТАБУ (не делает)</span>
+                            <div className="flex flex-wrap gap-2">
+                              {(selectedApplication as any).tabu_preferences.map((t: string, i: number) => (
+                                <Badge key={i} variant="outline" className="border-red-500/30 text-red-400">{t}</Badge>
+                              ))}
+                            </div>
                           </div>
-                          <p className="text-xs text-slate-500">Фото модели будут отображаться здесь после загрузки</p>
+                        )}
+
+                        {/* Additional fields */}
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          {(selectedApplication as any).body_params && (
+                            <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                              <span className="text-slate-500 text-xs block mb-1">Параметры</span>
+                              <span className="text-white font-medium">{(selectedApplication as any).body_params}</span>
+                            </div>
+                          )}
+                          {(selectedApplication as any).language_skills && (
+                            <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                              <span className="text-slate-500 text-xs block mb-1">Языки</span>
+                              <span className="text-white font-medium">{(selectedApplication as any).language_skills}</span>
+                            </div>
+                          )}
+                          {(selectedApplication as any).equipment && (
+                            <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                              <span className="text-slate-500 text-xs block mb-1">Оборудование</span>
+                              <span className="text-white font-medium">{(selectedApplication as any).equipment}</span>
+                            </div>
+                          )}
+                          {(selectedApplication as any).time_availability && (
+                            <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                              <span className="text-slate-500 text-xs block mb-1">Время</span>
+                              <span className="text-white font-medium">{(selectedApplication as any).time_availability}</span>
+                            </div>
+                          )}
                         </div>
+
+                        {/* Social links */}
+                        {(selectedApplication as any).social_media_links && (
+                          <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-1">Соцсети</span>
+                            <p className="text-[#0088cc] text-sm break-all">{(selectedApplication as any).social_media_links}</p>
+                          </div>
+                        )}
+
+                        {/* Strong points */}
+                        {(selectedApplication as any).strong_points && (
+                          <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-1">Сильные стороны</span>
+                            <p className="text-white text-sm">{(selectedApplication as any).strong_points}</p>
+                          </div>
+                        )}
+
+                        {/* Photos Gallery */}
+                        <ModelPhotosGallery 
+                          photos={(selectedApplication as any).portfolio_photos} 
+                          modelName={selectedApplication.full_name || selectedApplication.telegram_username || 'model'}
+                        />
 
                         {/* Date */}
                         <div className="text-xs text-slate-500 pt-2 border-t border-white/5">
@@ -1818,6 +1882,14 @@ const Dashboard = () => {
 
                 {/* Webhook Setup */}
                 <TabsContent value="webhook" className="space-y-4">
+                  {/* Team Notifications UI Component */}
+                  <TeamNotificationSettings 
+                    ownerChatId={ownerChatId}
+                    onOwnerChatIdChange={setOwnerChatId}
+                    onSave={saveOwnerChatId}
+                  />
+
+                  {/* Webhook URL & Setup */}
                   <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-white">
@@ -1828,39 +1900,6 @@ const Dashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {/* Owner Chat ID Setting */}
-                      <div className="p-4 rounded-xl bg-slate-800/30 border border-yellow-500/20 space-y-3">
-                        <div className="flex items-center gap-2 text-sm text-yellow-300">
-                          <Bell className="w-4 h-4" />
-                          <span>Уведомления о новых заявках</span>
-                        </div>
-                        <p className="text-xs text-slate-500">
-                          Введите ваш Telegram Chat ID для получения уведомлений. Узнать ID можно у @userinfobot
-                        </p>
-                        <div className="flex gap-2">
-                          <Input
-                            value={ownerChatId}
-                            onChange={(e) => setOwnerChatId(e.target.value)}
-                            placeholder="123456789"
-                            className="bg-slate-800/50 border-yellow-500/30 font-mono text-sm"
-                            type="number"
-                          />
-                          <Button
-                            onClick={saveOwnerChatId}
-                            className="bg-yellow-500 hover:bg-yellow-600 text-black"
-                          >
-                            <Save className="w-4 h-4 mr-2" />
-                            Сохранить
-                          </Button>
-                        </div>
-                        {ownerChatId && (
-                          <div className="flex items-center gap-2 text-yellow-400 text-sm">
-                            <CheckCircle className="w-4 h-4" />
-                            Chat ID настроен: {ownerChatId}
-                          </div>
-                        )}
-                      </div>
-
                       {/* Webhook URL */}
                       <div className="p-4 rounded-xl bg-slate-800/30 border border-purple-500/20 space-y-3">
                         <div className="flex items-center justify-between">
@@ -1939,30 +1978,7 @@ const Dashboard = () => {
 
             {/* OnlyFans Tab */}
             <TabsContent value="onlyfans" className="space-y-6">
-              <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-white">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm0-14c-3.309 0-6 2.691-6 6s2.691 6 6 6 6-2.691 6-6-2.691-6-6-6zm0 10c-2.206 0-4-1.794-4-4s1.794-4 4-4 4 1.794 4 4-1.794 4-4 4z"/>
-                      </svg>
-                    </div>
-                    OnlyFans
-                  </CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Управление аккаунтами и статистика
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-12 text-slate-500">
-                    <svg className="w-12 h-12 mx-auto mb-4 opacity-30" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm0-14c-3.309 0-6 2.691-6 6s2.691 6 6 6 6-2.691 6-6-2.691-6-6-6zm0 10c-2.206 0-4-1.794-4-4s1.794-4 4-4 4 1.794 4 4-1.794 4-4 4z"/>
-                    </svg>
-                    <p>Раздел OnlyFans</p>
-                    <p className="text-xs mt-2">Функционал будет добавлен по вашему запросу</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <OnlyFansSection />
             </TabsContent>
 
             {/* PimpBunny Tab */}
