@@ -12,9 +12,9 @@ import {
   MessageSquare, 
   Upload,
   Film,
-  Image,
   Trash2,
-  RefreshCw
+  Send,
+  Edit3
 } from "lucide-react";
 import {
   Select,
@@ -24,14 +24,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { QuestionsEditor } from "./QuestionsEditor";
+import { QuestionnairePreview } from "./QuestionnairePreview";
 
 export function BotEditor() {
   // Welcome message settings
   const [welcomeMessage, setWelcomeMessage] = useState("");
   const [welcomeMediaUrl, setWelcomeMediaUrl] = useState("");
   const [welcomeMediaType, setWelcomeMediaType] = useState<string>("video");
+  const [ownerChatId, setOwnerChatId] = useState<number | null>(null);
   const [isSavingWelcome, setIsSavingWelcome] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -41,7 +44,7 @@ export function BotEditor() {
   const fetchWelcomeSettings = async () => {
     const { data } = await supabase
       .from("bot_welcome_settings")
-      .select("welcome_message, welcome_media_url, welcome_media_type")
+      .select("welcome_message, welcome_media_url, welcome_media_type, owner_telegram_chat_id")
       .limit(1)
       .maybeSingle();
 
@@ -49,6 +52,7 @@ export function BotEditor() {
       if (data.welcome_message) setWelcomeMessage(data.welcome_message);
       if (data.welcome_media_url) setWelcomeMediaUrl(data.welcome_media_url);
       if (data.welcome_media_type) setWelcomeMediaType(data.welcome_media_type);
+      if (data.owner_telegram_chat_id) setOwnerChatId(data.owner_telegram_chat_id);
     }
   };
 
@@ -84,7 +88,7 @@ export function BotEditor() {
       const fileName = `welcome-media-${Date.now()}.${fileExt}`;
 
       // Upload to storage
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('bot-media')
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -156,6 +160,45 @@ export function BotEditor() {
     }
   };
 
+  const sendTestWelcome = async () => {
+    if (!ownerChatId) {
+      toast.error("Сначала настройте Chat ID владельца во вкладке Webhook");
+      return;
+    }
+
+    setIsTesting(true);
+    try {
+      // Send media if exists
+      if (welcomeMediaUrl) {
+        const { error: mediaError } = await supabase.functions.invoke('send-model-message', {
+          body: {
+            chat_id: ownerChatId,
+            message: welcomeMessage || "Тестовое приветствие",
+            media_url: welcomeMediaUrl,
+            media_type: welcomeMediaType
+          }
+        });
+        if (mediaError) throw mediaError;
+      } else {
+        // Send text only
+        const { error } = await supabase.functions.invoke('send-model-message', {
+          body: {
+            chat_id: ownerChatId,
+            message: `🧪 <b>ТЕСТ ПРИВЕТСТВИЯ</b>\n\n${welcomeMessage || "Текст приветствия не настроен"}`
+          }
+        });
+        if (error) throw error;
+      }
+      
+      toast.success("Тестовое приветствие отправлено! Проверьте Telegram.");
+    } catch (err) {
+      console.error('Test welcome error:', err);
+      toast.error("Ошибка отправки");
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
@@ -175,7 +218,7 @@ export function BotEditor() {
             Приветствие
           </TabsTrigger>
           <TabsTrigger value="questions" className="data-[state=active]:bg-pink-500">
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <Edit3 className="w-4 h-4 mr-2" />
             Вопросы анкеты
           </TabsTrigger>
         </TabsList>
@@ -183,17 +226,39 @@ export function BotEditor() {
         <TabsContent value="welcome">
           <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                  <MessageSquare className="w-4 h-4 text-white" />
+              <CardTitle className="flex items-center justify-between text-white">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4 text-white" />
+                  </div>
+                  Приветственное сообщение
                 </div>
-                Приветственное сообщение
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={sendTestWelcome}
+                  disabled={isTesting || !ownerChatId}
+                  className="border-green-500/30 text-green-400 hover:bg-green-500/10"
+                >
+                  {isTesting ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4 mr-2" />
+                  )}
+                  Тест в Telegram
+                </Button>
               </CardTitle>
               <CardDescription className="text-slate-400">
                 Настройте текст и медиа, которое увидят новые пользователи при запуске бота
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {!ownerChatId && (
+                <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm">
+                  ⚠️ Для тестирования настройте Chat ID владельца во вкладке "Webhook"
+                </div>
+              )}
+
               {/* Welcome Message Text */}
               <div className="space-y-2">
                 <label className="text-sm text-slate-300 flex items-center gap-2">
@@ -311,7 +376,10 @@ export function BotEditor() {
         </TabsContent>
 
         <TabsContent value="questions">
-          <QuestionsEditor />
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <QuestionsEditor />
+            <QuestionnairePreview />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
