@@ -240,23 +240,23 @@ export function OnlyFansSection() {
       <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-white">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00AFF0] to-[#0088cc] flex items-center justify-center overflow-hidden p-1">
+            <div className="w-10 h-10 rounded-xl bg-[#00AFF0]/20 flex items-center justify-center border border-[#00AFF0]/40 overflow-hidden p-1.5">
               <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
             </div>
-            API OnlyFans
+            API OnlyMonster
           </CardTitle>
           <CardDescription className="text-slate-400">
-            Интеграция с OnlyFans API для управления аккаунтами
+            Интеграция с OnlyMonster API для управления аккаунтами
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center py-8">
-            <div className="w-16 h-16 rounded-2xl bg-[#00AFF0]/20 flex items-center justify-center mx-auto mb-4 overflow-hidden p-2">
+            <div className="w-16 h-16 rounded-2xl bg-[#00AFF0]/20 flex items-center justify-center mx-auto mb-4 border border-[#00AFF0]/40 overflow-hidden p-2">
               <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
             </div>
             <h3 className="text-lg font-medium text-white mb-2">API подключено</h3>
             <p className="text-slate-400 text-sm mb-4">
-              OnlyFans API ключ сохранён. Нажмите кнопку ниже для загрузки данных.
+              OnlyMonster API ключ сохранён. Нажмите кнопку ниже для загрузки данных.
             </p>
             <Button 
               onClick={() => { setApiConnected(true); fetchData(); }}
@@ -269,7 +269,7 @@ export function OnlyFansSection() {
 
           <div className="p-4 rounded-xl bg-slate-800/30 border border-[#00AFF0]/20">
             <p className="text-xs text-slate-500">
-              <strong className="text-[#00AFF0]">API ключ:</strong> ofapi_****...****
+              <strong className="text-[#00AFF0]">API ключ:</strong> om_token_****...****
             </p>
             <p className="text-xs text-slate-500 mt-1">
               Edge Function: onlymonster-api
@@ -394,7 +394,7 @@ export function OnlyFansSection() {
               <div className="w-10 h-10 rounded-xl bg-[#00AFF0]/20 flex items-center justify-center border border-[#00AFF0]/40 overflow-hidden p-1.5">
                 <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
               </div>
-              API OnlyFans - Управление аккаунтами
+              API OnlyMonster - Управление аккаунтами
             </div>
             <div className="flex gap-2">
               <Button

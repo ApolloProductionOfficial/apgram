@@ -980,7 +980,7 @@ const Dashboard = () => {
                   <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-lg text-white">API OnlyFans</p>
+                  <p className="font-bold text-lg text-white">API OnlyMonster</p>
                   <p className="text-xs text-slate-400 mt-1">Управление аккаунтами</p>
                 </div>
                 <Badge variant="outline" className="text-xs border-[#00AFF0]/30 text-[#00AFF0] mt-2">Coming Soon</Badge>
