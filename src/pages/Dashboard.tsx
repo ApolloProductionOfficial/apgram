@@ -89,6 +89,7 @@ const Dashboard = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Редирект только если загрузка завершена И пользователя нет
     if (!isLoading && !user) {
       navigate("/auth");
     }
