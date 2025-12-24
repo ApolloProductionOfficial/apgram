@@ -60,7 +60,9 @@ import {
   ChevronDown,
   GripVertical,
   Link,
-  Search
+  Search,
+  Download,
+  Bell
 } from "lucide-react";
 import apolloLogo from "@/assets/cf-logo-final.png";
 import apolloLogoVideo from "@/assets/apollo-logo.mp4";
@@ -173,10 +175,14 @@ const Dashboard = () => {
   // Questions editor state
   const [questions, setQuestions] = useState<QuestionConfig[]>(DEFAULT_QUESTIONS);
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
+  const [isSavingQuestions, setIsSavingQuestions] = useState(false);
   
   // Webhook setup state
   const [isSettingWebhook, setIsSettingWebhook] = useState(false);
   const [webhookStatus, setWebhookStatus] = useState<'unknown' | 'success' | 'error'>('unknown');
+  
+  // Owner notification settings
+  const [ownerChatId, setOwnerChatId] = useState<string>('');
   const [modelBotToken, setModelBotToken] = useState("");
   
   // Filtered applications
@@ -209,6 +215,8 @@ const Dashboard = () => {
       fetchChatSettings();
       fetchMessages();
       fetchApplications();
+      fetchQuestions();
+      fetchBotSettings();
 
       // Realtime подписка на новые сообщения
       const channel = supabase
@@ -278,6 +286,127 @@ const Dashboard = () => {
       setApplications(data as ModelApplication[]);
     }
     setIsLoadingApplications(false);
+  };
+
+  const fetchQuestions = async () => {
+    const { data, error } = await supabase
+      .from("bot_questionnaire_questions")
+      .select("*")
+      .eq("is_active", true)
+      .order("question_order", { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      setQuestions(data.map(q => ({
+        id: q.id,
+        step: q.step,
+        question: q.question,
+        order: q.question_order
+      })));
+    }
+  };
+
+  const fetchBotSettings = async () => {
+    const { data } = await supabase
+      .from("bot_welcome_settings")
+      .select("owner_telegram_chat_id")
+      .limit(1)
+      .maybeSingle();
+
+    if (data?.owner_telegram_chat_id) {
+      setOwnerChatId(data.owner_telegram_chat_id.toString());
+    }
+  };
+
+  const saveOwnerChatId = async () => {
+    if (!ownerChatId.trim()) {
+      toast.error("Введите Chat ID");
+      return;
+    }
+
+    const { data: existing } = await supabase
+      .from("bot_welcome_settings")
+      .select("id")
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabase
+        .from("bot_welcome_settings")
+        .update({ owner_telegram_chat_id: parseInt(ownerChatId) })
+        .eq("id", existing.id);
+
+      if (error) {
+        toast.error("Ошибка сохранения");
+      } else {
+        toast.success("Chat ID сохранён! Уведомления будут приходить вам.");
+      }
+    } else {
+      const { error } = await supabase
+        .from("bot_welcome_settings")
+        .insert({ owner_telegram_chat_id: parseInt(ownerChatId) });
+
+      if (error) {
+        toast.error("Ошибка сохранения");
+      } else {
+        toast.success("Chat ID сохранён!");
+      }
+    }
+  };
+
+  const saveQuestionsToDb = async () => {
+    setIsSavingQuestions(true);
+    
+    try {
+      for (const q of questions) {
+        await supabase
+          .from("bot_questionnaire_questions")
+          .update({ 
+            question: q.question,
+            question_order: q.order 
+          })
+          .eq("id", q.id);
+      }
+      toast.success("Вопросы сохранены и синхронизированы с ботом!");
+    } catch (error) {
+      toast.error("Ошибка сохранения");
+    } finally {
+      setIsSavingQuestions(false);
+    }
+  };
+
+  const exportApplicationsToCSV = () => {
+    const headers = [
+      'ID', 'Telegram Username', 'Имя', 'Возраст', 'Страна', 
+      'Рост', 'Вес', 'Цвет волос', 'Платформы', 'Контент', 
+      'Желаемый доход', 'О себе', 'Статус', 'Дата заявки'
+    ];
+    
+    const csvContent = [
+      headers.join(';'),
+      ...filteredApplications.map(app => [
+        app.id,
+        app.telegram_username || '',
+        app.full_name || '',
+        app.age || '',
+        app.country || '',
+        app.height || '',
+        app.weight || '',
+        app.hair_color || '',
+        (app.platforms || []).join(', '),
+        (app.content_preferences || []).join(', '),
+        app.desired_income || '',
+        (app.about_yourself || '').replace(/;/g, ',').replace(/\n/g, ' '),
+        app.status,
+        new Date(app.created_at).toLocaleDateString('ru-RU')
+      ].map(v => `"${v}"`).join(';'))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `model_applications_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    toast.success("CSV файл скачан!");
   };
 
   const updateApplicationStatus = async (id: string, newStatus: string) => {
@@ -787,13 +916,13 @@ const Dashboard = () => {
             <TabsList className="bg-transparent border-0 p-0 gap-4 w-full grid grid-cols-1 md:grid-cols-3 h-auto">
               <TabsTrigger 
                 value="telegram-help" 
-                className="h-auto p-6 rounded-2xl bg-slate-900/50 border border-white/5 data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#0088cc] data-[state=active]:to-[#00a8e8] data-[state=active]:border-[#0088cc]/50 data-[state=active]:shadow-xl data-[state=active]:shadow-[#0088cc]/20 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
+                className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-[#0088cc] data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-2xl bg-[#0088cc]/20 flex items-center justify-center">
-                  <Bot className="w-8 h-8 text-[#0088cc]" />
+                <div className="w-16 h-16 rounded-2xl bg-[#0088cc]/20 flex items-center justify-center border border-[#0088cc]/30">
+                  <Bot className="w-8 h-8 text-white" />
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-lg">Telegram Bot HELP</p>
+                  <p className="font-bold text-lg text-white">Telegram Bot HELP</p>
                   <p className="text-xs text-slate-400 mt-1">Быстрые фразы • Чаты • История</p>
                 </div>
                 <div className="flex gap-2 mt-2">
@@ -804,13 +933,13 @@ const Dashboard = () => {
               
               <TabsTrigger 
                 value="model-application" 
-                className="h-auto p-6 rounded-2xl bg-slate-900/50 border border-white/5 data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:border-purple-500/50 data-[state=active]:shadow-xl data-[state=active]:shadow-purple-500/20 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
+                className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-purple-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-2xl bg-purple-500/20 flex items-center justify-center">
-                  <ClipboardList className="w-8 h-8 text-purple-400" />
+                <div className="w-16 h-16 rounded-2xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
+                  <ClipboardList className="w-8 h-8 text-white" />
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-lg">Анкета моделей</p>
+                  <p className="font-bold text-lg text-white">Анкета моделей</p>
                   <p className="text-xs text-slate-400 mt-1">Заявки • Вопросы • Webhook</p>
                 </div>
                 <div className="flex gap-2 mt-2">
@@ -823,13 +952,13 @@ const Dashboard = () => {
               
               <TabsTrigger 
                 value="pimpbunny" 
-                className="h-auto p-6 rounded-2xl bg-slate-900/50 border border-white/5 data-[state=active]:bg-gradient-to-br data-[state=active]:from-pink-500 data-[state=active]:to-rose-500 data-[state=active]:border-pink-500/50 data-[state=active]:shadow-xl data-[state=active]:shadow-pink-500/20 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
+                className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-pink-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-2xl bg-pink-500/20 flex items-center justify-center">
-                  <Rabbit className="w-8 h-8 text-pink-400" />
+                <div className="w-16 h-16 rounded-2xl bg-pink-500/20 flex items-center justify-center border border-pink-500/30">
+                  <Rabbit className="w-8 h-8 text-white" />
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-lg">PimpBunny</p>
+                  <p className="font-bold text-lg text-white">PimpBunny</p>
                   <p className="text-xs text-slate-400 mt-1">Скоро будет доступен</p>
                 </div>
                 <Badge variant="outline" className="text-xs border-pink-500/30 text-pink-400 mt-2">Coming Soon</Badge>
@@ -1287,14 +1416,24 @@ const Dashboard = () => {
                           <ClipboardList className="w-4 h-4 text-white" />
                         </div>
                         Заявки моделей
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={fetchApplications}
-                          className="ml-auto"
-                        >
-                          <RefreshCw className={`w-4 h-4 ${isLoadingApplications ? 'animate-spin' : ''}`} />
-                        </Button>
+                        <div className="ml-auto flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={exportApplicationsToCSV}
+                            className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Экспорт CSV
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={fetchApplications}
+                          >
+                            <RefreshCw className={`w-4 h-4 ${isLoadingApplications ? 'animate-spin' : ''}`} />
+                          </Button>
+                        </div>
                       </CardTitle>
                       
                       {/* Filters */}
@@ -1441,9 +1580,21 @@ const Dashboard = () => {
                           <Edit3 className="w-4 h-4 text-white" />
                         </div>
                         Редактор вопросов анкеты
+                        <Button
+                          onClick={saveQuestionsToDb}
+                          disabled={isSavingQuestions}
+                          className="ml-auto bg-pink-500 hover:bg-pink-600"
+                        >
+                          {isSavingQuestions ? (
+                            <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                          ) : (
+                            <Save className="w-4 h-4 mr-2" />
+                          )}
+                          Сохранить и синхронизировать
+                        </Button>
                       </CardTitle>
                       <CardDescription className="text-slate-400">
-                        Меняйте порядок и текст вопросов
+                        Меняйте порядок и текст вопросов. После изменений нажмите "Сохранить" для синхронизации с ботом.
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -1535,6 +1686,39 @@ const Dashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      {/* Owner Chat ID Setting */}
+                      <div className="p-4 rounded-xl bg-slate-800/30 border border-yellow-500/20 space-y-3">
+                        <div className="flex items-center gap-2 text-sm text-yellow-300">
+                          <Bell className="w-4 h-4" />
+                          <span>Уведомления о новых заявках</span>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Введите ваш Telegram Chat ID для получения уведомлений. Узнать ID можно у @userinfobot
+                        </p>
+                        <div className="flex gap-2">
+                          <Input
+                            value={ownerChatId}
+                            onChange={(e) => setOwnerChatId(e.target.value)}
+                            placeholder="123456789"
+                            className="bg-slate-800/50 border-yellow-500/30 font-mono text-sm"
+                            type="number"
+                          />
+                          <Button
+                            onClick={saveOwnerChatId}
+                            className="bg-yellow-500 hover:bg-yellow-600 text-black"
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            Сохранить
+                          </Button>
+                        </div>
+                        {ownerChatId && (
+                          <div className="flex items-center gap-2 text-yellow-400 text-sm">
+                            <CheckCircle className="w-4 h-4" />
+                            Chat ID настроен: {ownerChatId}
+                          </div>
+                        )}
+                      </div>
+
                       {/* Webhook URL */}
                       <div className="p-4 rounded-xl bg-slate-800/30 border border-purple-500/20 space-y-3">
                         <div className="flex items-center justify-between">
@@ -1564,7 +1748,7 @@ const Dashboard = () => {
                       <div className="p-4 rounded-xl bg-slate-800/30 border border-emerald-500/20 space-y-3">
                         <div className="flex items-center gap-2 text-sm text-emerald-300">
                           <Zap className="w-4 h-4" />
-                          <span>Автоматическая настройка</span>
+                          <span>Автоматическая настройка Webhook</span>
                         </div>
                         <p className="text-xs text-slate-500">
                           Вставьте токен бота от @BotFather и нажмите кнопку для автоматической настройки webhook
@@ -1635,58 +1819,6 @@ const Dashboard = () => {
               </Card>
             </TabsContent>
           </Tabs>
-        </motion.div>
-        {/* Bot Commands in Header area - moved from footer */}
-        <motion.div 
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40"
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl px-4 py-2 shadow-2xl">
-            <div className="flex items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-3 py-1.5 rounded-lg border border-[#0088cc]/20 cursor-help hover:bg-[#0088cc]/20 transition-colors">/start</code>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-slate-800 border-slate-700 text-white">
-                  <p>Запустить бота и показать приветствие</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-3 py-1.5 rounded-lg border border-[#0088cc]/20 cursor-help hover:bg-[#0088cc]/20 transition-colors">/summary</code>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-slate-800 border-slate-700 text-white">
-                  <p>Получить саммари чата за 24 часа</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <code className="text-xs font-mono text-purple-400 bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-500/20 cursor-help hover:bg-purple-500/20 transition-colors">/summary_all</code>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-slate-800 border-slate-700 text-white">
-                  <p>Полный отчёт за всё время</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <code className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 cursor-help hover:bg-emerald-500/20 transition-colors">/p_...</code>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-slate-800 border-slate-700 text-white">
-                  <p>Быстрые фразы: /p_название</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <div className="flex items-center gap-1 text-xs text-slate-400 px-2">
-                <Globe className="w-3 h-3" />
-                <span>RU↔EN</span>
-              </div>
-            </div>
-          </div>
         </motion.div>
       </main>
     </motion.div>
