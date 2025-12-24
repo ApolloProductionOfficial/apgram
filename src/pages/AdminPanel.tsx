@@ -127,7 +127,7 @@ const AdminPanel = () => {
   const [participants, setParticipants] = useState<MeetingParticipant[]>([]);
   const [geoData, setGeoData] = useState<Map<string, ParticipantGeoData>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'transcripts' | 'participants' | 'profile' | 'analytics' | 'users' | 'models'>('analytics');
+  const [activeTab, setActiveTab] = useState<'transcripts' | 'participants' | 'profile' | 'analytics' | 'users' | 'models' | 'help-bot' | 'pimpbunny'>('analytics');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
@@ -649,11 +649,12 @@ const AdminPanel = () => {
                 playsInline
                 className="w-8 h-8 object-cover rounded-full"
               />
-              <span className="font-semibold">Apollo Production</span>
+              <span className="font-semibold text-primary">APOLLO</span>
+              <span className="font-semibold">PRODUCTION</span>
             </Button>
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1 bg-primary/20 text-primary border-primary/30">
               <Shield className="w-3 h-3" />
-              Личный кабинет
+              Личный кабинет агентства
             </Badge>
           </div>
           
@@ -668,13 +669,31 @@ const AdminPanel = () => {
               {admin.analytics || 'Статистика'}
             </Button>
             <Button
+              variant={activeTab === 'help-bot' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('help-bot')}
+              className="gap-2"
+            >
+              <Globe className="w-4 h-4" />
+              Telegram Bot HELP
+            </Button>
+            <Button
               variant={activeTab === 'models' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setActiveTab('models')}
               className="gap-2"
             >
               <Sparkles className="w-4 h-4" />
-              Модели
+              Анкета моделей
+            </Button>
+            <Button
+              variant={activeTab === 'pimpbunny' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('pimpbunny')}
+              className="gap-2 text-pink-400 border-pink-400/30 hover:bg-pink-400/10"
+            >
+              <Sparkles className="w-4 h-4" />
+              PimpBunny
             </Button>
             <Button
               variant={activeTab === 'transcripts' ? 'default' : 'outline'}
@@ -720,6 +739,37 @@ const AdminPanel = () => {
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-12 h-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+          </div>
+        ) : activeTab === 'help-bot' ? (
+          <div className="space-y-6">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Globe className="w-6 h-6 text-primary" />
+              Telegram Bot HELP
+            </h1>
+            <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+              <CardHeader>
+                <CardTitle>Настройки бота-помощника</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Здесь будут настройки чатов, быстрые фразы и другие функции бота HELP.</p>
+                <p className="text-sm text-muted-foreground mt-2">Бот для добавления в группы: переводчик, саммари, быстрые фразы.</p>
+              </CardContent>
+            </Card>
+          </div>
+        ) : activeTab === 'pimpbunny' ? (
+          <div className="space-y-6">
+            <h1 className="text-2xl font-bold flex items-center gap-2 text-pink-400">
+              <Sparkles className="w-6 h-6" />
+              PimpBunny
+            </h1>
+            <Card className="bg-card/50 backdrop-blur-sm border-pink-500/20">
+              <CardHeader>
+                <CardTitle className="text-pink-400">Раздел в разработке</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Функционал PimpBunny будет добавлен позже.</p>
+              </CardContent>
+            </Card>
           </div>
         ) : activeTab === 'models' ? (
           <div className="space-y-6">
@@ -1429,6 +1479,16 @@ const AdminPanel = () => {
           </div>
         )}
       </main>
+      
+      {/* TwoFactorSetup Dialog - rendered outside of conditional */}
+      <TwoFactorSetup 
+        isOpen={show2FASetup}
+        onClose={() => setShow2FASetup(false)}
+        onSuccess={() => {
+          setShow2FASetup(false);
+          setHas2FA(true);
+        }} 
+      />
     </div>
   );
 };
