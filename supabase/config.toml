@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.model-bot]
 verify_jwt = false
+
+[functions.onlymonster-api]
+verify_jwt = false
