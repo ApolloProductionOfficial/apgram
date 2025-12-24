@@ -9,10 +9,21 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Edit3, Save, ChevronUp, ChevronDown, Plus, Trash2, RefreshCw, 
-  MessageSquare, ListChecks, Image, Type, GripVertical, X, Info
+  MessageSquare, ListChecks, Image, Type, X, Info, AlertTriangle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface QuestionOption {
   id?: string;
@@ -46,6 +57,8 @@ export function QuestionsEditor() {
   const [editingDescId, setEditingDescId] = useState<string | null>(null);
   const [editingOptionsId, setEditingOptionsId] = useState<string | null>(null);
   const [newOption, setNewOption] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [newQuestion, setNewQuestion] = useState({ step: '', question: '', question_type: 'text', description: '' });
 
   useEffect(() => {
     fetchQuestions();
@@ -87,6 +100,56 @@ export function QuestionsEditor() {
       toast.error("Ошибка сохранения");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const createQuestion = async () => {
+    if (!newQuestion.step.trim() || !newQuestion.question.trim()) {
+      toast.error("Заполните шаг и текст вопроса");
+      return;
+    }
+
+    const maxOrder = questions.length > 0 
+      ? Math.max(...questions.map(q => q.question_order)) 
+      : 0;
+
+    const { data, error } = await supabase
+      .from("bot_questionnaire_questions")
+      .insert({
+        step: newQuestion.step.toLowerCase().replace(/\s+/g, '_'),
+        question: newQuestion.question,
+        question_type: newQuestion.question_type,
+        description: newQuestion.description || null,
+        question_order: maxOrder + 1,
+        is_active: true,
+        options: newQuestion.question_type === 'buttons' || newQuestion.question_type === 'multi_select' ? [] : null
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error("Ошибка создания вопроса");
+      console.error(error);
+    } else {
+      toast.success("Вопрос создан!");
+      setQuestions([...questions, data]);
+      setNewQuestion({ step: '', question: '', question_type: 'text', description: '' });
+      setIsCreating(false);
+    }
+  };
+
+  const deleteQuestion = async (id: string) => {
+    const { error } = await supabase
+      .from("bot_questionnaire_questions")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Ошибка удаления вопроса");
+      console.error(error);
+    } else {
+      toast.success("Вопрос удалён");
+      setQuestions(questions.filter(q => q.id !== id));
     }
   };
 
@@ -191,6 +254,15 @@ export function QuestionsEditor() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setIsCreating(!isCreating)}
+              className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Новый вопрос
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={fetchQuestions}
               className="border-slate-600"
             >
@@ -207,7 +279,7 @@ export function QuestionsEditor() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              Сохранить и синхронизировать
+              Сохранить
             </Button>
           </div>
         </CardTitle>
@@ -216,6 +288,75 @@ export function QuestionsEditor() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* Create new question form */}
+        {isCreating && (
+          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+            <h3 className="text-sm font-medium text-emerald-400 mb-4 flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Создать новый вопрос
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Шаг (step)</label>
+                <Input
+                  placeholder="например: webcam_experience"
+                  value={newQuestion.step}
+                  onChange={(e) => setNewQuestion({ ...newQuestion, step: e.target.value })}
+                  className="bg-slate-800/50 border-emerald-500/30"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Тип вопроса</label>
+                <Select
+                  value={newQuestion.question_type}
+                  onValueChange={(value) => setNewQuestion({ ...newQuestion, question_type: value })}
+                >
+                  <SelectTrigger className="bg-slate-800/50 border-emerald-500/30">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {QUESTION_TYPES.map(type => (
+                      <SelectItem key={type.value} value={type.value}>
+                        <div className="flex items-center gap-2">
+                          <type.icon className="w-4 h-4" />
+                          {type.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs text-slate-400 mb-1 block">Текст вопроса</label>
+                <Textarea
+                  placeholder="Введите текст вопроса..."
+                  value={newQuestion.question}
+                  onChange={(e) => setNewQuestion({ ...newQuestion, question: e.target.value })}
+                  className="bg-slate-800/50 border-emerald-500/30"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs text-slate-400 mb-1 block">Подсказка (описание)</label>
+                <Input
+                  placeholder="Подсказка для пользователя..."
+                  value={newQuestion.description}
+                  onChange={(e) => setNewQuestion({ ...newQuestion, description: e.target.value })}
+                  className="bg-slate-800/50 border-emerald-500/30"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" size="sm" onClick={() => setIsCreating(false)}>
+                Отмена
+              </Button>
+              <Button size="sm" onClick={createQuestion} className="bg-emerald-500 hover:bg-emerald-600">
+                <Plus className="w-4 h-4 mr-2" />
+                Создать
+              </Button>
+            </div>
+          </div>
+        )}
+
         <ScrollArea className="h-[600px] pr-4">
           <div className="space-y-3">
             {questions.map((q, index) => (
@@ -295,13 +436,46 @@ export function QuestionsEditor() {
                           <p className="text-sm text-white">{q.question}</p>
                           <p className="text-xs text-slate-500 mt-1">step: {q.step}</p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingId(q.id)}
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingId(q.id)}
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="bg-slate-900 border-white/10">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="flex items-center gap-2 text-white">
+                                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                                  Удалить вопрос?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription className="text-slate-400">
+                                  Вопрос "{q.question.substring(0, 50)}..." будет удалён. Это действие нельзя отменить.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel className="bg-slate-800 border-white/10">Отмена</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteQuestion(q.id)}
+                                  className="bg-red-500 hover:bg-red-600"
+                                >
+                                  Удалить
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
                     )}
 

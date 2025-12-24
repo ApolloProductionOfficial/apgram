@@ -24,7 +24,7 @@ import {
   Timer
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import onlyfansLogo from "@/assets/onlyfans-neon-logo.png";
+import onlyfansLogo from "@/assets/onlyfans-icon.png";
 
 interface OnlyFansAccount {
   id: string;
