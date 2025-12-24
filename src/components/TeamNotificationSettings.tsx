@@ -12,8 +12,14 @@ import {
   Save, 
   Users,
   CheckCircle,
-  User
+  User,
+  AtSign
 } from "lucide-react";
+
+interface TeamMember {
+  chatId: number;
+  username?: string;
+}
 
 interface TeamNotificationSettingsProps {
   ownerChatId: string;
@@ -26,15 +32,17 @@ export function TeamNotificationSettings({
   onOwnerChatIdChange,
   onSave 
 }: TeamNotificationSettingsProps) {
-  const [teamChatIds, setTeamChatIds] = useState<number[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [newTeamChatId, setNewTeamChatId] = useState("");
+  const [newTeamUsername, setNewTeamUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    fetchTeamChatIds();
+    fetchTeamMembers();
   }, []);
 
-  const fetchTeamChatIds = async () => {
+  const fetchTeamMembers = async () => {
     const { data } = await supabase
       .from("bot_welcome_settings")
       .select("notification_chat_ids")
@@ -42,13 +50,20 @@ export function TeamNotificationSettings({
       .maybeSingle();
 
     if (data?.notification_chat_ids) {
-      setTeamChatIds(data.notification_chat_ids);
+      // Пока usernames хранятся локально, позже можно добавить jsonb колонку
+      const members = (data.notification_chat_ids as number[]).map((chatId: number) => ({
+        chatId,
+        username: undefined
+      }));
+      setTeamMembers(members);
     }
   };
 
-  const saveTeamChatIds = async (newIds: number[]) => {
+  const saveTeamMembers = async (members: TeamMember[]) => {
     setIsLoading(true);
     
+    const chatIds = members.map(m => m.chatId);
+
     const { data: existing } = await supabase
       .from("bot_welcome_settings")
       .select("id")
@@ -58,24 +73,30 @@ export function TeamNotificationSettings({
     if (existing) {
       const { error } = await supabase
         .from("bot_welcome_settings")
-        .update({ notification_chat_ids: newIds })
+        .update({ 
+          notification_chat_ids: chatIds
+        })
         .eq("id", existing.id);
 
       if (error) {
+        console.error('Save error:', error);
         toast.error("Ошибка сохранения");
       } else {
-        setTeamChatIds(newIds);
+        setTeamMembers(members);
         toast.success("Список команды обновлён!");
       }
     } else {
       const { error } = await supabase
         .from("bot_welcome_settings")
-        .insert({ notification_chat_ids: newIds });
+        .insert({ 
+          notification_chat_ids: chatIds
+        });
 
       if (error) {
+        console.error('Insert error:', error);
         toast.error("Ошибка сохранения");
       } else {
-        setTeamChatIds(newIds);
+        setTeamMembers(members);
         toast.success("Список команды сохранён!");
       }
     }
@@ -95,19 +116,68 @@ export function TeamNotificationSettings({
       return;
     }
 
-    if (teamChatIds.includes(chatId)) {
+    if (teamMembers.some(m => m.chatId === chatId)) {
       toast.error("Этот Chat ID уже добавлен");
       return;
     }
 
-    const newIds = [...teamChatIds, chatId];
-    saveTeamChatIds(newIds);
+    const newMember: TeamMember = {
+      chatId,
+      username: newTeamUsername.trim() ? newTeamUsername.trim().replace('@', '') : undefined
+    };
+
+    const newMembers = [...teamMembers, newMember];
+    saveTeamMembers(newMembers);
     setNewTeamChatId("");
+    setNewTeamUsername("");
   };
 
   const removeTeamMember = (chatId: number) => {
-    const newIds = teamChatIds.filter(id => id !== chatId);
-    saveTeamChatIds(newIds);
+    const newMembers = teamMembers.filter(m => m.chatId !== chatId);
+    saveTeamMembers(newMembers);
+  };
+
+  const handleOwnerSave = async () => {
+    if (!ownerChatId.trim()) {
+      toast.error("Введите Chat ID");
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      const { data: existing } = await supabase
+        .from("bot_welcome_settings")
+        .select("id")
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from("bot_welcome_settings")
+          .update({ owner_telegram_chat_id: parseInt(ownerChatId) })
+          .eq("id", existing.id);
+
+        if (error) {
+          console.error('Save owner error:', error);
+          toast.error("Ошибка сохранения");
+        } else {
+          toast.success("Chat ID сохранён! Уведомления будут приходить вам.");
+        }
+      } else {
+        const { error } = await supabase
+          .from("bot_welcome_settings")
+          .insert({ owner_telegram_chat_id: parseInt(ownerChatId) });
+
+        if (error) {
+          console.error('Insert owner error:', error);
+          toast.error("Ошибка сохранения");
+        } else {
+          toast.success("Chat ID сохранён!");
+        }
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -143,7 +213,8 @@ export function TeamNotificationSettings({
               type="number"
             />
             <Button
-              onClick={onSave}
+              onClick={handleOwnerSave}
+              disabled={isSaving}
               className="bg-yellow-500 hover:bg-yellow-600 text-black"
             >
               <Save className="w-4 h-4 mr-2" />
@@ -164,7 +235,7 @@ export function TeamNotificationSettings({
             <div className="flex items-center gap-2 text-sm text-blue-300">
               <Users className="w-4 h-4" />
               <span>Команда (дополнительно)</span>
-              <Badge className="bg-blue-500/20 text-blue-400 text-xs">{teamChatIds.length}</Badge>
+              <Badge className="bg-blue-500/20 text-blue-400 text-xs">{teamMembers.length}</Badge>
             </div>
           </div>
           <p className="text-xs text-slate-500">
@@ -172,44 +243,60 @@ export function TeamNotificationSettings({
           </p>
           
           {/* Add new team member */}
-          <div className="flex gap-2">
-            <Input
-              value={newTeamChatId}
-              onChange={(e) => setNewTeamChatId(e.target.value)}
-              placeholder="Chat ID члена команды"
-              className="bg-slate-800/50 border-blue-500/30 font-mono text-sm"
-              type="number"
-              onKeyDown={(e) => e.key === 'Enter' && addTeamMember()}
-            />
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input
+                value={newTeamChatId}
+                onChange={(e) => setNewTeamChatId(e.target.value)}
+                placeholder="Chat ID члена команды"
+                className="bg-slate-800/50 border-blue-500/30 font-mono text-sm"
+                type="number"
+              />
+              <Input
+                value={newTeamUsername}
+                onChange={(e) => setNewTeamUsername(e.target.value)}
+                placeholder="@username (опционально)"
+                className="bg-slate-800/50 border-blue-500/30 text-sm"
+                onKeyDown={(e) => e.key === 'Enter' && addTeamMember()}
+              />
+            </div>
             <Button
               onClick={addTeamMember}
               disabled={isLoading}
-              className="bg-blue-500 hover:bg-blue-600"
+              className="w-full bg-blue-500 hover:bg-blue-600"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Добавить
+              Добавить члена команды
             </Button>
           </div>
 
           {/* Team members list */}
-          {teamChatIds.length > 0 && (
+          {teamMembers.length > 0 && (
             <div className="space-y-2 mt-3">
-              {teamChatIds.map((chatId, index) => (
+              {teamMembers.map((member, index) => (
                 <div 
-                  key={chatId}
-                  className="flex items-center justify-between p-2 rounded-lg bg-slate-800/50 border border-white/5"
+                  key={member.chatId}
+                  className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-white/5"
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-xs text-blue-400">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-sm text-blue-400 font-medium">
                       {index + 1}
                     </div>
-                    <code className="text-sm font-mono text-blue-400">{chatId}</code>
+                    <div>
+                      {member.username && (
+                        <div className="flex items-center gap-1 text-sm text-white">
+                          <AtSign className="w-3 h-3 text-blue-400" />
+                          <span>{member.username}</span>
+                        </div>
+                      )}
+                      <code className="text-xs font-mono text-slate-400">{member.chatId}</code>
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => removeTeamMember(chatId)}
-                    className="h-7 w-7 p-0 text-slate-500 hover:text-red-400 hover:bg-red-500/10"
+                    onClick={() => removeTeamMember(member.chatId)}
+                    className="h-8 w-8 p-0 text-slate-500 hover:text-red-400 hover:bg-red-500/10"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -218,7 +305,7 @@ export function TeamNotificationSettings({
             </div>
           )}
 
-          {teamChatIds.length === 0 && (
+          {teamMembers.length === 0 && (
             <p className="text-xs text-slate-500 italic">
               Пока не добавлено ни одного члена команды
             </p>

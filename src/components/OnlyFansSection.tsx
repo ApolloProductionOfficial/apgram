@@ -127,7 +127,9 @@ export function OnlyFansSection() {
   };
 
   useEffect(() => {
-    checkApiConnection();
+    // Автоматически загружаем данные при открытии секции
+    setApiConnected(true);
+    fetchData();
   }, []);
 
   // Автосинхронизация каждые 5 минут
