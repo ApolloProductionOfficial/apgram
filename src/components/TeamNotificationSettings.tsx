@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -16,18 +15,8 @@ import {
   User,
   AtSign,
   Send,
-  Loader2,
-  MessageSquare,
-  Image,
-  Film
+  Loader2
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface TeamMember {
   chatId: number;
@@ -51,12 +40,6 @@ export function TeamNotificationSettings({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
-  
-  // Welcome message settings
-  const [welcomeMessage, setWelcomeMessage] = useState("");
-  const [welcomeMediaUrl, setWelcomeMediaUrl] = useState("");
-  const [welcomeMediaType, setWelcomeMediaType] = useState<string>("video");
-  const [isSavingWelcome, setIsSavingWelcome] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -65,7 +48,7 @@ export function TeamNotificationSettings({
   const fetchSettings = async () => {
     const { data } = await supabase
       .from("bot_welcome_settings")
-      .select("notification_chat_ids, welcome_message, welcome_media_url, welcome_media_type")
+      .select("notification_chat_ids")
       .limit(1)
       .maybeSingle();
 
@@ -77,9 +60,6 @@ export function TeamNotificationSettings({
         }));
         setTeamMembers(members);
       }
-      if (data.welcome_message) setWelcomeMessage(data.welcome_message);
-      if (data.welcome_media_url) setWelcomeMediaUrl(data.welcome_media_url);
-      if (data.welcome_media_type) setWelcomeMediaType(data.welcome_media_type);
     }
   };
 
@@ -245,157 +225,8 @@ export function TeamNotificationSettings({
     }
   };
 
-  const saveWelcomeSettings = async () => {
-    setIsSavingWelcome(true);
-    try {
-      const { data: existing } = await supabase
-        .from("bot_welcome_settings")
-        .select("id")
-        .limit(1)
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabase
-          .from("bot_welcome_settings")
-          .update({ 
-            welcome_message: welcomeMessage,
-            welcome_media_url: welcomeMediaUrl || null,
-            welcome_media_type: welcomeMediaType
-          })
-          .eq("id", existing.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("bot_welcome_settings")
-          .insert({ 
-            welcome_message: welcomeMessage,
-            welcome_media_url: welcomeMediaUrl || null,
-            welcome_media_type: welcomeMediaType
-          });
-
-        if (error) throw error;
-      }
-      toast.success("Приветственное сообщение сохранено!");
-    } catch (err) {
-      console.error('Save welcome error:', err);
-      toast.error("Ошибка сохранения");
-    } finally {
-      setIsSavingWelcome(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
-      {/* Welcome Message Settings */}
-      <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <MessageSquare className="w-4 h-4 text-white" />
-            </div>
-            Приветственное сообщение бота
-          </CardTitle>
-          <CardDescription className="text-slate-400">
-            Настройте текст и медиа, которое увидят новые пользователи при запуске бота
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Welcome Message Text */}
-          <div className="space-y-2">
-            <label className="text-sm text-slate-300 flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-purple-400" />
-              Текст приветствия
-            </label>
-            <Textarea
-              value={welcomeMessage}
-              onChange={(e) => setWelcomeMessage(e.target.value)}
-              placeholder="Добро пожаловать в Apollo Production! 🌟&#10;&#10;Мы рады видеть вас..."
-              className="bg-slate-800/50 border-purple-500/30 min-h-[120px] text-sm"
-            />
-            <p className="text-xs text-slate-500">
-              Поддерживается HTML форматирование: &lt;b&gt;жирный&lt;/b&gt;, &lt;i&gt;курсив&lt;/i&gt;, &lt;a href="..."&gt;ссылка&lt;/a&gt;
-            </p>
-          </div>
-
-          {/* Media Type */}
-          <div className="space-y-2">
-            <label className="text-sm text-slate-300 flex items-center gap-2">
-              <Film className="w-4 h-4 text-purple-400" />
-              Тип медиа
-            </label>
-            <Select value={welcomeMediaType} onValueChange={setWelcomeMediaType}>
-              <SelectTrigger className="bg-slate-800/50 border-purple-500/30">
-                <SelectValue placeholder="Выберите тип" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="video">🎬 Видео</SelectItem>
-                <SelectItem value="animation">🎞️ GIF / Анимация</SelectItem>
-                <SelectItem value="photo">🖼️ Фото</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Media URL */}
-          <div className="space-y-2">
-            <label className="text-sm text-slate-300 flex items-center gap-2">
-              <Image className="w-4 h-4 text-purple-400" />
-              Ссылка на медиа (опционально)
-            </label>
-            <Input
-              value={welcomeMediaUrl}
-              onChange={(e) => setWelcomeMediaUrl(e.target.value)}
-              placeholder="https://example.com/welcome.mp4"
-              className="bg-slate-800/50 border-purple-500/30 text-sm"
-            />
-            <p className="text-xs text-slate-500">
-              Прямая ссылка на видео, GIF или изображение. Оставьте пустым, если не нужно.
-            </p>
-          </div>
-
-          {/* Preview */}
-          {welcomeMediaUrl && (
-            <div className="p-3 rounded-lg bg-slate-800/30 border border-purple-500/20">
-              <p className="text-xs text-slate-400 mb-2">Предпросмотр медиа:</p>
-              {welcomeMediaType === 'photo' ? (
-                <img 
-                  src={welcomeMediaUrl} 
-                  alt="Preview" 
-                  className="max-w-full max-h-48 rounded-lg object-contain"
-                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                />
-              ) : welcomeMediaType === 'animation' ? (
-                <img 
-                  src={welcomeMediaUrl} 
-                  alt="Preview GIF" 
-                  className="max-w-full max-h-48 rounded-lg object-contain"
-                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                />
-              ) : (
-                <video 
-                  src={welcomeMediaUrl} 
-                  controls 
-                  className="max-w-full max-h-48 rounded-lg"
-                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                />
-              )}
-            </div>
-          )}
-
-          <Button
-            onClick={saveWelcomeSettings}
-            disabled={isSavingWelcome}
-            className="w-full bg-purple-500 hover:bg-purple-600"
-          >
-            {isSavingWelcome ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Сохранить приветствие
-          </Button>
-        </CardContent>
-      </Card>
 
       {/* Notifications Card */}
       <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
