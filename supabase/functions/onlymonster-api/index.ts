@@ -64,19 +64,49 @@ serve(async (req) => {
             }
           });
 
+          console.log('OnlyMonster API response status:', response.status);
+          
           if (response.ok) {
             const data = await response.json();
+            console.log('OnlyMonster API data:', JSON.stringify(data).substring(0, 500));
+            
+            // Normalize the response - handle different response formats
+            let accounts = [];
+            if (Array.isArray(data)) {
+              accounts = data;
+            } else if (data.accounts && Array.isArray(data.accounts)) {
+              accounts = data.accounts;
+            } else if (data.data && Array.isArray(data.data)) {
+              accounts = data.data;
+            }
+            
+            // Map to our format
+            const normalizedAccounts = accounts.map((acc: any, idx: number) => ({
+              id: acc.id || acc._id || `acc_${idx}`,
+              username: acc.username || acc.name || acc.user_name || `account_${idx}`,
+              display_name: acc.display_name || acc.displayName || acc.name || acc.username,
+              subscribers: acc.subscribers || acc.fans_count || acc.subscribersCount || 0,
+              earnings_today: acc.earnings_today || acc.todayEarnings || acc.today_earnings || 0,
+              earnings_month: acc.earnings_month || acc.monthEarnings || acc.month_earnings || acc.total_earnings || 0,
+              messages_pending: acc.messages_pending || acc.pendingMessages || acc.unread_messages || 0,
+              last_sync: acc.last_sync || acc.lastSync || new Date().toISOString(),
+              is_active: acc.is_active !== undefined ? acc.is_active : (acc.status === 'active' || acc.active || true)
+            }));
+            
             return new Response(
-              JSON.stringify({ accounts: data.accounts || data }),
+              JSON.stringify({ accounts: normalizedAccounts }),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           }
           
-          // Return mock data if API fails
+          // Log the error response
+          const errorText = await response.text();
+          console.log('OnlyMonster API error response:', errorText);
+          
           return new Response(
             JSON.stringify({ 
               accounts: [],
-              message: 'API returned non-OK status, using empty data'
+              message: `API returned status ${response.status}`
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
