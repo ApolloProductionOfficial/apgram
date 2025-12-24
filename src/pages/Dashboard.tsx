@@ -59,7 +59,8 @@ import {
   ChevronUp,
   ChevronDown,
   GripVertical,
-  Link
+  Link,
+  Search
 } from "lucide-react";
 import apolloLogo from "@/assets/cf-logo-final.png";
 import apolloLogoVideo from "@/assets/apollo-logo.mp4";
@@ -166,6 +167,8 @@ const Dashboard = () => {
   const [applications, setApplications] = useState<ModelApplication[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<ModelApplication | null>(null);
   const [isLoadingApplications, setIsLoadingApplications] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Questions editor state
   const [questions, setQuestions] = useState<QuestionConfig[]>(DEFAULT_QUESTIONS);
@@ -175,6 +178,15 @@ const Dashboard = () => {
   const [isSettingWebhook, setIsSettingWebhook] = useState(false);
   const [webhookStatus, setWebhookStatus] = useState<'unknown' | 'success' | 'error'>('unknown');
   const [modelBotToken, setModelBotToken] = useState("");
+  
+  // Filtered applications
+  const filteredApplications = applications.filter(app => {
+    const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+    const matchesSearch = !searchQuery || 
+      (app.full_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (app.telegram_username?.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesStatus && matchesSearch;
+  });
 
   useEffect(() => {
     // Редирект только если загрузка завершена И пользователя нет
@@ -763,134 +775,64 @@ const Dashboard = () => {
           </div>
         </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-8 relative z-10">
-        {/* Stats */}
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+      <main className="container mx-auto px-4 py-6 relative z-10">
+        {/* Main Content with Large Tabs */}
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
         >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl hover:bg-slate-800/50 transition-all group overflow-hidden relative cursor-help">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <CardContent className="pt-6 relative">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform border border-primary/20">
-                      <Zap className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{phrases.length}</p>
-                      <p className="text-xs text-slate-400">Быстрых фраз</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white max-w-xs">
-              <p>Заготовленные текстовые шаблоны, которые бот отправляет по команде /p_название</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl hover:bg-slate-800/50 transition-all group overflow-hidden relative cursor-help">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0088cc]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <CardContent className="pt-6 relative">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0088cc]/30 to-[#0088cc]/10 flex items-center justify-center group-hover:scale-110 transition-transform border border-[#0088cc]/20">
-                      <MessageSquare className="w-6 h-6 text-[#0088cc]" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{messages.length}</p>
-                      <p className="text-xs text-slate-400">Сообщений</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white max-w-xs">
-              <p>Все сообщения, которые бот обработал в подключённых чатах</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl hover:bg-slate-800/50 transition-all group overflow-hidden relative cursor-help">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <CardContent className="pt-6 relative">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/30 to-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform border border-purple-500/20">
-                      <Hash className="w-6 h-6 text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{chatSettings.length}</p>
-                      <p className="text-xs text-slate-400">Чатов</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white max-w-xs">
-              <p>Групповые чаты, в которых бот активирован и настроен</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl hover:bg-slate-800/50 transition-all group overflow-hidden relative cursor-help">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <CardContent className="pt-6 relative">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-emerald-500/10 flex items-center justify-center group-hover:scale-110 transition-transform border border-emerald-500/20">
-                      <Shield className="w-6 h-6 text-emerald-400" />
-                    </div>
-                    <div>
-                      <p className="text-xl font-bold text-emerald-400">Защищён</p>
-                      <p className="text-xs text-slate-400">Соединение</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white max-w-xs">
-              <p>Все данные зашифрованы и передаются по защищённому каналу</p>
-            </TooltipContent>
-          </Tooltip>
-        </motion.div>
-
-        {/* Main Content with Tabs */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          {/* Main Section Tabs */}
+          {/* Main Section Tabs - Large Cards Style */}
           <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-6">
-            <TabsList className="bg-slate-900/50 border border-white/5 p-1.5 gap-1 w-full flex-wrap">
+            <TabsList className="bg-transparent border-0 p-0 gap-4 w-full grid grid-cols-1 md:grid-cols-3 h-auto">
               <TabsTrigger 
                 value="telegram-help" 
-                className="relative flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0088cc] data-[state=active]:to-[#00a8e8] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-[#0088cc]/30 transition-all duration-300"
+                className="h-auto p-6 rounded-2xl bg-slate-900/50 border border-white/5 data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#0088cc] data-[state=active]:to-[#00a8e8] data-[state=active]:border-[#0088cc]/50 data-[state=active]:shadow-xl data-[state=active]:shadow-[#0088cc]/20 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <Bot className="w-4 h-4 mr-2" />
-                Telegram Bot HELP
+                <div className="w-16 h-16 rounded-2xl bg-[#0088cc]/20 flex items-center justify-center">
+                  <Bot className="w-8 h-8 text-[#0088cc]" />
+                </div>
+                <div className="text-center">
+                  <p className="font-bold text-lg">Telegram Bot HELP</p>
+                  <p className="text-xs text-slate-400 mt-1">Быстрые фразы • Чаты • История</p>
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <Badge variant="outline" className="text-xs border-[#0088cc]/30">{phrases.length} фраз</Badge>
+                  <Badge variant="outline" className="text-xs border-purple-500/30">{chatSettings.length} чатов</Badge>
+                </div>
               </TabsTrigger>
               
               <TabsTrigger 
                 value="model-application" 
-                className="relative flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/30 transition-all duration-300"
+                className="h-auto p-6 rounded-2xl bg-slate-900/50 border border-white/5 data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:border-purple-500/50 data-[state=active]:shadow-xl data-[state=active]:shadow-purple-500/20 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <ClipboardList className="w-4 h-4 mr-2" />
-                Анкета моделей
+                <div className="w-16 h-16 rounded-2xl bg-purple-500/20 flex items-center justify-center">
+                  <ClipboardList className="w-8 h-8 text-purple-400" />
+                </div>
+                <div className="text-center">
+                  <p className="font-bold text-lg">Анкета моделей</p>
+                  <p className="text-xs text-slate-400 mt-1">Заявки • Вопросы • Webhook</p>
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <Badge variant="outline" className="text-xs border-yellow-500/30 text-yellow-400">
+                    {applications.filter(a => a.status === 'pending').length} новых
+                  </Badge>
+                  <Badge variant="outline" className="text-xs border-slate-500/30">{applications.length} всего</Badge>
+                </div>
               </TabsTrigger>
               
               <TabsTrigger 
                 value="pimpbunny" 
-                className="relative flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-pink-500/30 transition-all duration-300"
+                className="h-auto p-6 rounded-2xl bg-slate-900/50 border border-white/5 data-[state=active]:bg-gradient-to-br data-[state=active]:from-pink-500 data-[state=active]:to-rose-500 data-[state=active]:border-pink-500/50 data-[state=active]:shadow-xl data-[state=active]:shadow-pink-500/20 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <Rabbit className="w-4 h-4 mr-2" />
-                PimpBunny
+                <div className="w-16 h-16 rounded-2xl bg-pink-500/20 flex items-center justify-center">
+                  <Rabbit className="w-8 h-8 text-pink-400" />
+                </div>
+                <div className="text-center">
+                  <p className="font-bold text-lg">PimpBunny</p>
+                  <p className="text-xs text-slate-400 mt-1">Скоро будет доступен</p>
+                </div>
+                <Badge variant="outline" className="text-xs border-pink-500/30 text-pink-400 mt-2">Coming Soon</Badge>
               </TabsTrigger>
             </TabsList>
 
@@ -1354,17 +1296,42 @@ const Dashboard = () => {
                           <RefreshCw className={`w-4 h-4 ${isLoadingApplications ? 'animate-spin' : ''}`} />
                         </Button>
                       </CardTitle>
+                      
+                      {/* Filters */}
+                      <div className="flex flex-wrap gap-3 mt-4">
+                        <div className="relative flex-1 min-w-[200px]">
+                          <Input
+                            placeholder="Поиск по имени или @username..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="bg-slate-800/50 border-white/10 pl-10"
+                          />
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        </div>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="w-[180px] bg-slate-800/50 border-white/10">
+                            <SelectValue placeholder="Статус" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Все статусы</SelectItem>
+                            <SelectItem value="pending">⏳ На рассмотрении</SelectItem>
+                            <SelectItem value="approved">✅ Одобрены</SelectItem>
+                            <SelectItem value="rejected">❌ Отклонены</SelectItem>
+                            <SelectItem value="in_progress">📝 Заполняются</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      {applications.length === 0 ? (
+                      {filteredApplications.length === 0 ? (
                         <div className="text-center py-12 text-slate-500">
                           <ClipboardList className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                          <p>Нет заявок</p>
-                          <p className="text-xs mt-2">Заявки появятся здесь после заполнения анкеты</p>
+                          <p>{applications.length === 0 ? 'Нет заявок' : 'Заявки не найдены'}</p>
+                          <p className="text-xs mt-2">{applications.length === 0 ? 'Заявки появятся здесь после заполнения анкеты' : 'Попробуйте изменить фильтры'}</p>
                         </div>
                       ) : (
                         <div className="grid gap-4">
-                          {applications.map((app) => (
+                          {filteredApplications.map((app) => (
                             <div
                               key={app.id}
                               className="p-4 rounded-xl bg-slate-800/30 border border-white/5 hover:border-purple-500/30 transition-all cursor-pointer"
