@@ -982,6 +982,9 @@ const Dashboard = () => {
                   <Badge variant="outline" className="text-xs border-yellow-500/30 text-yellow-400">
                     {applications.filter(a => a.status === 'pending').length} новых
                   </Badge>
+                  <Badge variant="outline" className="text-xs border-blue-500/30 text-blue-400">
+                    {applications.filter(a => a.status === 'in_progress').length} заполняются
+                  </Badge>
                   <Badge variant="outline" className="text-xs border-slate-500/30">{applications.length} всего</Badge>
                 </div>
               </TabsTrigger>
@@ -1465,7 +1468,7 @@ const Dashboard = () => {
                     className="text-xs data-[state=active]:bg-purple-500 data-[state=active]:text-white"
                   >
                     <ClipboardList className="w-3 h-3 mr-1" />
-                    Заявки ({applications.filter(a => a.status === 'pending').length})
+                    Заявки ({applications.filter(a => a.status === 'pending' || a.status === 'in_progress').length})
                   </TabsTrigger>
                   <TabsTrigger 
                     value="bot-editor" 
