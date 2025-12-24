@@ -937,10 +937,10 @@ const Dashboard = () => {
             <TabsList className="bg-transparent border-0 p-0 gap-4 w-full grid grid-cols-1 md:grid-cols-4 h-auto">
               <TabsTrigger 
                 value="telegram-help" 
-                className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-[#0088cc] data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
+                className="group h-auto p-6 rounded-2xl bg-slate-900/50 border-2 border-transparent data-[state=active]:bg-slate-900/80 data-[state=active]:border-[#0088cc] hover:border-[#0088cc]/50 hover:shadow-[0_0_30px_rgba(0,136,204,0.3)] transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-2xl bg-[#0088cc]/20 flex items-center justify-center border border-[#0088cc]/30">
-                  <Bot className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 rounded-xl bg-[#0088cc]/20 flex items-center justify-center border border-[#0088cc]/40 group-hover:bg-[#0088cc]/30 group-hover:shadow-[0_0_20px_rgba(0,136,204,0.5)] transition-all duration-300">
+                  <Bot className="w-8 h-8 text-[#0088cc]" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">Telegram Bot HELP</p>
@@ -954,10 +954,10 @@ const Dashboard = () => {
               
               <TabsTrigger 
                 value="model-application" 
-                className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-purple-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
+                className="group h-auto p-6 rounded-2xl bg-slate-900/50 border-2 border-transparent data-[state=active]:bg-slate-900/80 data-[state=active]:border-purple-500 hover:border-purple-500/50 hover:shadow-[0_0_30px_rgba(139,92,246,0.3)] transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-2xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
-                  <ClipboardList className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 rounded-xl bg-purple-500/20 flex items-center justify-center border border-purple-500/40 group-hover:bg-purple-500/30 group-hover:shadow-[0_0_20px_rgba(139,92,246,0.5)] transition-all duration-300">
+                  <ClipboardList className="w-8 h-8 text-purple-400" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">Анкета моделей</p>
@@ -973,24 +973,24 @@ const Dashboard = () => {
               
               <TabsTrigger 
                 value="onlyfans" 
-                className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-teal-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
+                className="group h-auto p-6 rounded-2xl bg-slate-900/50 border-2 border-transparent data-[state=active]:bg-slate-900/80 data-[state=active]:border-[#00AFF0] hover:border-[#00AFF0]/50 hover:shadow-[0_0_30px_rgba(0,175,240,0.3)] transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-24 h-24 flex items-center justify-center">
-                  <img src={onlyfansLogo} alt="OnlyFans" className="w-20 h-20 object-contain drop-shadow-[0_0_20px_rgba(6,182,228,0.9)]" />
+                <div className="w-16 h-16 rounded-xl bg-[#00AFF0]/20 flex items-center justify-center border border-[#00AFF0]/40 group-hover:bg-[#00AFF0]/30 group-hover:shadow-[0_0_20px_rgba(0,175,240,0.5)] transition-all duration-300 p-2">
+                  <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">OnlyFans</p>
                   <p className="text-xs text-slate-400 mt-1">Управление аккаунтами</p>
                 </div>
-                <Badge variant="outline" className="text-xs border-teal-500/30 text-teal-400 mt-2">Новое</Badge>
+                <Badge variant="outline" className="text-xs border-[#00AFF0]/30 text-[#00AFF0] mt-2">Новое</Badge>
               </TabsTrigger>
 
               <TabsTrigger 
                 value="pimpbunny" 
-                className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-pink-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
+                className="group h-auto p-6 rounded-2xl bg-slate-900/50 border-2 border-transparent data-[state=active]:bg-slate-900/80 data-[state=active]:border-pink-500 hover:border-pink-500/50 hover:shadow-[0_0_30px_rgba(236,72,153,0.3)] transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-24 h-24 flex items-center justify-center">
-                  <img src={pimpbunnyLogo} alt="PimpBunny" className="w-20 h-20 object-contain drop-shadow-[0_0_20px_rgba(236,72,153,0.9)]" />
+                <div className="w-16 h-16 rounded-xl bg-pink-500/20 flex items-center justify-center border border-pink-500/40 group-hover:bg-pink-500/30 group-hover:shadow-[0_0_20px_rgba(236,72,153,0.5)] transition-all duration-300 p-2">
+                  <img src={pimpbunnyLogo} alt="PimpBunny" className="w-full h-full object-contain" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">PimpBunny</p>

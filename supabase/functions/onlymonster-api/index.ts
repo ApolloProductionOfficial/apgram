@@ -6,29 +6,84 @@ const corsHeaders = {
 };
 
 const ONLYMONSTER_API_KEY = Deno.env.get('ONLYMONSTER_API_KEY');
-// OnlyMonster Beta API - попробуем несколько вариантов
-const ONLYMONSTER_BASE_URLS = [
-  'https://api.onlymonster.ai',
-  'https://onlymonster.ai/api/v1',
-  'https://app.onlymonster.ai/api/v1',
-  'https://panel.onlymonster.ai/api/v1'
-];
+// OnlyMonster Beta API - use only the working endpoint
+const ONLYMONSTER_BASE_URL = 'https://onlymonster.ai/api/v1';
 
-async function tryFetch(path: string, options: RequestInit): Promise<{response: Response | null, url: string}> {
-  for (const baseUrl of ONLYMONSTER_BASE_URLS) {
-    try {
-      const fullUrl = `${baseUrl}${path}`;
-      console.log(`Trying URL: ${fullUrl}`);
-      const response = await fetch(fullUrl, options);
-      console.log(`Response from ${fullUrl}: status ${response.status}`);
-      if (response.status !== 503 && response.status !== 404) {
-        return { response, url: fullUrl };
+async function tryFetch(path: string, authHeader: string): Promise<Response | null> {
+  const fullUrl = `${ONLYMONSTER_BASE_URL}${path}`;
+  console.log(`Trying URL: ${fullUrl} with auth: ${authHeader}`);
+  
+  try {
+    const response = await fetch(fullUrl, {
+      headers: {
+        [authHeader]: ONLYMONSTER_API_KEY!,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       }
-    } catch (error) {
-      console.log(`Failed for ${baseUrl}: ${error}`);
+    });
+    console.log(`Response from ${fullUrl}: status ${response.status}`);
+    return response;
+  } catch (error) {
+    console.log(`Failed for ${fullUrl}: ${error}`);
+    return null;
+  }
+}
+
+async function fetchWithAuth(path: string): Promise<{response: Response | null, body: any}> {
+  // Try different auth methods
+  const authMethods = [
+    'X-API-Key',
+    'Authorization',
+    'X-Auth-Token',
+    'Api-Key'
+  ];
+  
+  for (const method of authMethods) {
+    let response: Response | null = null;
+    
+    if (method === 'Authorization') {
+      // For Authorization header, try both Bearer and plain token
+      for (const prefix of ['Bearer ', '']) {
+        const fullUrl = `${ONLYMONSTER_BASE_URL}${path}`;
+        try {
+          response = await fetch(fullUrl, {
+            headers: {
+              'Authorization': `${prefix}${ONLYMONSTER_API_KEY}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            }
+          });
+          console.log(`Auth with "Authorization: ${prefix}..." status: ${response.status}`);
+          if (response.ok) {
+            const body = await response.json();
+            return { response, body };
+          }
+        } catch (e) {
+          console.log(`Failed with ${method}: ${e}`);
+        }
+      }
+    } else {
+      const fullUrl = `${ONLYMONSTER_BASE_URL}${path}`;
+      try {
+        response = await fetch(fullUrl, {
+          headers: {
+            [method]: ONLYMONSTER_API_KEY!,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }
+        });
+        console.log(`Auth with "${method}": status ${response.status}`);
+        if (response.ok) {
+          const body = await response.json();
+          return { response, body };
+        }
+      } catch (e) {
+        console.log(`Failed with ${method}: ${e}`);
+      }
     }
   }
-  return { response: null, url: '' };
+  
+  return { response: null, body: null };
 }
 
 serve(async (req) => {
@@ -52,36 +107,21 @@ serve(async (req) => {
       );
     }
 
-    const headers = {
-      'Authorization': `Bearer ${ONLYMONSTER_API_KEY}`,
-      'Content-Type': 'application/json',
-      'X-Api-Key': ONLYMONSTER_API_KEY,
-    };
-
     switch (action) {
       case 'check_connection': {
-        // Simple connection check - try multiple endpoints
+        // Try to connect using fetchWithAuth
         try {
-          const { response, url } = await tryFetch('/creators', { headers });
+          const { response, body } = await fetchWithAuth('/creators');
           
           if (response && response.ok) {
             return new Response(
-              JSON.stringify({ connected: true, url }),
-              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-          
-          // Also try /accounts endpoint
-          const { response: accountsResponse, url: accountsUrl } = await tryFetch('/accounts', { headers });
-          if (accountsResponse && accountsResponse.ok) {
-            return new Response(
-              JSON.stringify({ connected: true, url: accountsUrl }),
+              JSON.stringify({ connected: true, data: body }),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           }
           
           return new Response(
-            JSON.stringify({ connected: false, message: 'All endpoints returned errors' }),
+            JSON.stringify({ connected: false, message: 'Authentication failed - check API key format' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         } catch (error) {
@@ -95,23 +135,21 @@ serve(async (req) => {
 
       case 'get_accounts': {
         try {
-          // Try different endpoints
-          const { response, url } = await tryFetch('/creators', { headers });
+          const { response, body } = await fetchWithAuth('/creators');
           
-          if (response && response.ok) {
-            const data = await response.json();
-            console.log('OnlyMonster API data:', JSON.stringify(data).substring(0, 500));
+          if (response && response.ok && body) {
+            console.log('OnlyMonster API data:', JSON.stringify(body).substring(0, 500));
             
             // Normalize the response - handle different response formats
             let accounts = [];
-            if (Array.isArray(data)) {
-              accounts = data;
-            } else if (data.creators && Array.isArray(data.creators)) {
-              accounts = data.creators;
-            } else if (data.accounts && Array.isArray(data.accounts)) {
-              accounts = data.accounts;
-            } else if (data.data && Array.isArray(data.data)) {
-              accounts = data.data;
+            if (Array.isArray(body)) {
+              accounts = body;
+            } else if (body.creators && Array.isArray(body.creators)) {
+              accounts = body.creators;
+            } else if (body.accounts && Array.isArray(body.accounts)) {
+              accounts = body.accounts;
+            } else if (body.data && Array.isArray(body.data)) {
+              accounts = body.data;
             }
             
             // Map to our format
@@ -128,36 +166,13 @@ serve(async (req) => {
             }));
             
             return new Response(
-              JSON.stringify({ accounts: normalizedAccounts, source_url: url }),
-              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-          
-          // Fallback - try /accounts endpoint
-          const { response: accountsResponse } = await tryFetch('/accounts', { headers });
-          if (accountsResponse && accountsResponse.ok) {
-            const data = await accountsResponse.json();
-            let accounts = Array.isArray(data) ? data : (data.accounts || data.data || []);
-            const normalizedAccounts = accounts.map((acc: any, idx: number) => ({
-              id: acc.id || acc._id || `acc_${idx}`,
-              username: acc.username || acc.name || `account_${idx}`,
-              display_name: acc.display_name || acc.displayName || acc.name || acc.username,
-              subscribers: acc.subscribers || acc.fans_count || 0,
-              earnings_today: acc.earnings_today || acc.todayEarnings || 0,
-              earnings_month: acc.earnings_month || acc.monthEarnings || 0,
-              messages_pending: acc.messages_pending || acc.pendingMessages || 0,
-              last_sync: acc.last_sync || new Date().toISOString(),
-              is_active: acc.is_active !== undefined ? acc.is_active : true
-            }));
-            
-            return new Response(
               JSON.stringify({ accounts: normalizedAccounts }),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           }
           
           return new Response(
-            JSON.stringify({ accounts: [], message: 'No working API endpoint found' }),
+            JSON.stringify({ accounts: [], message: 'API authentication failed' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         } catch (error) {
@@ -173,12 +188,11 @@ serve(async (req) => {
         const { account_id, period } = params;
         
         try {
-          const { response } = await tryFetch(`/creators/${account_id}/stats?period=${period || 'today'}`, { headers });
+          const { response, body } = await fetchWithAuth(`/creators/${account_id}/stats?period=${period || 'today'}`);
 
           if (response && response.ok) {
-            const data = await response.json();
             return new Response(
-              JSON.stringify(data),
+              JSON.stringify(body),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           }
@@ -200,19 +214,16 @@ serve(async (req) => {
         const { account_id, days = 14 } = params;
         
         try {
-          // Try to get daily earnings from OnlyMonster API
-          const { response } = await tryFetch(`/creators/${account_id}/earnings?days=${days}`, { headers });
+          const { response, body } = await fetchWithAuth(`/creators/${account_id}/earnings?days=${days}`);
 
           if (response && response.ok) {
-            const data = await response.json();
-            console.log('Earnings history from API:', data);
+            console.log('Earnings history from API:', body);
             return new Response(
-              JSON.stringify({ earnings_history: data.earnings || data }),
+              JSON.stringify({ earnings_history: body.earnings || body }),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           }
 
-          // If API doesn't support this endpoint yet, return empty
           console.log('Earnings history endpoint not available');
           return new Response(
             JSON.stringify({ earnings_history: [], message: 'Endpoint not available' }),
@@ -231,12 +242,11 @@ serve(async (req) => {
         const { account_id, limit = 50 } = params;
         
         try {
-          const { response } = await tryFetch(`/creators/${account_id}/messages?limit=${limit}`, { headers });
+          const { response, body } = await fetchWithAuth(`/creators/${account_id}/messages?limit=${limit}`);
 
           if (response && response.ok) {
-            const data = await response.json();
             return new Response(
-              JSON.stringify(data),
+              JSON.stringify(body),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           }
