@@ -431,6 +431,93 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_model_applications: {
+        Row: {
+          about_yourself: string | null
+          age: number | null
+          body_params: string | null
+          chat_id: number
+          completed_at: string | null
+          content_preferences: string[] | null
+          country: string | null
+          created_at: string
+          desired_income: string | null
+          equipment: string | null
+          full_name: string | null
+          hair_color: string | null
+          height: string | null
+          id: string
+          language_skills: string | null
+          platforms: string[] | null
+          social_media_experience: string[] | null
+          social_media_links: string | null
+          status: string
+          step: string
+          strong_points: string | null
+          telegram_user_id: number
+          telegram_username: string | null
+          time_availability: string | null
+          updated_at: string
+          weight: string | null
+        }
+        Insert: {
+          about_yourself?: string | null
+          age?: number | null
+          body_params?: string | null
+          chat_id: number
+          completed_at?: string | null
+          content_preferences?: string[] | null
+          country?: string | null
+          created_at?: string
+          desired_income?: string | null
+          equipment?: string | null
+          full_name?: string | null
+          hair_color?: string | null
+          height?: string | null
+          id?: string
+          language_skills?: string | null
+          platforms?: string[] | null
+          social_media_experience?: string[] | null
+          social_media_links?: string | null
+          status?: string
+          step?: string
+          strong_points?: string | null
+          telegram_user_id: number
+          telegram_username?: string | null
+          time_availability?: string | null
+          updated_at?: string
+          weight?: string | null
+        }
+        Update: {
+          about_yourself?: string | null
+          age?: number | null
+          body_params?: string | null
+          chat_id?: number
+          completed_at?: string | null
+          content_preferences?: string[] | null
+          country?: string | null
+          created_at?: string
+          desired_income?: string | null
+          equipment?: string | null
+          full_name?: string | null
+          hair_color?: string | null
+          height?: string | null
+          id?: string
+          language_skills?: string | null
+          platforms?: string[] | null
+          social_media_experience?: string[] | null
+          social_media_links?: string | null
+          status?: string
+          step?: string
+          strong_points?: string | null
+          telegram_user_id?: number
+          telegram_username?: string | null
+          time_availability?: string | null
+          updated_at?: string
+          weight?: string | null
+        }
+        Relationships: []
+      }
       telegram_quick_phrases: {
         Row: {
           command: string
