@@ -69,13 +69,16 @@ export function initGlobalErrorHandlers() {
       typeof arg === "object" ? JSON.stringify(arg) : String(arg)
     ).join(" ");
     
-    // Skip common non-critical errors
+    // Skip common non-critical errors and self-referential errors
     if (
       message.includes("Warning:") ||
       message.includes("DevTools") ||
       message.includes("favicon") ||
       message.includes("ResizeObserver") ||
-      message.includes("ChunkLoadError")
+      message.includes("ChunkLoadError") ||
+      message.includes("send-error-notification") ||
+      message.includes("API key is invalid") ||
+      message.includes("FunctionsHttpError")
     ) {
       return;
     }

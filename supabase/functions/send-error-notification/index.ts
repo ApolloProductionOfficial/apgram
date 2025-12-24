@@ -16,11 +16,12 @@ serve(async (req) => {
 
   try {
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) {
-      console.error("RESEND_API_KEY is not configured");
+    if (!resendApiKey || resendApiKey === 'placeholder' || resendApiKey.length < 10) {
+      // Silently skip if API key not configured - don't throw error
+      console.log("RESEND_API_KEY not configured or invalid, skipping email notification");
       return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, skipped: true, reason: "Email service not configured" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
