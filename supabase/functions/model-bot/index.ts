@@ -36,6 +36,36 @@ const TABU_CATEGORIES = [
   { id: 'facial', name: 'Фейшл', emoji: '💦' },
 ];
 
+// Категории "что готовы делать"
+const CONTENT_WILLINGNESS = [
+  { id: 'toys_video', name: 'Видео с игрушками', emoji: '🎀' },
+  { id: 'closeup_pussy', name: 'Крупный план Pussy', emoji: '👀' },
+  { id: 'closeup_butt', name: 'Крупный план попы', emoji: '🍑' },
+  { id: 'closeup_breasts', name: 'Крупный план груди', emoji: '👙' },
+  { id: 'closeup_feet', name: 'Крупный план стоп', emoji: '🦶' },
+  { id: 'finger_masturbation', name: 'Мастурбация пальцами', emoji: '✋' },
+  { id: 'vibrator_masturbation', name: 'Мастурбация (Вибратор)', emoji: '📳' },
+  { id: 'dildo_masturbation', name: 'Мастурбация Дилдо', emoji: '🎯' },
+  { id: 'erotic_lingerie', name: 'Эротическое бельё', emoji: '🩱' },
+  { id: 'stockings', name: 'Колготки/чулки', emoji: '🧦' },
+  { id: 'toy_bj', name: 'Минет с игрушкой', emoji: '🍭' },
+  { id: 'couple_content', name: 'Парный контент', emoji: '👫' },
+  { id: 'video_calls_eu', name: 'Видеозвонки с европейцами', emoji: '📹' },
+  { id: 'american_social', name: 'Американские соцсети', emoji: '🇺🇸' },
+  { id: 'anal_penetration', name: 'Проникновение в анал', emoji: '🔴' },
+  { id: 'double_penetration', name: 'Двойное проникновение', emoji: '⚠️' },
+  { id: 'squirt', name: 'Сквирт', emoji: '💦' },
+];
+
+// Опции вебкама
+const WEBCAM_OPTIONS = [
+  { id: 'already_working', name: 'Да, уже работаю', emoji: '✅' },
+  { id: 'want_to_start', name: 'Нет, но хочу начать', emoji: '🆕' },
+  { id: 'need_equipment', name: 'Интересно если помогут с оборудованием', emoji: '💡' },
+  { id: 'need_relocation', name: 'Интересно с переездом и ВНЖ в Грузии', emoji: '🏠' },
+  { id: 'not_interested', name: 'Нет, не интересно', emoji: '❌' },
+];
+
 // Получение настроек приветствия
 async function getWelcomeSettings() {
   const { data } = await supabase
@@ -400,7 +430,7 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       tabuButtons.push([{ text: '✅ Готово — продолжить', callback_data: 'app_tabu_done' }]);
       
       await sendMessageWithButtons(chatId,
-        `🚫 <b>Шаг 10/17 — ТАБУ</b>
+        `🚫 <b>Шаг 10/19 — ТАБУ</b>
 
 <b>Отметьте то, что вы НЕ готовы делать:</b>
 
@@ -412,9 +442,40 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       );
       break;
       
+    case 'content_willingness':
+      // Split content willingness into 2 pages due to telegram button limit
+      const willingnessButtons1 = CONTENT_WILLINGNESS.slice(0, 8).map(c => [{ 
+        text: `${application.content_preferences?.includes(c.id) ? '✅' : '⬜'} ${c.emoji} ${c.name}`, 
+        callback_data: `app_willing_${c.id}` 
+      }]);
+      willingnessButtons1.push([{ text: '➡️ Далее (ещё 9 пунктов)', callback_data: 'app_willing_page2' }]);
+      
+      await sendMessageWithButtons(chatId,
+        `📋 <b>Шаг 11/19 — ЧТО ВЫ ГОТОВЫ ДЕЛАТЬ</b>
+
+<b>Отметьте галочками ВСЁ, что вы ГОТОВЫ делать:</b>
+⬜ = не готова
+✅ = готова
+
+<i>Нажимайте на пункты чтобы выбрать:</i>`,
+        willingnessButtons1
+      );
+      break;
+      
+    case 'webcam_interest':
+      await sendMessageWithButtons(chatId,
+        `🎥 <b>Шаг 12/19 — ВЕБКАМ</b>
+
+<b>Работаете ли вы на вебкам платформах?</b>
+
+Мы предоставляем полную поддержку: оборудование, финансовую помощь с переездами и получением ВНЖ в Грузии для наших моделей.`,
+        WEBCAM_OPTIONS.map(o => [{ text: `${o.emoji} ${o.name}`, callback_data: `app_webcam_${o.id}` }])
+      );
+      break;
+      
     case 'experience':
       await sendMessageWithButtons(chatId,
-        '⭐ <b>Шаг 11/17</b>\n\nУ вас есть <b>опыт</b> работы моделью или в сфере контента?',
+        '⭐ <b>Шаг 13/19</b>\n\nУ вас есть <b>опыт</b> работы моделью или в сфере контента?',
         [
           [{ text: '🆕 Нет опыта', callback_data: 'app_exp_none' }],
           [{ text: '📱 Есть соцсети', callback_data: 'app_exp_social' }],
@@ -425,12 +486,12 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       break;
       
     case 'social_links':
-      await sendMessage(chatId, '📱 <b>Шаг 12/17</b>\n\nОтправьте ссылки на ваши <b>соцсети</b> (Instagram, TikTok, Twitter и т.д.).\n\nЕсли нет — напишите "нет"');
+      await sendMessage(chatId, '📱 <b>Шаг 14/19</b>\n\nОтправьте ссылки на ваши <b>соцсети</b> (Instagram, TikTok, Twitter и т.д.).\n\nЕсли нет — напишите "нет"');
       break;
       
     case 'equipment':
       await sendMessageWithButtons(chatId,
-        `📷 <b>Шаг 13/17</b>
+        `📷 <b>Шаг 15/19</b>
 
 <b>Какое оборудование у вас есть для работы?</b>
 
@@ -452,7 +513,7 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       
     case 'time_availability':
       await sendMessageWithButtons(chatId,
-        '⏰ <b>Шаг 14/17</b>\n\nСколько <b>времени</b> вы готовы уделять работе?',
+        '⏰ <b>Шаг 16/19</b>\n\nСколько <b>времени</b> вы готовы уделять работе?',
         [
           [{ text: '🕐 2-3 часа/день', callback_data: 'app_time_part' }],
           [{ text: '🕓 4-6 часов/день', callback_data: 'app_time_half' }],
@@ -464,7 +525,7 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       
     case 'desired_income':
       await sendMessageWithButtons(chatId,
-        '💰 <b>Шаг 15/17</b>\n\nКакой <b>доход</b> вы хотите получать в месяц?',
+        '💰 <b>Шаг 17/19</b>\n\nКакой <b>доход</b> вы хотите получать в месяц?',
         [
           [{ text: '💵 $1,000-3,000', callback_data: 'app_income_1k' }],
           [{ text: '💵💵 $3,000-5,000', callback_data: 'app_income_3k' }],
@@ -478,7 +539,7 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       // Send example photo first
       await sendPhoto(chatId, 
         'https://ykwiqymksnndugphhgmc.supabase.co/storage/v1/object/public/bot-media/examples/portfolio-example.jpg',
-        `📸 <b>Шаг 16/17 — ФОТО ПОРТФОЛИО</b>
+        `📸 <b>Шаг 18/19 — ФОТО ПОРТФОЛИО</b>
 
 <b>Пример хорошей фотографии:</b>
 • Хорошее освещение
@@ -507,7 +568,7 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       break;
       
     case 'about_yourself':
-      await sendMessage(chatId, `✨ <b>Шаг 17/17 — САМЫЙ ВАЖНЫЙ!</b>
+      await sendMessage(chatId, `✨ <b>Шаг 19/19 — САМЫЙ ВАЖНЫЙ!</b>
 
 🌟 <b>Расскажите о себе максимально подробно!</b>
 
@@ -744,17 +805,84 @@ async function handleApplicationCallback(callbackQuery: any) {
     contentButtons.push([{ text: '✅ Готово', callback_data: 'app_content_done' }]);
     
     await editMessage(chatId, messageId,
-      '🎭 <b>Шаг 9/17</b>\n\nКакой <b>контент</b> вы готовы создавать? (можно выбрать несколько):',
+      '🎭 <b>Шаг 9/19</b>\n\nКакой <b>контент</b> вы готовы создавать? (можно выбрать несколько):',
       contentButtons
     );
+    return;
+  }
+  
+  // Обработка "что готовы делать"
+  if (data.startsWith('app_willing_')) {
+    if (data === 'app_willing_done') {
+      await updateApplication(application.id, { step: 'webcam_interest' });
+      await sendApplicationQuestion(chatId, 'webcam_interest', application);
+      return;
+    }
+    
+    if (data === 'app_willing_page2') {
+      const currentPrefs = application.content_preferences || [];
+      const willingnessButtons2 = CONTENT_WILLINGNESS.slice(8).map(c => [{ 
+        text: `${currentPrefs.includes(c.id) ? '✅' : '⬜'} ${c.emoji} ${c.name}`, 
+        callback_data: `app_willing_${c.id}` 
+      }]);
+      willingnessButtons2.push([{ text: '⬅️ Назад', callback_data: 'app_willing_page1' }]);
+      willingnessButtons2.push([{ text: '✅ Готово', callback_data: 'app_willing_done' }]);
+      
+      await editMessage(chatId, messageId, 
+        `📋 <b>Шаг 11/19 — ЧТО ВЫ ГОТОВЫ ДЕЛАТЬ (стр. 2)</b>\n\n<b>Продолжайте отмечать:</b>`,
+        willingnessButtons2
+      );
+      return;
+    }
+    
+    if (data === 'app_willing_page1') {
+      const currentPrefs = application.content_preferences || [];
+      const willingnessButtons1 = CONTENT_WILLINGNESS.slice(0, 8).map(c => [{ 
+        text: `${currentPrefs.includes(c.id) ? '✅' : '⬜'} ${c.emoji} ${c.name}`, 
+        callback_data: `app_willing_${c.id}` 
+      }]);
+      willingnessButtons1.push([{ text: '➡️ Далее', callback_data: 'app_willing_page2' }]);
+      
+      await editMessage(chatId, messageId, 
+        `📋 <b>Шаг 11/19 — ЧТО ВЫ ГОТОВЫ ДЕЛАТЬ</b>\n\n<b>Отметьте галочками ВСЁ, что вы ГОТОВЫ делать:</b>`,
+        willingnessButtons1
+      );
+      return;
+    }
+    
+    const willingId = data.replace('app_willing_', '');
+    const currentPrefs = application.content_preferences || [];
+    
+    let newPrefs;
+    if (currentPrefs.includes(willingId)) {
+      newPrefs = currentPrefs.filter((c: string) => c !== willingId);
+    } else {
+      newPrefs = [...currentPrefs, willingId];
+    }
+    
+    await updateApplication(application.id, { content_preferences: newPrefs });
+    application.content_preferences = newPrefs;
+    return;
+  }
+  
+  // Обработка вебкама
+  if (data.startsWith('app_webcam_')) {
+    const webcamId = data.replace('app_webcam_', '');
+    const webcamOption = WEBCAM_OPTIONS.find(o => o.id === webcamId);
+    
+    await updateApplication(application.id, { 
+      equipment: `${application.equipment || ''} | Вебкам: ${webcamOption?.name || webcamId}`.trim(),
+      step: 'experience' 
+    });
+    await sendApplicationQuestion(chatId, 'experience', application);
     return;
   }
   
   // Обработка ТАБУ выбора
   if (data.startsWith('app_tabu_')) {
     if (data === 'app_tabu_done') {
-      await updateApplication(application.id, { step: 'experience' });
-      await sendApplicationQuestion(chatId, 'experience', application);
+      await updateApplication(application.id, { step: 'content_willingness' });
+      await sendApplicationQuestion(chatId, 'content_willingness', application);
       return;
     }
     
