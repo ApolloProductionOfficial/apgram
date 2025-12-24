@@ -726,82 +726,82 @@ async function handleApplicationCallback(callbackQuery: any) {
     return;
   }
   
-  // Handle new multi-select toggles (app_ms_{step}_{optionId}) - supports step with underscores
-  const msMatch = data.match(/^app_ms_(.+)_([a-z0-9_]+)$/i);
-  if (msMatch) {
-    const fullData = data.replace('app_ms_', '');
-    
-    // Check if it's a "done" command
-    if (fullData.startsWith('done_')) {
-      const doneStep = fullData.replace('done_', '');
-      const nextStep = await getNextStep(doneStep);
-      
-      if (nextStep) {
-        await updateApplication(application.id, { step: nextStep });
-        await sendApplicationQuestion(chatId, nextStep, application);
-      } else {
-        await updateApplication(application.id, { step: 'complete' });
-        const updatedApp = await getOrCreateApplication(chatId, userId, username);
-        await completeApplication(chatId, updatedApp);
-      }
+  // Handle multi-select toggles (app_ms_{step}_{optionId}) - robust parsing when optionId contains underscores
+  if (data.startsWith('app_ms_done_')) {
+    const doneStep = data.substring('app_ms_done_'.length);
+    const nextStep = await getNextStep(doneStep);
+
+    if (nextStep) {
+      await updateApplication(application.id, { step: nextStep });
+      await sendApplicationQuestion(chatId, nextStep, application);
+    } else {
+      await updateApplication(application.id, { step: 'complete' });
+      const updatedApp = await getOrCreateApplication(chatId, userId, username);
+      await completeApplication(chatId, updatedApp);
+    }
+    return;
+  }
+
+  if (data.startsWith('app_ms_')) {
+    // Find which multi_select step this callback belongs to by matching known step prefixes
+    const multiSteps = questions
+      .filter((q: any) => q.question_type === 'multi_select')
+      .map((q: any) => q.step);
+
+    const matchedStep = multiSteps.find((s: string) => data.startsWith(`app_ms_${s}_`));
+    if (!matchedStep) {
+      console.warn('Unmatched multi-select callback:', data);
       return;
     }
-    
-    // Parse step and optionId - optionId is the last underscore-separated part
-    const parts = fullData.split('_');
-    const optionId = parts.pop()!;
-    const step = parts.join('_');
-    
+
+    const optionId = data.substring(`app_ms_${matchedStep}_`.length);
+
     // Map step to database field
     const msFieldMap: Record<string, string> = {
-      'content_preferences': 'content_preferences',
-      'tabu': 'tabu_preferences'
+      'tabu': 'tabu_preferences',
     };
-    const dbField = msFieldMap[step] || 'content_preferences';
-    
+    const dbField = msFieldMap[matchedStep] || 'content_preferences';
+
     // Toggle option selection
     const currentPrefs = (application as any)[dbField] || [];
-    let newPrefs;
-    if (currentPrefs.includes(optionId)) {
-      newPrefs = currentPrefs.filter((c: string) => c !== optionId);
-    } else {
-      newPrefs = [...currentPrefs, optionId];
-    }
-    
+    const newPrefs = currentPrefs.includes(optionId)
+      ? currentPrefs.filter((c: string) => c !== optionId)
+      : [...currentPrefs, optionId];
+
     await updateApplication(application.id, { [dbField]: newPrefs });
     (application as any)[dbField] = newPrefs;
-    
-    // Refresh the multi-select message with all options in 2 columns
-    const question = await getQuestionByStep(step);
+
+    // Refresh the multi-select message
+    const question = await getQuestionByStep(matchedStep);
     if (question && question.options) {
       const multiOptions = question.options;
-      const prevStep = await getPreviousStep(step);
+      const prevStep = await getPreviousStep(matchedStep);
       const backBtn = prevStep ? { text: '◀️ Назад', callback_data: `app_back_${prevStep}` } : null;
-      
+
       const buttons: any[][] = [];
       for (let i = 0; i < multiOptions.length; i += 2) {
         const row = [];
         const opt1 = multiOptions[i];
         const isSelected1 = newPrefs.includes(opt1.id);
-        row.push({ 
-          text: `${isSelected1 ? '✅' : '⬜'} ${opt1.emoji || ''} ${opt1.name}`.substring(0, 32), 
-          callback_data: `app_ms_${step}_${opt1.id}` 
+        row.push({
+          text: `${isSelected1 ? '✅' : '⬜'} ${opt1.emoji || ''} ${opt1.name}`.substring(0, 32),
+          callback_data: `app_ms_${matchedStep}_${opt1.id}`,
         });
-        
+
         if (multiOptions[i + 1]) {
           const opt2 = multiOptions[i + 1];
           const isSelected2 = newPrefs.includes(opt2.id);
-          row.push({ 
-            text: `${isSelected2 ? '✅' : '⬜'} ${opt2.emoji || ''} ${opt2.name}`.substring(0, 32), 
-            callback_data: `app_ms_${step}_${opt2.id}` 
+          row.push({
+            text: `${isSelected2 ? '✅' : '⬜'} ${opt2.emoji || ''} ${opt2.name}`.substring(0, 32),
+            callback_data: `app_ms_${matchedStep}_${opt2.id}`,
           });
         }
         buttons.push(row);
       }
-      
-      buttons.push([{ text: '✅ Готово', callback_data: `app_ms_done_${step}` }]);
+
+      buttons.push([{ text: '✅ Готово', callback_data: `app_ms_done_${matchedStep}` }]);
       if (backBtn) buttons.push([backBtn]);
-      
+
       await editMessage(chatId, messageId, question.question, buttons);
     }
     return;
