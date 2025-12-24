@@ -12,59 +12,58 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// Типы контента
-const CONTENT_TYPES = [
-  { id: 'solo', name: 'Соло контент', emoji: '👤' },
-  { id: 'bg', name: 'B/G (с партнёром)', emoji: '👫' },
-  { id: 'gg', name: 'G/G (лесби)', emoji: '👩‍❤️‍👩' },
-  { id: 'fetish', name: 'Фетиш контент', emoji: '🎭' },
-  { id: 'webcam', name: 'Вебкам трансляции', emoji: '📺' },
-  { id: 'chat', name: 'Только чат/общение', emoji: '💬' },
-];
+// Cache for questions
+let questionsCache: any[] | null = null;
+let questionsCacheTime = 0;
+const CACHE_TTL = 60000; // 1 minute
 
-// ТАБУ категории контента
-const TABU_CATEGORIES = [
-  { id: 'anal', name: 'Анал', emoji: '🚫' },
-  { id: 'bdsm', name: 'BDSM', emoji: '⛓️' },
-  { id: 'feet', name: 'Фут-фетиш', emoji: '🦶' },
-  { id: 'roleplay', name: 'Ролевые игры', emoji: '🎭' },
-  { id: 'public', name: 'Публичные места', emoji: '🏙️' },
-  { id: 'toys', name: 'Игрушки', emoji: '🎀' },
-  { id: 'dp', name: 'DP/Двойное', emoji: '❌' },
-  { id: 'group', name: 'Групповое', emoji: '👥' },
-  { id: 'outdoor', name: 'На улице', emoji: '🌳' },
-  { id: 'facial', name: 'Фейшл', emoji: '💦' },
-];
+// Fetch questions from database
+async function getQuestions(): Promise<any[]> {
+  const now = Date.now();
+  if (questionsCache && (now - questionsCacheTime) < CACHE_TTL) {
+    return questionsCache;
+  }
+  
+  const { data } = await supabase
+    .from('bot_questionnaire_questions')
+    .select('*')
+    .eq('is_active', true)
+    .order('question_order', { ascending: true });
+  
+  questionsCache = data || [];
+  questionsCacheTime = now;
+  console.log('Loaded questions from DB:', questionsCache.length);
+  return questionsCache;
+}
 
-// Категории "что готовы делать"
-const CONTENT_WILLINGNESS = [
-  { id: 'toys_video', name: 'Видео с игрушками', emoji: '🎀' },
-  { id: 'closeup_pussy', name: 'Крупный план Pussy', emoji: '👀' },
-  { id: 'closeup_butt', name: 'Крупный план попы', emoji: '🍑' },
-  { id: 'closeup_breasts', name: 'Крупный план груди', emoji: '👙' },
-  { id: 'closeup_feet', name: 'Крупный план стоп', emoji: '🦶' },
-  { id: 'finger_masturbation', name: 'Мастурбация пальцами', emoji: '✋' },
-  { id: 'vibrator_masturbation', name: 'Мастурбация (Вибратор)', emoji: '📳' },
-  { id: 'dildo_masturbation', name: 'Мастурбация Дилдо', emoji: '🎯' },
-  { id: 'erotic_lingerie', name: 'Эротическое бельё', emoji: '🩱' },
-  { id: 'stockings', name: 'Колготки/чулки', emoji: '🧦' },
-  { id: 'toy_bj', name: 'Минет с игрушкой', emoji: '🍭' },
-  { id: 'couple_content', name: 'Парный контент', emoji: '👫' },
-  { id: 'video_calls_eu', name: 'Видеозвонки с европейцами', emoji: '📹' },
-  { id: 'american_social', name: 'Американские соцсети', emoji: '🇺🇸' },
-  { id: 'anal_penetration', name: 'Проникновение в анал', emoji: '🔴' },
-  { id: 'double_penetration', name: 'Двойное проникновение', emoji: '⚠️' },
-  { id: 'squirt', name: 'Сквирт', emoji: '💦' },
-];
+// Get question by step
+async function getQuestionByStep(step: string) {
+  const questions = await getQuestions();
+  return questions.find(q => q.step === step);
+}
 
-// Опции вебкама
-const WEBCAM_OPTIONS = [
-  { id: 'already_working', name: 'Да, уже работаю', emoji: '✅' },
-  { id: 'want_to_start', name: 'Нет, но хочу начать', emoji: '🆕' },
-  { id: 'need_equipment', name: 'Интересно если помогут с оборудованием', emoji: '💡' },
-  { id: 'need_relocation', name: 'Интересно с переездом и ВНЖ в Грузии', emoji: '🏠' },
-  { id: 'not_interested', name: 'Нет, не интересно', emoji: '❌' },
-];
+// Get next question step
+async function getNextStep(currentStep: string): Promise<string | null> {
+  const questions = await getQuestions();
+  const currentIndex = questions.findIndex(q => q.step === currentStep);
+  if (currentIndex === -1 || currentIndex >= questions.length - 1) {
+    return null; // No more questions
+  }
+  return questions[currentIndex + 1].step;
+}
+
+// Get total questions count
+async function getTotalQuestions(): Promise<number> {
+  const questions = await getQuestions();
+  return questions.length;
+}
+
+// Get question number
+async function getQuestionNumber(step: string): Promise<number> {
+  const questions = await getQuestions();
+  const index = questions.findIndex(q => q.step === step);
+  return index + 1;
+}
 
 // Получение настроек приветствия
 async function getWelcomeSettings() {
@@ -78,7 +77,7 @@ async function getWelcomeSettings() {
     welcome_message: '🌟 <b>Добро пожаловать в Apollo Production!</b>',
     welcome_media_url: null,
     welcome_media_type: 'video',
-    owner_contact: '@Apollo_Produciton',
+    owner_contact: '@Apollo_Production',
     owner_telegram_chat_id: null,
     notification_chat_ids: []
   };
@@ -230,7 +229,6 @@ async function sendPhoto(chatId: number, photoUrl: string, caption?: string) {
 // Скачивание файла из Telegram
 async function downloadTelegramFile(fileId: string): Promise<ArrayBuffer | null> {
   try {
-    // Get file path
     const fileInfoUrl = `https://api.telegram.org/bot${MODEL_BOT_TOKEN}/getFile?file_id=${fileId}`;
     const fileInfoRes = await fetch(fileInfoUrl);
     const fileInfo = await fileInfoRes.json();
@@ -240,9 +238,14 @@ async function downloadTelegramFile(fileId: string): Promise<ArrayBuffer | null>
       return null;
     }
     
-    // Download file
-    const downloadUrl = `https://api.telegram.org/file/bot${MODEL_BOT_TOKEN}/${fileInfo.result.file_path}`;
-    const fileRes = await fetch(downloadUrl);
+    const fileUrl = `https://api.telegram.org/file/bot${MODEL_BOT_TOKEN}/${fileInfo.result.file_path}`;
+    const fileRes = await fetch(fileUrl);
+    
+    if (!fileRes.ok) {
+      console.error('Failed to download file');
+      return null;
+    }
+    
     return await fileRes.arrayBuffer();
   } catch (error) {
     console.error('Error downloading file:', error);
@@ -250,13 +253,13 @@ async function downloadTelegramFile(fileId: string): Promise<ArrayBuffer | null>
   }
 }
 
-// Загрузка фото в Storage
+// Загрузка фото в Supabase Storage
 async function uploadPhotoToStorage(fileId: string, applicationId: string, photoIndex: number): Promise<string | null> {
   try {
     const fileData = await downloadTelegramFile(fileId);
     if (!fileData) return null;
     
-    const fileName = `model-applications/${applicationId}/photo_${photoIndex}_${Date.now()}.jpg`;
+    const fileName = `${applicationId}_photo_${photoIndex}_${Date.now()}.jpg`;
     
     const { error } = await supabase.storage
       .from('model-applications')
@@ -266,15 +269,15 @@ async function uploadPhotoToStorage(fileId: string, applicationId: string, photo
       });
     
     if (error) {
-      console.error('Upload error:', error);
+      console.error('Storage upload error:', error);
       return null;
     }
     
-    const { data: { publicUrl } } = supabase.storage
+    const { data: urlData } = supabase.storage
       .from('model-applications')
       .getPublicUrl(fileName);
     
-    return publicUrl;
+    return urlData.publicUrl;
   } catch (error) {
     console.error('Error uploading photo:', error);
     return null;
@@ -350,249 +353,90 @@ async function sendApplicationWelcome(chatId: number) {
   );
 }
 
-// Отправить следующий вопрос анкеты
+// Отправить вопрос анкеты (ДИНАМИЧЕСКИ ИЗ БД)
 async function sendApplicationQuestion(chatId: number, step: string, application: any) {
   console.log('Sending application question for step:', step);
   
-  switch (step) {
-    case 'full_name':
-      await sendMessage(chatId, '👤 <b>Шаг 1/17</b>\n\nКак вас зовут? Напишите ваше <b>полное имя</b>:');
+  const question = await getQuestionByStep(step);
+  if (!question) {
+    console.error('Question not found for step:', step);
+    return;
+  }
+  
+  const totalQuestions = await getTotalQuestions();
+  const questionNum = await getQuestionNumber(step);
+  const header = `📋 <b>Шаг ${questionNum}/${totalQuestions}</b>\n\n`;
+  const questionText = header + question.question + (question.description ? `\n\n<i>${question.description}</i>` : '');
+  
+  switch (question.question_type) {
+    case 'text':
+      await sendMessage(chatId, questionText);
       break;
       
-    case 'age':
-      await sendMessage(chatId, '🎂 <b>Шаг 2/17</b>\n\nСколько вам <b>полных лет</b>? (только число)');
+    case 'buttons':
+      // Parse options from question
+      const options = question.options || [];
+      const buttons = options.map((opt: string) => {
+        // Create callback data from option text
+        const callbackData = `app_${step}_${options.indexOf(opt)}`;
+        return [{ text: opt, callback_data: callbackData }];
+      });
+      
+      // Add "Other" option for country
+      if (step === 'country') {
+        buttons.push([{ text: '🌐 Другая страна', callback_data: 'app_country_other' }]);
+      }
+      
+      await sendMessageWithButtons(chatId, questionText, buttons);
       break;
       
-    case 'country':
-      await sendMessageWithButtons(chatId,
-        '🌍 <b>Шаг 3/17</b>\n\nВыберите вашу <b>страну проживания</b>:',
-        [
-          [{ text: '🇷🇺 Россия', callback_data: 'app_country_russia' }, { text: '🇺🇦 Украина', callback_data: 'app_country_ukraine' }],
-          [{ text: '🇧🇾 Беларусь', callback_data: 'app_country_belarus' }, { text: '🇰🇿 Казахстан', callback_data: 'app_country_kazakhstan' }],
-          [{ text: '🇺🇿 Узбекистан', callback_data: 'app_country_uzbekistan' }, { text: '🇲🇩 Молдова', callback_data: 'app_country_moldova' }],
-          [{ text: '🇵🇱 Польша', callback_data: 'app_country_poland' }, { text: '🇬🇪 Грузия', callback_data: 'app_country_georgia' }],
-          [{ text: '🌐 Другая страна', callback_data: 'app_country_other' }]
-        ]
-      );
+    case 'multi_select':
+      // Multi-select with checkboxes
+      const multiOptions = question.options || [];
+      const currentPrefs = application.content_preferences || [];
+      
+      // Paginate if more than 8 options
+      const pageSize = 8;
+      const totalPages = Math.ceil(multiOptions.length / pageSize);
+      
+      if (totalPages > 1) {
+        // First page
+        const page1Options = multiOptions.slice(0, pageSize);
+        const multiButtons = page1Options.map((opt: any) => {
+          const isSelected = currentPrefs.includes(opt.id);
+          return [{ 
+            text: `${isSelected ? '✅' : '⬜'} ${opt.emoji || ''} ${opt.name}`, 
+            callback_data: `app_multi_${step}_${opt.id}` 
+          }];
+        });
+        multiButtons.push([{ text: `➡️ Далее (стр. 2/${totalPages})`, callback_data: `app_multi_page_${step}_2` }]);
+        multiButtons.push([{ text: '✅ Готово', callback_data: `app_multi_done_${step}` }]);
+        
+        await sendMessageWithButtons(chatId, questionText + '\n\n<b>Страница 1/' + totalPages + '</b>', multiButtons);
+      } else {
+        const multiButtons = multiOptions.map((opt: any) => {
+          const isSelected = currentPrefs.includes(opt.id);
+          return [{ 
+            text: `${isSelected ? '✅' : '⬜'} ${opt.emoji || ''} ${opt.name}`, 
+            callback_data: `app_multi_${step}_${opt.id}` 
+          }];
+        });
+        multiButtons.push([{ text: '✅ Готово', callback_data: `app_multi_done_${step}` }]);
+        
+        await sendMessageWithButtons(chatId, questionText, multiButtons);
+      }
       break;
       
-    case 'height_weight':
-      await sendMessage(chatId, '📏 <b>Шаг 4/17</b>\n\nУкажите ваш <b>рост и вес</b>.\n\nПример: 170 см / 55 кг');
-      break;
-      
-    case 'body_params':
-      await sendMessage(chatId, '📐 <b>Шаг 5/17</b>\n\nУкажите ваши <b>параметры фигуры</b> (грудь-талия-бёдра).\n\nПример: 90-60-90');
-      break;
-      
-    case 'hair_color':
-      await sendMessageWithButtons(chatId,
-        '💇 <b>Шаг 6/17</b>\n\nВыберите <b>цвет волос</b>:',
-        [
-          [{ text: '👱‍♀️ Блондинка', callback_data: 'app_hair_blonde' }, { text: '👩 Брюнетка', callback_data: 'app_hair_brunette' }],
-          [{ text: '👩‍🦰 Рыжая', callback_data: 'app_hair_red' }, { text: '🧑‍🦳 Русая', callback_data: 'app_hair_light_brown' }],
-          [{ text: '🎨 Цветные', callback_data: 'app_hair_colored' }]
-        ]
-      );
-      break;
-      
-    case 'languages':
-      await sendMessage(chatId, '🌐 <b>Шаг 7/17</b>\n\nКакими <b>языками</b> вы владеете?\n\nПример: Русский (родной), English (B2)');
-      break;
-      
-    case 'platforms':
-      await sendMessage(chatId, `🎯 <b>Шаг 8/17</b>
-
-<b>Есть ли у вас уже платформы, где вы работаете?</b>
-
-Напишите названия платформ, если есть. Например: OnlyFans, Fansly, Instagram и т.д.
-
-Если платформ пока нет — напишите "нет" и мы подберём для вас лучшие варианты! 💎`);
-      break;
-      
-    case 'content_types':
-      const contentButtons = CONTENT_TYPES.map(c => [{ 
-        text: `${application.content_preferences?.includes(c.id) ? '✅' : ''} ${c.emoji} ${c.name}`, 
-        callback_data: `app_content_${c.id}` 
-      }]);
-      contentButtons.push([{ text: '✅ Готово', callback_data: 'app_content_done' }]);
-      
-      await sendMessageWithButtons(chatId,
-        '🎭 <b>Шаг 9/17</b>\n\nКакой <b>контент</b> вы готовы создавать? (можно выбрать несколько):',
-        contentButtons
-      );
-      break;
-      
-    case 'tabu_preferences':
-      const tabuButtons = TABU_CATEGORIES.map(t => [{ 
-        text: `${application.tabu_preferences?.includes(t.id) ? '🚫' : '✅'} ${t.emoji} ${t.name}`, 
-        callback_data: `app_tabu_${t.id}` 
-      }]);
-      tabuButtons.push([{ text: '✅ Готово — продолжить', callback_data: 'app_tabu_done' }]);
-      
-      await sendMessageWithButtons(chatId,
-        `🚫 <b>Шаг 10/19 — ТАБУ</b>
-
-<b>Отметьте то, что вы НЕ готовы делать:</b>
-
-✅ = готова делать
-🚫 = ТАБУ (не делаю)
-
-Нажимайте на категории, чтобы отметить их как ТАБУ:`,
-        tabuButtons
-      );
-      break;
-      
-    case 'content_willingness':
-      // Split content willingness into 2 pages due to telegram button limit
-      const willingnessButtons1 = CONTENT_WILLINGNESS.slice(0, 8).map(c => [{ 
-        text: `${application.content_preferences?.includes(c.id) ? '✅' : '⬜'} ${c.emoji} ${c.name}`, 
-        callback_data: `app_willing_${c.id}` 
-      }]);
-      willingnessButtons1.push([{ text: '➡️ Далее (ещё 9 пунктов)', callback_data: 'app_willing_page2' }]);
-      
-      await sendMessageWithButtons(chatId,
-        `📋 <b>Шаг 11/19 — ЧТО ВЫ ГОТОВЫ ДЕЛАТЬ</b>
-
-<b>Отметьте галочками ВСЁ, что вы ГОТОВЫ делать:</b>
-⬜ = не готова
-✅ = готова
-
-<i>Нажимайте на пункты чтобы выбрать:</i>`,
-        willingnessButtons1
-      );
-      break;
-      
-    case 'webcam_interest':
-      await sendMessageWithButtons(chatId,
-        `🎥 <b>Шаг 12/19 — ВЕБКАМ</b>
-
-<b>Работаете ли вы на вебкам платформах?</b>
-
-Мы предоставляем полную поддержку: оборудование, финансовую помощь с переездами и получением ВНЖ в Грузии для наших моделей.`,
-        WEBCAM_OPTIONS.map(o => [{ text: `${o.emoji} ${o.name}`, callback_data: `app_webcam_${o.id}` }])
-      );
-      break;
-      
-    case 'experience':
-      await sendMessageWithButtons(chatId,
-        '⭐ <b>Шаг 13/19</b>\n\nУ вас есть <b>опыт</b> работы моделью или в сфере контента?',
-        [
-          [{ text: '🆕 Нет опыта', callback_data: 'app_exp_none' }],
-          [{ text: '📱 Есть соцсети', callback_data: 'app_exp_social' }],
-          [{ text: '💰 Уже работаю моделью', callback_data: 'app_exp_model' }],
-          [{ text: '🌟 Опытная модель', callback_data: 'app_exp_pro' }]
-        ]
-      );
-      break;
-      
-    case 'social_links':
-      await sendMessage(chatId, '📱 <b>Шаг 14/19</b>\n\nОтправьте ссылки на ваши <b>соцсети</b> (Instagram, TikTok, Twitter и т.д.).\n\nЕсли нет — напишите "нет"');
-      break;
-      
-    case 'equipment':
-      await sendMessageWithButtons(chatId,
-        `📷 <b>Шаг 15/19</b>
-
-<b>Какое оборудование у вас есть для работы?</b>
-
-Выберите вариант ниже, а затем <b>уточните модель телефона или другого оборудования</b> в следующем сообщении:`,
-        [
-          [{ text: '📱 Только телефон', callback_data: 'app_equip_phone' }],
-          [{ text: '💻 Телефон + ноутбук', callback_data: 'app_equip_laptop' }],
-          [{ text: '📷 Проф. камера + свет', callback_data: 'app_equip_pro' }],
-          [{ text: '🎬 Полная студия', callback_data: 'app_equip_studio' }]
-        ]
-      );
-      break;
-      
-    case 'equipment_details':
-      await sendMessage(chatId, `📱 <b>Уточните модель вашего оборудования:</b>
-
-Напишите модель телефона (iPhone 15 Pro, Samsung S24 Ultra и т.д.) и другое оборудование, которое у вас есть (камера, свет, микрофон и т.д.)`);
-      break;
-      
-    case 'time_availability':
-      await sendMessageWithButtons(chatId,
-        '⏰ <b>Шаг 16/19</b>\n\nСколько <b>времени</b> вы готовы уделять работе?',
-        [
-          [{ text: '🕐 2-3 часа/день', callback_data: 'app_time_part' }],
-          [{ text: '🕓 4-6 часов/день', callback_data: 'app_time_half' }],
-          [{ text: '🕗 8+ часов/день (Full-time)', callback_data: 'app_time_full' }],
-          [{ text: '📅 Только по выходным', callback_data: 'app_time_weekend' }]
-        ]
-      );
-      break;
-      
-    case 'desired_income':
-      await sendMessageWithButtons(chatId,
-        '💰 <b>Шаг 17/19</b>\n\nКакой <b>доход</b> вы хотите получать в месяц?',
-        [
-          [{ text: '💵 $1,000-3,000', callback_data: 'app_income_1k' }],
-          [{ text: '💵💵 $3,000-5,000', callback_data: 'app_income_3k' }],
-          [{ text: '💵💵💵 $5,000-10,000', callback_data: 'app_income_5k' }],
-          [{ text: '💎 $10,000+', callback_data: 'app_income_10k' }]
-        ]
-      );
-      break;
-      
-    case 'portfolio_photos':
-      // Send example photo first
-      await sendPhoto(chatId, 
-        'https://ykwiqymksnndugphhgmc.supabase.co/storage/v1/object/public/bot-media/examples/portfolio-example.jpg',
-        `📸 <b>Шаг 18/19 — ФОТО ПОРТФОЛИО</b>
-
-<b>Пример хорошей фотографии:</b>
-• Хорошее освещение
-• Видно лицо и фигуру
-• Качественное фото
-
-👆 Вот пример того, какие фото нам нужны!`
-      );
-      
-      await sendMessage(chatId, `📸 <b>Теперь отправьте 1-5 ваших фотографий:</b>
-
-Фото должны показать:
-• Ваше лицо (можно без макияжа)  
-• Фигуру полностью
-• Разные ракурсы
-
-⚠️ <b>Без фильтров и сильной обработки!</b>
-
-Отправляйте фото по одному. Когда закончите — нажмите кнопку "Готово":`,
-      );
-      
+    case 'photos':
+      await sendMessage(chatId, questionText + '\n\n📷 <b>Отправляйте фото по одному.</b> Когда закончите — нажмите кнопку ниже:');
       await sendMessageWithButtons(chatId, '👇 Отправьте фото или нажмите, когда закончите:', [
         [{ text: '✅ Готово — у меня все фото', callback_data: 'app_photos_done' }],
         [{ text: '⏭️ Пропустить фото', callback_data: 'app_photos_skip' }]
       ]);
       break;
       
-    case 'about_yourself':
-      await sendMessage(chatId, `✨ <b>Шаг 19/19 — САМЫЙ ВАЖНЫЙ!</b>
-
-🌟 <b>Расскажите о себе максимально подробно!</b>
-
-Это ваш шанс показать себя с лучшей стороны. Мы раскрываем весь потенциал модели!
-
-<b>Что важно рассказать:</b>
-• Ваши хобби и увлечения
-• Таланты (пение, танцы, игра на инструментах и т.д.)
-• Интересные факты о себе
-• Что вас мотивирует
-• Ваши фишки и особенности
-
-💡 <i>Например: если вы умеете петь, играть на гитаре, танцевать — это станет вашими сильными сторонами! Расскажите о своих уникальных качествах.</i>
-
-Чем подробнее вы расскажете, тем лучше мы сможем вам помочь! 🚀`);
-      break;
-      
-    case 'strong_points':
-      await sendMessage(chatId, `💪 <b>Последний вопрос!</b>
-
-В чём ваши <b>сильные стороны</b>? Чем вы можете выделиться среди других моделей?
-
-<i>Опишите всё, что может стать вашим преимуществом!</i>`);
-      break;
+    default:
+      await sendMessage(chatId, questionText);
   }
 }
 
@@ -600,12 +444,10 @@ async function sendApplicationQuestion(chatId: number, step: string, application
 async function notifyOwner(application: any, settings: any) {
   const chatIds: number[] = [];
   
-  // Add main owner chat ID
   if (settings.owner_telegram_chat_id) {
     chatIds.push(settings.owner_telegram_chat_id);
   }
   
-  // Add additional notification IDs
   if (settings.notification_chat_ids && Array.isArray(settings.notification_chat_ids)) {
     chatIds.push(...settings.notification_chat_ids.filter((id: number) => id && !chatIds.includes(id)));
   }
@@ -614,10 +456,6 @@ async function notifyOwner(application: any, settings: any) {
     console.log('No notification chat IDs set, skipping notification');
     return;
   }
-  
-  const tabuList = application.tabu_preferences?.length > 0 
-    ? application.tabu_preferences.map((t: string) => TABU_CATEGORIES.find(c => c.id === t)?.name || t).join(', ')
-    : 'Не указано';
   
   const ownerNotification = `
 🆕 <b>НОВАЯ ЗАЯВКА МОДЕЛИ!</b>
@@ -629,8 +467,6 @@ async function notifyOwner(application: any, settings: any) {
 💇 <b>Волосы:</b> ${application.hair_color || 'Не указано'}
 📱 <b>Telegram:</b> @${application.telegram_username || 'unknown'}
 💰 <b>Желаемый доход:</b> ${application.desired_income || 'Не указан'}
-
-🚫 <b>ТАБУ:</b> ${tabuList}
 
 📸 <b>Фото:</b> ${application.portfolio_photos?.length || 0} шт.
 
@@ -665,10 +501,8 @@ async function completeApplication(chatId: number, application: any) {
     completed_at: new Date().toISOString()
   });
   
-  // Notify owner about new application
   await notifyOwner(application, settings);
   
-  // Благодарственное сообщение
   await sendMessage(chatId, `✨ <b>Вы прекрасны!</b> ✨
 
 Спасибо, что уделили время заполнению анкеты! 💜
@@ -683,7 +517,6 @@ async function completeApplication(chatId: number, application: any) {
 🌍 Страна: ${application.country || 'Не указана'}
 📏 Рост/вес: ${application.height || 'Не указано'} / ${application.weight || 'Не указан'}
 💇 Волосы: ${application.hair_color || 'Не указано'}
-🎯 Платформы: ${application.platforms?.join(', ') || 'Подберём для вас'}
 💰 Желаемый доход: ${application.desired_income || 'Не указан'}
 📸 Фото: ${application.portfolio_photos?.length || 0} шт.
 
@@ -691,7 +524,6 @@ async function completeApplication(chatId: number, application: any) {
 Мы уже изучаем вашу заявку и <b>скоро свяжемся с вами напрямую</b>!
 
 📞 <b>Есть вопросы?</b> Пишите владельцу: @Apollo_Production
-Он решит любой вопрос!
 `;
 
   await sendMessage(chatId, summary);
@@ -717,8 +549,16 @@ async function handleApplicationCallback(callbackQuery: any) {
   await answerCallbackQuery(callbackQuery.id);
   
   let application = await getOrCreateApplication(chatId, userId, username);
+  const questions = await getQuestions();
   
+  // Start application
   if (data === 'app_start' || data === 'app_restart') {
+    const firstQuestion = questions[0];
+    if (!firstQuestion) {
+      await sendMessage(chatId, '❌ Ошибка: вопросы анкеты не настроены.');
+      return;
+    }
+    
     if (data === 'app_restart') {
       const { data: newApp } = await supabase
         .from('telegram_model_applications')
@@ -726,278 +566,198 @@ async function handleApplicationCallback(callbackQuery: any) {
           chat_id: chatId,
           telegram_user_id: userId,
           telegram_username: username,
-          step: 'full_name',
+          step: firstQuestion.step,
           status: 'in_progress'
         })
         .select()
         .single();
       application = newApp;
     } else {
-      await updateApplication(application.id, { step: 'full_name' });
+      await updateApplication(application.id, { step: firstQuestion.step });
     }
-    await sendApplicationQuestion(chatId, 'full_name', application);
+    await sendApplicationQuestion(chatId, firstQuestion.step, application);
     return;
   }
   
-  // Обработка выбора страны
-  if (data.startsWith('app_country_')) {
-    const countryMap: Record<string, string> = {
-      'app_country_russia': 'Россия',
-      'app_country_ukraine': 'Украина',
-      'app_country_belarus': 'Беларусь',
-      'app_country_kazakhstan': 'Казахстан',
-      'app_country_uzbekistan': 'Узбекистан',
-      'app_country_moldova': 'Молдова',
-      'app_country_poland': 'Польша',
-      'app_country_georgia': 'Грузия',
-      'app_country_other': 'Другая'
-    };
+  // Handle button selection for any step (app_{step}_{optionIndex})
+  const buttonMatch = data.match(/^app_([^_]+)_(\d+)$/);
+  if (buttonMatch) {
+    const step = buttonMatch[1];
+    const optionIndex = parseInt(buttonMatch[2]);
     
-    if (data === 'app_country_other') {
-      await updateApplication(application.id, { step: 'country_input' });
-      await sendMessage(chatId, '🌍 Напишите название вашей страны:');
-    } else {
-      await updateApplication(application.id, { 
-        country: countryMap[data] || 'Не указана',
-        step: 'height_weight' 
-      });
-      await sendApplicationQuestion(chatId, 'height_weight', application);
+    const question = await getQuestionByStep(step);
+    if (question && question.options) {
+      const selectedOption = question.options[optionIndex];
+      if (selectedOption) {
+        // Clean option text (remove emoji prefix if present)
+        const cleanOption = selectedOption.replace(/^[^\s]+\s/, '').trim();
+        
+        // Map step to field name
+        const fieldMap: Record<string, string> = {
+          'country': 'country',
+          'hair_color': 'hair_color',
+          'equipment': 'equipment',
+          'time_availability': 'time_availability',
+          'desired_income': 'desired_income'
+        };
+        
+        const field = fieldMap[step] || step;
+        const nextStep = await getNextStep(step);
+        
+        if (nextStep) {
+          await updateApplication(application.id, { 
+            [field]: cleanOption,
+            step: nextStep 
+          });
+          await sendApplicationQuestion(chatId, nextStep, application);
+        } else {
+          // Last question - complete
+          await updateApplication(application.id, { [field]: cleanOption, step: 'complete' });
+          const updatedApp = await getOrCreateApplication(chatId, userId, username);
+          await completeApplication(chatId, updatedApp);
+        }
+      }
     }
     return;
   }
   
-  // Обработка выбора цвета волос
-  if (data.startsWith('app_hair_')) {
-    const hairMap: Record<string, string> = {
-      'app_hair_blonde': 'Блондинка',
-      'app_hair_brunette': 'Брюнетка',
-      'app_hair_red': 'Рыжая',
-      'app_hair_light_brown': 'Русая',
-      'app_hair_colored': 'Цветные'
-    };
-    
-    await updateApplication(application.id, { 
-      hair_color: hairMap[data] || 'Не указано',
-      step: 'languages' 
-    });
-    await sendApplicationQuestion(chatId, 'languages', application);
+  // Handle "Other" country input
+  if (data === 'app_country_other') {
+    await updateApplication(application.id, { step: 'country_input' });
+    await sendMessage(chatId, '🌍 Напишите название вашей страны:');
     return;
   }
   
-  // Обработка выбора типов контента
-  if (data.startsWith('app_content_')) {
-    if (data === 'app_content_done') {
-      await updateApplication(application.id, { step: 'tabu_preferences' });
-      await sendApplicationQuestion(chatId, 'tabu_preferences', application);
+  // Handle multi-select toggles (app_multi_{step}_{optionId})
+  const multiMatch = data.match(/^app_multi_([^_]+)_(.+)$/);
+  if (multiMatch) {
+    const step = multiMatch[1];
+    const optionId = multiMatch[2];
+    
+    // Handle page navigation
+    if (optionId.startsWith('page_')) {
+      const pageMatch = optionId.match(/page_([^_]+)_(\d+)/);
+      if (pageMatch) {
+        const pageStep = pageMatch[1];
+        const pageNum = parseInt(pageMatch[2]);
+        
+        const question = await getQuestionByStep(pageStep);
+        if (question && question.options) {
+          const pageSize = 8;
+          const totalPages = Math.ceil(question.options.length / pageSize);
+          const startIndex = (pageNum - 1) * pageSize;
+          const pageOptions = question.options.slice(startIndex, startIndex + pageSize);
+          const currentPrefs = application.content_preferences || [];
+          
+          const buttons = pageOptions.map((opt: any) => {
+            const isSelected = currentPrefs.includes(opt.id);
+            return [{ 
+              text: `${isSelected ? '✅' : '⬜'} ${opt.emoji || ''} ${opt.name}`, 
+              callback_data: `app_multi_${pageStep}_${opt.id}` 
+            }];
+          });
+          
+          // Navigation buttons
+          const navButtons = [];
+          if (pageNum > 1) {
+            navButtons.push({ text: `⬅️ Стр. ${pageNum - 1}`, callback_data: `app_multi_page_${pageStep}_${pageNum - 1}` });
+          }
+          if (pageNum < totalPages) {
+            navButtons.push({ text: `Стр. ${pageNum + 1} ➡️`, callback_data: `app_multi_page_${pageStep}_${pageNum + 1}` });
+          }
+          if (navButtons.length > 0) {
+            buttons.push(navButtons);
+          }
+          buttons.push([{ text: '✅ Готово', callback_data: `app_multi_done_${pageStep}` }]);
+          
+          await editMessage(chatId, messageId, 
+            `📋 ${question.question}\n\n<b>Страница ${pageNum}/${totalPages}</b>`,
+            buttons
+          );
+        }
+      }
       return;
     }
     
-    const contentId = data.replace('app_content_', '');
-    const currentContent = application.content_preferences || [];
-    
-    let newContent;
-    if (currentContent.includes(contentId)) {
-      newContent = currentContent.filter((c: string) => c !== contentId);
-    } else {
-      newContent = [...currentContent, contentId];
-    }
-    
-    await updateApplication(application.id, { content_preferences: newContent });
-    application.content_preferences = newContent;
-    
-    const contentButtons = CONTENT_TYPES.map(c => [{ 
-      text: `${newContent.includes(c.id) ? '✅' : ''} ${c.emoji} ${c.name}`, 
-      callback_data: `app_content_${c.id}` 
-    }]);
-    contentButtons.push([{ text: '✅ Готово', callback_data: 'app_content_done' }]);
-    
-    await editMessage(chatId, messageId,
-      '🎭 <b>Шаг 9/19</b>\n\nКакой <b>контент</b> вы готовы создавать? (можно выбрать несколько):',
-      contentButtons
-    );
-    return;
-  }
-  
-  // Обработка "что готовы делать"
-  if (data.startsWith('app_willing_')) {
-    if (data === 'app_willing_done') {
-      await updateApplication(application.id, { step: 'webcam_interest' });
-      await sendApplicationQuestion(chatId, 'webcam_interest', application);
-      return;
-    }
-    
-    if (data === 'app_willing_page2') {
-      const currentPrefs = application.content_preferences || [];
-      const willingnessButtons2 = CONTENT_WILLINGNESS.slice(8).map(c => [{ 
-        text: `${currentPrefs.includes(c.id) ? '✅' : '⬜'} ${c.emoji} ${c.name}`, 
-        callback_data: `app_willing_${c.id}` 
-      }]);
-      willingnessButtons2.push([{ text: '⬅️ Назад', callback_data: 'app_willing_page1' }]);
-      willingnessButtons2.push([{ text: '✅ Готово', callback_data: 'app_willing_done' }]);
+    // Handle "done" for multi-select
+    if (optionId.startsWith('done_')) {
+      const doneStep = optionId.replace('done_', '');
+      const nextStep = await getNextStep(doneStep);
       
-      await editMessage(chatId, messageId, 
-        `📋 <b>Шаг 11/19 — ЧТО ВЫ ГОТОВЫ ДЕЛАТЬ (стр. 2)</b>\n\n<b>Продолжайте отмечать:</b>`,
-        willingnessButtons2
-      );
+      if (nextStep) {
+        await updateApplication(application.id, { step: nextStep });
+        await sendApplicationQuestion(chatId, nextStep, application);
+      } else {
+        await updateApplication(application.id, { step: 'complete' });
+        const updatedApp = await getOrCreateApplication(chatId, userId, username);
+        await completeApplication(chatId, updatedApp);
+      }
       return;
     }
     
-    if (data === 'app_willing_page1') {
-      const currentPrefs = application.content_preferences || [];
-      const willingnessButtons1 = CONTENT_WILLINGNESS.slice(0, 8).map(c => [{ 
-        text: `${currentPrefs.includes(c.id) ? '✅' : '⬜'} ${c.emoji} ${c.name}`, 
-        callback_data: `app_willing_${c.id}` 
-      }]);
-      willingnessButtons1.push([{ text: '➡️ Далее', callback_data: 'app_willing_page2' }]);
-      
-      await editMessage(chatId, messageId, 
-        `📋 <b>Шаг 11/19 — ЧТО ВЫ ГОТОВЫ ДЕЛАТЬ</b>\n\n<b>Отметьте галочками ВСЁ, что вы ГОТОВЫ делать:</b>`,
-        willingnessButtons1
-      );
-      return;
-    }
-    
-    const willingId = data.replace('app_willing_', '');
+    // Toggle option selection
     const currentPrefs = application.content_preferences || [];
-    
     let newPrefs;
-    if (currentPrefs.includes(willingId)) {
-      newPrefs = currentPrefs.filter((c: string) => c !== willingId);
+    if (currentPrefs.includes(optionId)) {
+      newPrefs = currentPrefs.filter((c: string) => c !== optionId);
     } else {
-      newPrefs = [...currentPrefs, willingId];
+      newPrefs = [...currentPrefs, optionId];
     }
     
     await updateApplication(application.id, { content_preferences: newPrefs });
     application.content_preferences = newPrefs;
-    return;
-  }
-  
-  // Обработка вебкама
-  if (data.startsWith('app_webcam_')) {
-    const webcamId = data.replace('app_webcam_', '');
-    const webcamOption = WEBCAM_OPTIONS.find(o => o.id === webcamId);
     
-    await updateApplication(application.id, { 
-      equipment: `${application.equipment || ''} | Вебкам: ${webcamOption?.name || webcamId}`.trim(),
-      step: 'experience' 
-    });
-    await sendApplicationQuestion(chatId, 'experience', application);
-    return;
-  }
-  
-  // Обработка ТАБУ выбора
-  if (data.startsWith('app_tabu_')) {
-    if (data === 'app_tabu_done') {
-      await updateApplication(application.id, { step: 'content_willingness' });
-      await sendApplicationQuestion(chatId, 'content_willingness', application);
-      return;
+    // Refresh the multi-select message
+    const question = await getQuestionByStep(step);
+    if (question && question.options) {
+      const multiOptions = question.options;
+      const pageSize = 8;
+      
+      // Find which page the option is on
+      const optIndex = multiOptions.findIndex((o: any) => o.id === optionId);
+      const currentPage = Math.floor(optIndex / pageSize) + 1;
+      const totalPages = Math.ceil(multiOptions.length / pageSize);
+      const startIndex = (currentPage - 1) * pageSize;
+      const pageOptions = multiOptions.slice(startIndex, startIndex + pageSize);
+      
+      const buttons = pageOptions.map((opt: any) => {
+        const isSelected = newPrefs.includes(opt.id);
+        return [{ 
+          text: `${isSelected ? '✅' : '⬜'} ${opt.emoji || ''} ${opt.name}`, 
+          callback_data: `app_multi_${step}_${opt.id}` 
+        }];
+      });
+      
+      // Navigation buttons
+      const navButtons = [];
+      if (currentPage > 1) {
+        navButtons.push({ text: `⬅️ Стр. ${currentPage - 1}`, callback_data: `app_multi_page_${step}_${currentPage - 1}` });
+      }
+      if (currentPage < totalPages) {
+        navButtons.push({ text: `Стр. ${currentPage + 1} ➡️`, callback_data: `app_multi_page_${step}_${currentPage + 1}` });
+      }
+      if (navButtons.length > 0) {
+        buttons.push(navButtons);
+      }
+      buttons.push([{ text: '✅ Готово', callback_data: `app_multi_done_${step}` }]);
+      
+      const pageInfo = totalPages > 1 ? `\n\n<b>Страница ${currentPage}/${totalPages}</b>` : '';
+      await editMessage(chatId, messageId, question.question + pageInfo, buttons);
     }
-    
-    const tabuId = data.replace('app_tabu_', '');
-    const currentTabu = application.tabu_preferences || [];
-    
-    let newTabu;
-    if (currentTabu.includes(tabuId)) {
-      newTabu = currentTabu.filter((t: string) => t !== tabuId);
-    } else {
-      newTabu = [...currentTabu, tabuId];
-    }
-    
-    await updateApplication(application.id, { tabu_preferences: newTabu });
-    application.tabu_preferences = newTabu;
-    
-    const tabuButtons = TABU_CATEGORIES.map(t => [{ 
-      text: `${newTabu.includes(t.id) ? '🚫' : '✅'} ${t.emoji} ${t.name}`, 
-      callback_data: `app_tabu_${t.id}` 
-    }]);
-    tabuButtons.push([{ text: '✅ Готово — продолжить', callback_data: 'app_tabu_done' }]);
-    
-    await editMessage(chatId, messageId,
-      `🚫 <b>Шаг 10/17 — ТАБУ</b>
-
-<b>Отметьте то, что вы НЕ готовы делать:</b>
-
-✅ = готова делать
-🚫 = ТАБУ (не делаю)
-
-Нажимайте на категории, чтобы отметить их как ТАБУ:`,
-      tabuButtons
-    );
     return;
   }
   
-  // Обработка фото
+  // Handle photos done/skip
   if (data === 'app_photos_done' || data === 'app_photos_skip') {
-    await updateApplication(application.id, { step: 'about_yourself' });
-    await sendApplicationQuestion(chatId, 'about_yourself', application);
-    return;
-  }
-  
-  // Обработка опыта
-  if (data.startsWith('app_exp_')) {
-    const expMap: Record<string, string[]> = {
-      'app_exp_none': ['Нет опыта'],
-      'app_exp_social': ['Есть соцсети'],
-      'app_exp_model': ['Уже работаю моделью'],
-      'app_exp_pro': ['Опытная модель']
-    };
-    
-    await updateApplication(application.id, { 
-      social_media_experience: expMap[data] || [],
-      step: 'social_links' 
-    });
-    await sendApplicationQuestion(chatId, 'social_links', application);
-    return;
-  }
-  
-  // Обработка оборудования
-  if (data.startsWith('app_equip_')) {
-    const equipMap: Record<string, string> = {
-      'app_equip_phone': 'Только телефон',
-      'app_equip_laptop': 'Телефон + ноутбук',
-      'app_equip_pro': 'Проф. камера + свет',
-      'app_equip_studio': 'Полная студия'
-    };
-    
-    await updateApplication(application.id, { 
-      equipment: equipMap[data] || 'Не указано',
-      step: 'equipment_details' 
-    });
-    await sendApplicationQuestion(chatId, 'equipment_details', application);
-    return;
-  }
-  
-  // Обработка времени
-  if (data.startsWith('app_time_')) {
-    const timeMap: Record<string, string> = {
-      'app_time_part': '2-3 часа/день',
-      'app_time_half': '4-6 часов/день',
-      'app_time_full': '8+ часов/день',
-      'app_time_weekend': 'Только по выходным'
-    };
-    
-    await updateApplication(application.id, { 
-      time_availability: timeMap[data] || 'Не указано',
-      step: 'desired_income' 
-    });
-    await sendApplicationQuestion(chatId, 'desired_income', application);
-    return;
-  }
-  
-  // Обработка дохода
-  if (data.startsWith('app_income_')) {
-    const incomeMap: Record<string, string> = {
-      'app_income_1k': '$1,000-3,000',
-      'app_income_3k': '$3,000-5,000',
-      'app_income_5k': '$5,000-10,000',
-      'app_income_10k': '$10,000+'
-    };
-    
-    await updateApplication(application.id, { 
-      desired_income: incomeMap[data] || 'Не указано',
-      step: 'portfolio_photos' 
-    });
-    await sendApplicationQuestion(chatId, 'portfolio_photos', application);
+    const nextStep = await getNextStep('portfolio_photos');
+    if (nextStep) {
+      await updateApplication(application.id, { step: nextStep });
+      await sendApplicationQuestion(chatId, nextStep, application);
+    } else {
+      await updateApplication(application.id, { step: 'complete' });
+      const updatedApp = await getOrCreateApplication(chatId, userId, username);
+      await completeApplication(chatId, updatedApp);
+    }
     return;
   }
 }
@@ -1017,12 +777,11 @@ async function handlePhotoMessage(message: any): Promise<boolean> {
   const photos = message.photo;
   if (!photos || photos.length === 0) return false;
   
-  // Get largest photo
   const largestPhoto = photos[photos.length - 1];
   const currentPhotos = application.portfolio_photos || [];
   
-  if (currentPhotos.length >= 5) {
-    await sendMessage(chatId, '⚠️ Вы уже загрузили максимум 5 фото. Нажмите "Готово" чтобы продолжить.');
+  if (currentPhotos.length >= 10) {
+    await sendMessage(chatId, '⚠️ Вы уже загрузили максимум 10 фото. Нажмите "Готово" чтобы продолжить.');
     return true;
   }
   
@@ -1035,7 +794,7 @@ async function handlePhotoMessage(message: any): Promise<boolean> {
     await updateApplication(application.id, { portfolio_photos: newPhotos });
     
     await sendMessageWithButtons(chatId, 
-      `✅ Фото ${newPhotos.length}/5 загружено!\n\n${newPhotos.length < 5 ? 'Отправьте ещё фото или нажмите "Готово":' : 'Максимум фото достигнут. Нажмите "Готово":'}`,
+      `✅ Фото ${newPhotos.length} загружено!\n\nОтправьте ещё фото или нажмите "Готово":`,
       [[{ text: '✅ Готово — у меня все фото', callback_data: 'app_photos_done' }]]
     );
   } else {
@@ -1060,77 +819,79 @@ async function handleApplicationTextInput(message: any): Promise<boolean> {
   
   console.log('Processing text input for step:', application.step);
   
-  switch (application.step) {
-    case 'full_name':
-      await updateApplication(application.id, { full_name: text, step: 'age' });
-      await sendApplicationQuestion(chatId, 'age', application);
-      return true;
-      
-    case 'age':
+  const currentStep = application.step;
+  const question = await getQuestionByStep(currentStep);
+  
+  // Special handling for country_input
+  if (currentStep === 'country_input') {
+    const nextStep = await getNextStep('country');
+    if (nextStep) {
+      await updateApplication(application.id, { country: text, step: nextStep });
+      await sendApplicationQuestion(chatId, nextStep, application);
+    }
+    return true;
+  }
+  
+  // If current step expects text input
+  if (question && question.question_type === 'text') {
+    // Map step to field name
+    const fieldMap: Record<string, string> = {
+      'full_name': 'full_name',
+      'age': 'age',
+      'height_weight': 'height',
+      'body_params': 'body_params',
+      'languages': 'language_skills',
+      'platforms': 'platforms',
+      'social_links': 'social_media_links',
+      'about_yourself': 'about_yourself'
+    };
+    
+    const field = fieldMap[currentStep] || currentStep;
+    let value: any = text;
+    
+    // Special handling for age
+    if (currentStep === 'age') {
       const age = parseInt(text);
       if (isNaN(age) || age < 18 || age > 100) {
         await sendMessage(chatId, '⚠️ Пожалуйста, введите корректный возраст (от 18 лет). Только число:');
         return true;
       }
-      await updateApplication(application.id, { age, step: 'country' });
-      await sendApplicationQuestion(chatId, 'country', application);
-      return true;
-      
-    case 'country_input':
-      await updateApplication(application.id, { country: text, step: 'height_weight' });
-      await sendApplicationQuestion(chatId, 'height_weight', application);
-      return true;
-      
-    case 'height_weight':
+      value = age;
+    }
+    
+    // Special handling for height_weight
+    if (currentStep === 'height_weight') {
       const parts = text.split('/').map((s: string) => s.trim());
       await updateApplication(application.id, { 
         height: parts[0] || text,
-        weight: parts[1] || null,
-        step: 'body_params' 
+        weight: parts[1] || null
       });
-      await sendApplicationQuestion(chatId, 'body_params', application);
+      const nextStep = await getNextStep(currentStep);
+      if (nextStep) {
+        await updateApplication(application.id, { step: nextStep });
+        await sendApplicationQuestion(chatId, nextStep, application);
+      }
       return true;
-      
-    case 'body_params':
-      await updateApplication(application.id, { body_params: text, step: 'hair_color' });
-      await sendApplicationQuestion(chatId, 'hair_color', application);
-      return true;
-      
-    case 'languages':
-      await updateApplication(application.id, { language_skills: text, step: 'platforms' });
-      await sendApplicationQuestion(chatId, 'platforms', application);
-      return true;
-      
-    case 'platforms':
-      const platformsArray = text.toLowerCase() === 'нет' ? [] : [text];
-      await updateApplication(application.id, { platforms: platformsArray, step: 'content_types' });
-      await sendApplicationQuestion(chatId, 'content_types', application);
-      return true;
-      
-    case 'social_links':
-      await updateApplication(application.id, { social_media_links: text, step: 'equipment' });
-      await sendApplicationQuestion(chatId, 'equipment', application);
-      return true;
-      
-    case 'equipment_details':
-      const currentEquipment = application.equipment || '';
-      await updateApplication(application.id, { 
-        equipment: `${currentEquipment} — ${text}`,
-        step: 'time_availability' 
-      });
-      await sendApplicationQuestion(chatId, 'time_availability', application);
-      return true;
-      
-    case 'about_yourself':
-      await updateApplication(application.id, { about_yourself: text, step: 'strong_points' });
-      await sendApplicationQuestion(chatId, 'strong_points', application);
-      return true;
-      
-    case 'strong_points':
-      await updateApplication(application.id, { strong_points: text, step: 'complete' });
+    }
+    
+    // Special handling for platforms
+    if (currentStep === 'platforms') {
+      value = text.toLowerCase() === 'нет' ? [] : [text];
+    }
+    
+    const nextStep = await getNextStep(currentStep);
+    
+    if (nextStep) {
+      await updateApplication(application.id, { [field]: value, step: nextStep });
+      await sendApplicationQuestion(chatId, nextStep, application);
+    } else {
+      // Last question - complete
+      await updateApplication(application.id, { [field]: value, step: 'complete' });
       const updatedApp = await getOrCreateApplication(chatId, userId, username);
       await completeApplication(chatId, updatedApp);
-      return true;
+    }
+    
+    return true;
   }
   
   return false;
@@ -1157,7 +918,7 @@ async function handleCommand(message: any) {
 
 Используйте /start или /apply чтобы начать заполнение анкеты.
 
-📞 <b>Есть вопросы?</b> Пишите: @Apollo_Produciton`);
+📞 <b>Есть вопросы?</b> Пишите: @Apollo_Production`);
   }
 }
 
@@ -1169,7 +930,7 @@ async function handleTextMessage(message: any) {
   
   const isApplicationInput = await handleApplicationTextInput(message);
   if (!isApplicationInput) {
-    await sendMessage(message.chat.id, '👆 Используйте /start чтобы начать заполнение анкеты.\n\n📞 Вопросы? Пишите: @Apollo_Produciton');
+    await sendMessage(message.chat.id, '👆 Используйте /start чтобы начать заполнение анкеты.\n\n📞 Вопросы? Пишите: @Apollo_Production');
   }
 }
 
@@ -1178,20 +939,18 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Handle GET request for webhook info
   if (req.method === 'GET') {
     return new Response(JSON.stringify({ 
       ok: true, 
       bot: 'Model Bot',
       status: 'running',
-      version: '2.0.0'
+      version: '3.0.0 - Dynamic Questions'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
   try {
-    // Check if request has body
     const contentLength = req.headers.get('content-length');
     if (!contentLength || contentLength === '0') {
       return new Response(JSON.stringify({ ok: true, message: 'No body' }), {
@@ -1222,7 +981,7 @@ serve(async (req) => {
     const callbackQuery = update.callback_query;
     
     if (callbackQuery) {
-      if (callbackQuery.data.startsWith('app_')) {
+      if (callbackQuery.data.startsWith('app_') || callbackQuery.data.startsWith('admin_')) {
         await handleApplicationCallback(callbackQuery);
       }
       return new Response(JSON.stringify({ ok: true }), {
@@ -1236,7 +995,6 @@ serve(async (req) => {
       });
     }
     
-    // Handle photo messages
     if (message.photo) {
       const handled = await handlePhotoMessage(message);
       if (handled) {
