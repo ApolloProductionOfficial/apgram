@@ -41,11 +41,48 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_questionnaire_questions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          options: Json | null
+          question: string
+          question_order: number
+          question_type: string | null
+          step: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          options?: Json | null
+          question: string
+          question_order: number
+          question_type?: string | null
+          step: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          options?: Json | null
+          question?: string
+          question_order?: number
+          question_type?: string | null
+          step?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bot_welcome_settings: {
         Row: {
           created_at: string
           id: string
           owner_contact: string | null
+          owner_telegram_chat_id: number | null
           updated_at: string
           welcome_media_type: string | null
           welcome_media_url: string | null
@@ -55,6 +92,7 @@ export type Database = {
           created_at?: string
           id?: string
           owner_contact?: string | null
+          owner_telegram_chat_id?: number | null
           updated_at?: string
           welcome_media_type?: string | null
           welcome_media_url?: string | null
@@ -64,6 +102,7 @@ export type Database = {
           created_at?: string
           id?: string
           owner_contact?: string | null
+          owner_telegram_chat_id?: number | null
           updated_at?: string
           welcome_media_type?: string | null
           welcome_media_url?: string | null

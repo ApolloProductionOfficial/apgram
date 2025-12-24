@@ -413,6 +413,45 @@ async function sendApplicationQuestion(chatId: number, step: string, application
   }
 }
 
+// Отправить уведомление владельцу о новой заявке
+async function notifyOwner(application: any, settings: any) {
+  // Try to get owner chat ID from settings
+  if (!settings.owner_telegram_chat_id) {
+    console.log('Owner chat ID not set, skipping notification');
+    return;
+  }
+  
+  const ownerNotification = `
+🆕 <b>НОВАЯ ЗАЯВКА МОДЕЛИ!</b>
+
+👤 <b>Имя:</b> ${application.full_name || 'Не указано'}
+🎂 <b>Возраст:</b> ${application.age || '?'}
+🌍 <b>Страна:</b> ${application.country || 'Не указана'}
+📏 <b>Параметры:</b> ${application.height || '?'} / ${application.weight || '?'}
+💇 <b>Волосы:</b> ${application.hair_color || 'Не указано'}
+📱 <b>Telegram:</b> @${application.telegram_username || 'unknown'}
+💰 <b>Желаемый доход:</b> ${application.desired_income || 'Не указан'}
+
+📝 <b>О себе:</b>
+${application.about_yourself ? application.about_yourself.substring(0, 500) + (application.about_yourself.length > 500 ? '...' : '') : 'Не указано'}
+
+⏰ ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}
+`;
+
+  try {
+    await sendMessageWithButtons(settings.owner_telegram_chat_id, ownerNotification, [
+      [
+        { text: '✅ Одобрить', callback_data: `admin_approve_${application.id}` },
+        { text: '❌ Отклонить', callback_data: `admin_reject_${application.id}` }
+      ],
+      [{ text: '💬 Написать', url: `https://t.me/${application.telegram_username || ''}` }]
+    ]);
+    console.log('Owner notification sent successfully');
+  } catch (error) {
+    console.error('Failed to send owner notification:', error);
+  }
+}
+
 // Завершить анкету
 async function completeApplication(chatId: number, application: any) {
   const settings = await getWelcomeSettings();
@@ -421,6 +460,9 @@ async function completeApplication(chatId: number, application: any) {
     status: 'pending',
     completed_at: new Date().toISOString()
   });
+  
+  // Notify owner about new application
+  await notifyOwner(application, settings);
   
   const summary = `
 📋 <b>Ваша анкета успешно отправлена!</b>
