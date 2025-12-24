@@ -80,6 +80,7 @@ import { OnlyFansSection } from "@/components/OnlyFansSection";
 import { TeamNotificationSettings } from "@/components/TeamNotificationSettings";
 import { ModelPhotosGallery } from "@/components/ModelPhotosGallery";
 import { QuestionsEditor } from "@/components/QuestionsEditor";
+import { QuestionnairePreview } from "@/components/QuestionnairePreview";
 
 interface QuickPhrase {
   id: string;
@@ -982,7 +983,7 @@ const Dashboard = () => {
                   <p className="font-bold text-lg text-white">API OnlyFans</p>
                   <p className="text-xs text-slate-400 mt-1">Управление аккаунтами</p>
                 </div>
-                <Badge variant="outline" className="text-xs border-[#00AFF0]/30 text-[#00AFF0] mt-2">Новое</Badge>
+                <Badge variant="outline" className="text-xs border-[#00AFF0]/30 text-[#00AFF0] mt-2">Coming Soon</Badge>
               </TabsTrigger>
 
               <TabsTrigger 
@@ -1781,7 +1782,10 @@ const Dashboard = () => {
 
                 {/* Questions Editor */}
                 <TabsContent value="questions" className="space-y-4">
-                  <QuestionsEditor />
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <QuestionsEditor />
+                    <QuestionnairePreview />
+                  </div>
                 </TabsContent>
 
                 {/* Webhook Setup */}
@@ -1890,7 +1894,7 @@ const Dashboard = () => {
               <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-white">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center overflow-hidden p-1">
+                    <div className="w-10 h-10 rounded-xl bg-pink-500/20 flex items-center justify-center border border-pink-500/40 overflow-hidden p-1.5">
                       <img src={pimpbunnyLogo} alt="PimpBunny" className="w-full h-full object-contain" />
                     </div>
                     PimpBunny
@@ -1901,7 +1905,9 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-12 text-slate-500">
-                    <img src={pimpbunnyLogo} alt="PimpBunny" className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <div className="w-16 h-16 rounded-xl bg-pink-500/20 flex items-center justify-center border border-pink-500/40 mx-auto mb-4 overflow-hidden p-2">
+                      <img src={pimpbunnyLogo} alt="PimpBunny" className="w-full h-full object-contain opacity-50" />
+                    </div>
                     <p>Раздел PimpBunny</p>
                     <p className="text-xs mt-2">Функционал будет добавлен позже</p>
                   </div>
