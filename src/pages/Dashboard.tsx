@@ -70,7 +70,8 @@ import {
 import apolloLogo from "@/assets/cf-logo-final.png";
 import apolloLogoVideo from "@/assets/apollo-logo.mp4";
 import backgroundVideo from "@/assets/background-video-new.mp4";
-import onlyfansLogo from "@/assets/onlyfans-logo.png";
+import onlyfansLogo from "@/assets/onlyfans-neon-logo.png";
+import pimpbunnyLogo from "@/assets/pimpbunny-logo.png";
 import CustomCursor from "@/components/CustomCursor";
 import { ApplicationStats } from "@/components/ApplicationStats";
 import { BotCommandsHelp } from "@/components/BotCommandsHelp";
@@ -973,8 +974,8 @@ const Dashboard = () => {
                 value="onlyfans" 
                 className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-teal-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-2xl bg-teal-500/20 flex items-center justify-center border border-teal-500/30 overflow-hidden p-2">
-                  <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
+                <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/30 overflow-hidden">
+                  <img src={onlyfansLogo} alt="OnlyFans" className="w-12 h-12 object-contain drop-shadow-[0_0_8px_rgba(6,182,228,0.6)]" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">OnlyFans</p>
@@ -987,8 +988,8 @@ const Dashboard = () => {
                 value="pimpbunny" 
                 className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-pink-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-2xl bg-pink-500/20 flex items-center justify-center border border-pink-500/30">
-                  <Rabbit className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 rounded-2xl bg-pink-500/10 flex items-center justify-center border border-pink-500/30 overflow-hidden">
+                  <img src={pimpbunnyLogo} alt="PimpBunny" className="w-12 h-12 object-contain drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">PimpBunny</p>
