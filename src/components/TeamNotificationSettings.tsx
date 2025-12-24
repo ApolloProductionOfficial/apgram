@@ -205,7 +205,7 @@ export function TeamNotificationSettings({
     try {
       const { data, error } = await supabase.functions.invoke('send-model-message', {
         body: {
-          chatId: parseInt(ownerChatId),
+          chat_id: parseInt(ownerChatId),
           message: `🔔 <b>Тестовое уведомление!</b>\n\n✅ Уведомления работают корректно.\n\n⏰ ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}\n\n<i>Это сообщение отправлено из панели администратора Apollo Production.</i>`
         }
       });
