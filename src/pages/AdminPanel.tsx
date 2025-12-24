@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Users, Calendar, Clock, MapPin, Globe, Shield, User, Camera, Save, Trash2, Loader2, BarChart3, Languages, MousePointer, TrendingUp, Eye, Sparkles, Upload, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Users, Calendar, Clock, MapPin, Globe, Shield, User, Camera, Save, Trash2, Loader2, BarChart3, Languages, MousePointer, TrendingUp, Eye, Sparkles, Upload, CheckCircle, XCircle, AlertCircle, Bot } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import CustomCursor from '@/components/CustomCursor';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import TwoFactorSetup from '@/components/TwoFactorSetup';
+import { BotEditor } from '@/components/BotEditor';
 import apolloLogo from '@/assets/apollo-logo.mp4';
 
 interface MeetingTranscript {
@@ -127,7 +128,7 @@ const AdminPanel = () => {
   const [participants, setParticipants] = useState<MeetingParticipant[]>([]);
   const [geoData, setGeoData] = useState<Map<string, ParticipantGeoData>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'transcripts' | 'participants' | 'profile' | 'analytics' | 'users' | 'models' | 'help-bot' | 'pimpbunny'>('analytics');
+  const [activeTab, setActiveTab] = useState<'transcripts' | 'participants' | 'profile' | 'analytics' | 'users' | 'models' | 'help-bot' | 'pimpbunny' | 'bot-editor'>('analytics');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
@@ -687,6 +688,15 @@ const AdminPanel = () => {
               Анкета моделей
             </Button>
             <Button
+              variant={activeTab === 'bot-editor' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('bot-editor')}
+              className="gap-2"
+            >
+              <Bot className="w-4 h-4" />
+              Редактор бота
+            </Button>
+            <Button
               variant={activeTab === 'pimpbunny' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setActiveTab('pimpbunny')}
@@ -771,6 +781,8 @@ const AdminPanel = () => {
               </CardContent>
             </Card>
           </div>
+        ) : activeTab === 'bot-editor' ? (
+          <BotEditor />
         ) : activeTab === 'models' ? (
           <div className="space-y-6">
             <h1 className="text-2xl font-bold flex items-center gap-2">
