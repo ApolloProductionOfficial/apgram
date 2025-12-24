@@ -24,7 +24,7 @@ import {
   Timer
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import onlyfansLogo from "@/assets/onlyfans-logo.png";
+import onlyfansLogo from "@/assets/onlyfans-neon-logo.png";
 
 interface OnlyFansAccount {
   id: string;
@@ -74,14 +74,35 @@ export function OnlyFansSection() {
 
       if (error) throw error;
 
-      if (data?.accounts) {
-        // Добавляем моковые данные для графика (в реальности это придёт с API)
-        const enrichedAccounts = data.accounts.map((acc: OnlyFansAccount) => ({
-          ...acc,
-          earnings_history: generateMockEarningsHistory()
-        }));
-        setAccounts(enrichedAccounts);
-        calculateStats(enrichedAccounts);
+      if (data?.accounts && data.accounts.length > 0) {
+        // Загружаем историю доходов для каждого аккаунта
+        const accountsWithHistory = await Promise.all(
+          data.accounts.map(async (acc: OnlyFansAccount) => {
+            try {
+              const { data: historyData } = await supabase.functions.invoke('onlymonster-api', {
+                body: { action: 'get_earnings_history', account_id: acc.id, days: 14 }
+              });
+              
+              return {
+                ...acc,
+                earnings_history: historyData?.earnings_history?.length > 0 
+                  ? historyData.earnings_history 
+                  : generateMockEarningsHistory() // Fallback на mock если API не вернул данные
+              };
+            } catch {
+              return {
+                ...acc,
+                earnings_history: generateMockEarningsHistory()
+              };
+            }
+          })
+        );
+        
+        setAccounts(accountsWithHistory);
+        calculateStats(accountsWithHistory);
+      } else {
+        setAccounts([]);
+        calculateStats([]);
       }
       
       setLastSyncTime(new Date());

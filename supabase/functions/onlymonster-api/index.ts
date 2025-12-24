@@ -124,6 +124,45 @@ serve(async (req) => {
         }
       }
 
+      case 'get_earnings_history': {
+        const { account_id, days = 14 } = params;
+        
+        try {
+          // Try to get daily earnings from OnlyMonster API
+          const response = await fetch(
+            `${ONLYMONSTER_BASE_URL}/accounts/${account_id}/earnings?days=${days}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${ONLYMONSTER_API_KEY}`,
+                'Content-Type': 'application/json',
+              }
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Earnings history from API:', data);
+            return new Response(
+              JSON.stringify({ earnings_history: data.earnings || data }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          // If API doesn't support this endpoint yet, return empty
+          console.log('Earnings history endpoint not available, status:', response.status);
+          return new Response(
+            JSON.stringify({ earnings_history: [], message: 'Endpoint not available' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (error) {
+          console.log('Get earnings history failed:', error);
+          return new Response(
+            JSON.stringify({ earnings_history: [], error: String(error) }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
       case 'get_messages': {
         const { account_id, limit = 50 } = params;
         
