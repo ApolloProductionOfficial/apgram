@@ -83,6 +83,7 @@ import { ModelPhotosGallery } from "@/components/ModelPhotosGallery";
 import { QuestionsEditor } from "@/components/QuestionsEditor";
 import { QuestionnairePreview } from "@/components/QuestionnairePreview";
 import { ApplicationFunnel } from "@/components/ApplicationFunnel";
+import { SendMessageDialog } from "@/components/SendMessageDialog";
 
 interface QuickPhrase {
   id: string;
@@ -119,6 +120,7 @@ interface ChatSettings {
 interface ModelApplication {
   id: string;
   telegram_user_id: number;
+  chat_id: number;
   telegram_username: string | null;
   full_name: string | null;
   age: number | null;
@@ -208,6 +210,9 @@ const Dashboard = () => {
   // Owner notification settings
   const [ownerChatId, setOwnerChatId] = useState<string>('');
   const [modelBotToken, setModelBotToken] = useState("");
+  
+  // Send message dialog
+  const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   
   // Filtered applications
   const filteredApplications = applications.filter(app => {
@@ -1768,9 +1773,30 @@ const Dashboard = () => {
                               <ExternalLink className="w-4 h-4 mr-2" /> Telegram
                             </Button>
                           )}
+                          <Button
+                            variant="outline"
+                            onClick={() => setMessageDialogOpen(true)}
+                            className="border-purple-500/30 hover:bg-purple-500/20 text-purple-400"
+                          >
+                            <Send className="w-4 h-4 mr-2" /> Написать
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
+                  )}
+                  
+                  {/* Send Message Dialog */}
+                  {selectedApplication && (
+                    <SendMessageDialog
+                      open={messageDialogOpen}
+                      onOpenChange={setMessageDialogOpen}
+                      application={{
+                        id: selectedApplication.id,
+                        chat_id: (selectedApplication as any).chat_id || selectedApplication.telegram_user_id,
+                        telegram_username: selectedApplication.telegram_username,
+                        full_name: selectedApplication.full_name
+                      }}
+                    />
                   )}
                 </TabsContent>
 
