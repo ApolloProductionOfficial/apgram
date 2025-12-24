@@ -46,7 +46,8 @@ import {
   FileText,
   Command
 } from "lucide-react";
-import apolloLogo from "@/assets/cf-logo-final.png";
+import apolloLogo from "@/assets/cf-logo-transparent.png";
+import CustomCursor from "@/components/CustomCursor";
 
 interface QuickPhrase {
   id: string;
@@ -360,6 +361,7 @@ const Dashboard = () => {
 
   return (
     <TooltipProvider delayDuration={200}>
+      <CustomCursor />
       <motion.div 
         className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
         initial={{ opacity: 0 }}
