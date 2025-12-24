@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   MessageCircle, 
   Plus, 
@@ -40,8 +41,12 @@ import {
   Hash,
   Info,
   Shield,
-  Clock
+  Clock,
+  Play,
+  FileText,
+  Command
 } from "lucide-react";
+import apolloLogo from "@/assets/cf-logo-final.png";
 
 interface QuickPhrase {
   id: string;
@@ -90,6 +95,7 @@ const Dashboard = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState("phrases");
+  const [showSplash, setShowSplash] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -98,6 +104,14 @@ const Dashboard = () => {
       navigate("/auth");
     }
   }, [user, isLoading, navigate]);
+
+  // Splash screen timeout
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -289,25 +303,69 @@ const Dashboard = () => {
     return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   };
 
-  if (isLoading || isLoadingData) {
+  // Splash Screen
+  if (showSplash || isLoading || isLoadingData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#0088cc] to-[#00a8e8] flex items-center justify-center shadow-2xl shadow-[#0088cc]/40 animate-pulse">
-              <Bot className="w-8 h-8 text-white" />
-            </div>
-            <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-[#0088cc]/20 to-[#00a8e8]/20 blur-xl animate-pulse" />
+      <AnimatePresence>
+        <motion.div 
+          className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="flex flex-col items-center gap-6">
+            <motion.div 
+              className="relative"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+              <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-2xl shadow-[#0088cc]/50">
+                <img src={apolloLogo} alt="Apollo" className="w-full h-full object-cover" />
+              </div>
+              <motion.div 
+                className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-[#0088cc]/30 to-purple-500/20 blur-2xl"
+                animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+            </motion.div>
+            
+            <motion.div 
+              className="text-center"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+            >
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-[#0088cc] to-purple-400 bg-clip-text text-transparent">
+                Apollo Bot Manager
+              </h1>
+              <p className="text-slate-400 text-sm mt-2">Telegram Automation</p>
+            </motion.div>
+            
+            <motion.div 
+              className="flex items-center gap-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              <div className="w-2 h-2 rounded-full bg-[#0088cc] animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-2 h-2 rounded-full bg-[#0088cc] animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-2 h-2 rounded-full bg-[#0088cc] animate-bounce" style={{ animationDelay: '300ms' }} />
+            </motion.div>
           </div>
-          <p className="text-muted-foreground text-sm font-medium">Загрузка...</p>
-        </div>
-      </div>
+        </motion.div>
+      </AnimatePresence>
     );
   }
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <motion.div 
+        className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         {/* Animated background */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 w-72 h-72 bg-[#0088cc]/20 rounded-full blur-3xl animate-pulse" />
@@ -319,19 +377,9 @@ const Dashboard = () => {
         <header className="sticky top-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-2xl">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="relative group cursor-help">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0088cc] to-[#00a8e8] flex items-center justify-center shadow-xl shadow-[#0088cc]/30 transition-all duration-300 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-[#0088cc]/50">
-                      <Bot className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-[#0088cc]/30 to-[#00a8e8]/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="bg-slate-800 border-slate-700 text-white">
-                  <p>Панель управления Telegram ботом</p>
-                </TooltipContent>
-              </Tooltip>
+              <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-xl shadow-[#0088cc]/30 transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:shadow-[#0088cc]/50">
+                <img src={apolloLogo} alt="Apollo" className="w-full h-full object-cover" />
+              </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-white via-white to-[#0088cc] bg-clip-text text-transparent">
                   Apollo Bot Manager
@@ -346,7 +394,7 @@ const Dashboard = () => {
             <div className="flex items-center gap-3">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 cursor-help">
                     <div className="relative">
                       <div className="w-2 h-2 rounded-full bg-emerald-400" />
                       <div className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-400 animate-ping opacity-75" />
@@ -354,7 +402,7 @@ const Dashboard = () => {
                     <span className="text-xs text-emerald-400 font-medium">Online</span>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent className="bg-slate-800 border-slate-700 text-white">
+                <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white">
                   <p>Бот активен и обрабатывает сообщения</p>
                 </TooltipContent>
               </Tooltip>
@@ -374,7 +422,12 @@ const Dashboard = () => {
 
       <main className="container mx-auto px-4 py-8 space-y-8 relative z-10">
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
           <Tooltip>
             <TooltipTrigger asChild>
               <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl hover:bg-slate-800/50 transition-all group overflow-hidden relative cursor-help">
@@ -392,7 +445,7 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </TooltipTrigger>
-            <TooltipContent className="bg-slate-800 border-slate-700 text-white max-w-xs">
+            <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white max-w-xs">
               <p>Заготовленные текстовые шаблоны, которые бот отправляет по команде /p_название</p>
             </TooltipContent>
           </Tooltip>
@@ -414,7 +467,7 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </TooltipTrigger>
-            <TooltipContent className="bg-slate-800 border-slate-700 text-white max-w-xs">
+            <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white max-w-xs">
               <p>Все сообщения, которые бот обработал в подключённых чатах</p>
             </TooltipContent>
           </Tooltip>
@@ -436,7 +489,7 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </TooltipTrigger>
-            <TooltipContent className="bg-slate-800 border-slate-700 text-white max-w-xs">
+            <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white max-w-xs">
               <p>Групповые чаты, в которых бот активирован и настроен</p>
             </TooltipContent>
           </Tooltip>
@@ -458,55 +511,95 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </TooltipTrigger>
-            <TooltipContent className="bg-slate-800 border-slate-700 text-white max-w-xs">
+            <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white max-w-xs">
               <p>Все данные зашифрованы и передаются по защищённому каналу</p>
             </TooltipContent>
           </Tooltip>
-        </div>
+        </motion.div>
 
         {/* Main Content with Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-slate-900/50 border border-white/5 p-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <TabsTrigger value="phrases" className="data-[state=active]:bg-[#0088cc] data-[state=active]:text-white">
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Быстрые фразы
-                </TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent className="bg-slate-800 border-slate-700 text-white">
-                <p>Создание шаблонных сообщений для быстрой отправки по команде</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <TabsTrigger value="chats" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Настройки чатов
-                </TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent className="bg-slate-800 border-slate-700 text-white">
-                <p>Включение/выключение функций бота для каждого чата</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <TabsTrigger value="history" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
-                  <History className="w-4 h-4 mr-2" />
-                  История
-                </TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent className="bg-slate-800 border-slate-700 text-white">
-                <p>Лента сообщений в реальном времени со всех чатов</p>
-              </TooltipContent>
-            </Tooltip>
-          </TabsList>
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="bg-slate-900/50 border border-white/5 p-1.5 gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger 
+                    value="phrases" 
+                    className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0088cc] data-[state=active]:to-[#00a8e8] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-[#0088cc]/30 transition-all duration-300"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Быстрые фразы
+                    {activeTab === "phrases" && (
+                      <motion.div
+                        className="absolute inset-0 rounded-md bg-gradient-to-r from-[#0088cc]/20 to-[#00a8e8]/20"
+                        layoutId="activeTab"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white">
+                  <p>Создание шаблонных сообщений для быстрой отправки по команде</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger 
+                    value="chats" 
+                    className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/30 transition-all duration-300"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Настройки чатов
+                    {activeTab === "chats" && (
+                      <motion.div
+                        className="absolute inset-0 rounded-md bg-gradient-to-r from-purple-500/20 to-pink-500/20"
+                        layoutId="activeTab"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white">
+                  <p>Включение/выключение функций бота для каждого чата</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger 
+                    value="history" 
+                    className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/30 transition-all duration-300"
+                  >
+                    <History className="w-4 h-4 mr-2" />
+                    История
+                    {activeTab === "history" && (
+                      <motion.div
+                        className="absolute inset-0 rounded-md bg-gradient-to-r from-emerald-500/20 to-teal-500/20"
+                        layoutId="activeTab"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white">
+                  <p>Лента сообщений в реальном времени со всех чатов</p>
+                </TooltipContent>
+              </Tooltip>
+            </TabsList>
 
-          {/* Phrases Tab */}
-          <TabsContent value="phrases" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Phrases Tab */}
+            <TabsContent value="phrases" className="space-y-6">
+              <motion.div 
+                className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
               {/* Add New Phrase */}
               <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl overflow-hidden relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
@@ -686,7 +779,7 @@ const Dashboard = () => {
                   )}
                 </CardContent>
               </Card>
-            </div>
+            </motion.div>
           </TabsContent>
 
           {/* Chat Settings Tab */}
@@ -874,25 +967,62 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
-
-        {/* Bot Commands Footer */}
-        <Card className="bg-gradient-to-r from-[#0088cc]/10 via-slate-900/50 to-[#00a8e8]/10 border-[#0088cc]/20 backdrop-blur-xl">
-          <CardContent className="py-4">
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <span className="text-sm text-slate-400">Команды:</span>
-              <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-3 py-1.5 rounded-lg border border-[#0088cc]/20">/start</code>
-              <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-3 py-1.5 rounded-lg border border-[#0088cc]/20">/summary</code>
-              <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-3 py-1.5 rounded-lg border border-[#0088cc]/20">/summary_all</code>
-              <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-3 py-1.5 rounded-lg border border-[#0088cc]/20">/p_команда</code>
-              <span className="flex items-center gap-1 text-xs text-slate-400">
-                <Globe className="w-3 h-3" /> RU ↔ EN авто
-              </span>
+          </Tabs>
+        </motion.div>
+        {/* Bot Commands in Header area - moved from footer */}
+        <motion.div 
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40"
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl px-4 py-2 shadow-2xl">
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-3 py-1.5 rounded-lg border border-[#0088cc]/20 cursor-help hover:bg-[#0088cc]/20 transition-colors">/start</code>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-slate-800 border-slate-700 text-white">
+                  <p>Запустить бота и показать приветствие</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <code className="text-xs font-mono text-[#0088cc] bg-[#0088cc]/10 px-3 py-1.5 rounded-lg border border-[#0088cc]/20 cursor-help hover:bg-[#0088cc]/20 transition-colors">/summary</code>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-slate-800 border-slate-700 text-white">
+                  <p>Получить саммари чата за 24 часа</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <code className="text-xs font-mono text-purple-400 bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-500/20 cursor-help hover:bg-purple-500/20 transition-colors">/summary_all</code>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-slate-800 border-slate-700 text-white">
+                  <p>Полный отчёт за всё время</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <code className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 cursor-help hover:bg-emerald-500/20 transition-colors">/p_...</code>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-slate-800 border-slate-700 text-white">
+                  <p>Быстрые фразы: /p_название</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <div className="flex items-center gap-1 text-xs text-slate-400 px-2">
+                <Globe className="w-3 h-3" />
+                <span>RU↔EN</span>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </motion.div>
       </main>
-    </div>
+    </motion.div>
     </TooltipProvider>
   );
 };
