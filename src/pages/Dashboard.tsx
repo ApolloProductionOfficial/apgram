@@ -311,7 +311,7 @@ const Dashboard = () => {
     return (
       <AnimatePresence>
         <motion.div 
-          className="fixed inset-0 z-[9999] bg-background flex flex-col items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[9999] bg-[#030305] flex flex-col items-center justify-center overflow-hidden"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
@@ -320,7 +320,7 @@ const Dashboard = () => {
           <motion.div
             className="absolute inset-0 overflow-hidden"
             initial={{ scale: 1.2, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.4 }}
+            animate={{ scale: 1, opacity: 0.3 }}
             transition={{ duration: 2, ease: [0.16, 1, 0.3, 1] }}
           >
             <video
@@ -333,15 +333,15 @@ const Dashboard = () => {
               <source src={backgroundVideo} type="video/mp4" />
             </video>
             {/* Dark overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#030305] via-[#030305]/90 to-[#030305]" />
           </motion.div>
           
           {/* Animated particles */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {[...Array(25)].map((_, i) => (
+            {[...Array(30)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-1 h-1 bg-primary/50 rounded-full"
+                className="absolute w-1 h-1 bg-primary/60 rounded-full"
                 style={{
                   left: `${Math.random() * 100}%`,
                   top: `${Math.random() * 100}%`,
@@ -363,61 +363,100 @@ const Dashboard = () => {
           
           {/* Central glow */}
           <motion.div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-primary/20 blur-[100px]"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/15 blur-[120px]"
             initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: [0, 1.3, 1], opacity: [0, 0.6, 0.4] }}
+            animate={{ scale: [0, 1.3, 1], opacity: [0, 0.5, 0.3] }}
             transition={{ duration: 2.5, ease: "easeOut" }}
           />
+
+          {/* Logo with rotating rings */}
+          <motion.div
+            className="relative z-10 mb-8"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
+          >
+            {/* Outer glow */}
+            <motion.div 
+              className="absolute -inset-4 rounded-full bg-primary/20 blur-xl"
+              animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            />
+            {/* Rotating ring 1 */}
+            <motion.div 
+              className="absolute -inset-3 rounded-full border-2 border-primary/40"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            />
+            {/* Rotating ring 2 */}
+            <motion.div 
+              className="absolute -inset-5 rounded-full border border-primary/20"
+              animate={{ rotate: -360 }}
+              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            />
+            {/* Logo container - scale-125 to fill circle edge-to-edge */}
+            <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden ring-2 ring-primary/50 shadow-[0_0_40px_rgba(6,182,228,0.4)]">
+              <video
+                src={apolloLogoVideo}
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="auto"
+                className="w-full h-full object-cover scale-125"
+              />
+            </div>
+          </motion.div>
 
           {/* Text content */}
           <motion.div
             className="relative z-10 text-center px-4"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+            transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
           >
             {/* Decorative line top */}
             <motion.div
-              className="w-20 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mb-8"
+              className="w-24 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mb-6"
               initial={{ scaleX: 0, opacity: 0 }}
               animate={{ scaleX: 1, opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
+              transition={{ delay: 0.7, duration: 0.6 }}
             />
             
             <motion.p
-              className="text-sm sm:text-base text-primary/80 mb-4 tracking-[0.3em] uppercase font-medium"
+              className="text-xs sm:text-sm text-primary/70 mb-3 tracking-[0.4em] uppercase font-medium"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
             >
               Apollo Production
             </motion.p>
             
             <motion.p
-              className="text-sm text-muted-foreground/70 mb-10 italic"
+              className="text-xs text-muted-foreground/50 mb-8 italic font-light"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.5 }}
+              transition={{ delay: 0.8, duration: 0.5 }}
             >
               представляет
             </motion.p>
             
-            {/* Logo letter by letter */}
-            <div className="relative mb-6">
+            {/* APOLLO BOT MANAGER - letter by letter */}
+            <div className="relative mb-4">
               <motion.div
-                className="absolute inset-0 blur-3xl bg-primary/50 rounded-full"
+                className="absolute inset-0 blur-3xl bg-primary/40 rounded-full"
                 initial={{ x: "-100%", opacity: 0 }}
-                animate={{ x: "100%", opacity: [0, 0.8, 0] }}
-                transition={{ delay: 0.8, duration: 2, ease: "easeInOut" }}
+                animate={{ x: "100%", opacity: [0, 0.6, 0] }}
+                transition={{ delay: 1, duration: 2, ease: "easeInOut" }}
               />
-              <h1 className="text-6xl sm:text-8xl font-bold relative z-10 flex justify-center">
-                {"Apollo".split("").map((letter, index) => (
+              <h1 className="text-4xl sm:text-6xl md:text-7xl font-black relative z-10 flex flex-wrap justify-center tracking-tight">
+                {"APOLLO".split("").map((letter, index) => (
                   <motion.span
                     key={index}
                     className="inline-block relative bg-gradient-to-r from-primary via-foreground to-primary bg-clip-text text-transparent bg-[length:200%_auto]"
                     initial={{ 
                       opacity: 0, 
-                      x: -30,
+                      x: -20,
                       filter: "blur(8px)",
                     }}
                     animate={{ 
@@ -427,10 +466,10 @@ const Dashboard = () => {
                       backgroundPosition: ["200% 0", "-200% 0"],
                     }}
                     transition={{ 
-                      opacity: { delay: 0.8 + index * 0.15, duration: 0.5 },
-                      x: { delay: 0.8 + index * 0.15, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
-                      filter: { delay: 0.8 + index * 0.15, duration: 0.5 },
-                      backgroundPosition: { delay: 1.5, duration: 3, repeat: Infinity, ease: "linear" },
+                      opacity: { delay: 1 + index * 0.1, duration: 0.4 },
+                      x: { delay: 1 + index * 0.1, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+                      filter: { delay: 1 + index * 0.1, duration: 0.4 },
+                      backgroundPosition: { delay: 2, duration: 4, repeat: Infinity, ease: "linear" },
                     }}
                   >
                     {letter}
@@ -439,36 +478,37 @@ const Dashboard = () => {
               </h1>
             </div>
             
+            {/* BOT MANAGER subtitle */}
             <motion.p
-              className="text-xl sm:text-2xl text-foreground/80 font-light tracking-wide"
+              className="text-xl sm:text-2xl md:text-3xl text-foreground/90 font-semibold tracking-widest"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.1, duration: 0.5 }}
+              transition={{ delay: 1.6, duration: 0.5 }}
             >
-              Bot Manager
+              BOT MANAGER
             </motion.p>
 
             {/* Decorative line bottom */}
             <motion.div
-              className="w-20 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mt-8"
+              className="w-24 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mt-6"
               initial={{ scaleX: 0, opacity: 0 }}
               animate={{ scaleX: 1, opacity: 1 }}
-              transition={{ delay: 1.3, duration: 0.6 }}
+              transition={{ delay: 1.8, duration: 0.6 }}
             />
           </motion.div>
 
           {/* Loading bar */}
           <motion.div
-            className="absolute bottom-16 w-48 h-1 bg-muted/20 rounded-full overflow-hidden"
+            className="absolute bottom-12 w-56 h-1 bg-muted/10 rounded-full overflow-hidden"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.5, duration: 0.3 }}
+            transition={{ delay: 2, duration: 0.3 }}
           >
             <motion.div
               className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full"
               initial={{ width: "0%" }}
               animate={{ width: "100%" }}
-              transition={{ delay: 1.5, duration: 1.5, ease: "easeInOut" }}
+              transition={{ delay: 2, duration: 1.5, ease: "easeInOut" }}
             />
           </motion.div>
         </motion.div>
@@ -506,7 +546,7 @@ const Dashboard = () => {
                   animate={{ rotate: 360 }}
                   transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 />
-                {/* Logo container */}
+                {/* Logo container - scale-125 to fill circle edge-to-edge */}
                 <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden ring-2 ring-primary/40 shadow-lg shadow-primary/30 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:shadow-primary/50">
                   <video
                     src={apolloLogoVideo}
@@ -515,7 +555,7 @@ const Dashboard = () => {
                     muted
                     playsInline
                     preload="auto"
-                    className="w-full h-full object-cover scale-110"
+                    className="w-full h-full object-cover scale-125"
                   />
                 </div>
               </div>
