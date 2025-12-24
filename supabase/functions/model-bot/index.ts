@@ -443,53 +443,58 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       break;
       
     case 'multi_select':
-      // Multi-select with checkboxes
+      // Multi-select with checkboxes - ALL options in 2 columns, no pagination
       const multiOptions = question.options || [];
       const currentPrefs = application.content_preferences || [];
       
-      // Paginate if more than 8 options
-      const pageSize = 8;
-      const totalPages = Math.ceil(multiOptions.length / pageSize);
-      
-      if (totalPages > 1) {
-        // First page
-        const page1Options = multiOptions.slice(0, pageSize);
-        const multiButtons = page1Options.map((opt: any) => {
-          const isSelected = currentPrefs.includes(opt.id);
-          return [{ 
-            text: `${isSelected ? '✅' : '⬜'} ${opt.emoji || ''} ${opt.name}`, 
-            callback_data: `app_multi_${step}_${opt.id}` 
-          }];
+      // Build buttons in 2 columns
+      const multiButtons: any[][] = [];
+      for (let i = 0; i < multiOptions.length; i += 2) {
+        const row = [];
+        const opt1 = multiOptions[i];
+        const isSelected1 = currentPrefs.includes(opt1.id);
+        row.push({ 
+          text: `${isSelected1 ? '✅' : '⬜'} ${opt1.emoji || ''} ${opt1.name}`.substring(0, 32), 
+          callback_data: `app_ms_${step}_${opt1.id}` 
         });
-        multiButtons.push([{ text: `➡️ Далее (стр. 2/${totalPages})`, callback_data: `app_multi_page_${step}_2` }]);
-        multiButtons.push([{ text: '✅ Готово', callback_data: `app_multi_done_${step}` }]);
-        if (backButtonData) multiButtons.push([backButtonData]);
         
-        await sendMessageWithButtons(chatId, questionText + '\n\n<b>Страница 1/' + totalPages + '</b>', multiButtons);
-      } else {
-        const multiButtons = multiOptions.map((opt: any) => {
-          const isSelected = currentPrefs.includes(opt.id);
-          return [{ 
-            text: `${isSelected ? '✅' : '⬜'} ${opt.emoji || ''} ${opt.name}`, 
-            callback_data: `app_multi_${step}_${opt.id}` 
-          }];
-        });
-        multiButtons.push([{ text: '✅ Готово', callback_data: `app_multi_done_${step}` }]);
-        if (backButtonData) multiButtons.push([backButtonData]);
-        
-        await sendMessageWithButtons(chatId, questionText, multiButtons);
+        if (multiOptions[i + 1]) {
+          const opt2 = multiOptions[i + 1];
+          const isSelected2 = currentPrefs.includes(opt2.id);
+          row.push({ 
+            text: `${isSelected2 ? '✅' : '⬜'} ${opt2.emoji || ''} ${opt2.name}`.substring(0, 32), 
+            callback_data: `app_ms_${step}_${opt2.id}` 
+          });
+        }
+        multiButtons.push(row);
       }
+      
+      multiButtons.push([{ text: '✅ Готово', callback_data: `app_ms_done_${step}` }]);
+      if (backButtonData) multiButtons.push([backButtonData]);
+      
+      await sendMessageWithButtons(chatId, questionText, multiButtons);
       break;
       
     case 'photos':
-      const photoButtons = [
-        [{ text: '✅ Готово — у меня все фото', callback_data: 'app_photos_done' }],
-        [{ text: '⏭️ Пропустить фото', callback_data: 'app_photos_skip' }]
-      ];
+      // No skip button - require minimum 5 photos
+      const currentPhotoCount = application.portfolio_photos?.length || 0;
+      const minPhotos = 5;
+      const photoButtons: any[][] = [];
+      
+      if (currentPhotoCount >= minPhotos) {
+        photoButtons.push([{ text: `✅ Готово (${currentPhotoCount} фото)`, callback_data: 'app_photos_done' }]);
+      }
       if (backButtonData) photoButtons.push([backButtonData]);
       
-      await sendMessage(chatId, questionText + '\n\n📷 <b>Отправляйте фото по одному.</b> Когда закончите — нажмите кнопку ниже:');
-      await sendMessageWithButtons(chatId, '👇 Отправьте фото или нажмите, когда закончите:', photoButtons);
+      const remainingPhotos = minPhotos - currentPhotoCount;
+      const photoText = remainingPhotos > 0 
+        ? `📷 <b>Обязательно загрузите минимум ${minPhotos} фото!</b>\nОсталось: ${remainingPhotos} фото\n\nОтправляйте по одному.`
+        : `📷 Загружено ${currentPhotoCount} фото. Можете отправить ещё (максимум 10) или нажать "Готово".`;
+      
+      await sendMessage(chatId, questionText + '\n\n' + photoText);
+      if (photoButtons.length > 0) {
+        await sendMessageWithButtons(chatId, '👇 Управление:', photoButtons);
+      }
       break;
       
     default:
@@ -699,60 +704,14 @@ async function handleApplicationCallback(callbackQuery: any) {
     return;
   }
   
-  // Handle multi-select toggles (app_multi_{step}_{optionId})
-  const multiMatch = data.match(/^app_multi_([^_]+)_(.+)$/);
-  if (multiMatch) {
-    const step = multiMatch[1];
-    const optionId = multiMatch[2];
+  // Handle new multi-select toggles (app_ms_{step}_{optionId}) - supports step with underscores
+  const msMatch = data.match(/^app_ms_(.+)_([a-z0-9_]+)$/i);
+  if (msMatch) {
+    const fullData = data.replace('app_ms_', '');
     
-    // Handle page navigation
-    if (optionId.startsWith('page_')) {
-      const pageMatch = optionId.match(/page_([^_]+)_(\d+)/);
-      if (pageMatch) {
-        const pageStep = pageMatch[1];
-        const pageNum = parseInt(pageMatch[2]);
-        
-        const question = await getQuestionByStep(pageStep);
-        if (question && question.options) {
-          const pageSize = 8;
-          const totalPages = Math.ceil(question.options.length / pageSize);
-          const startIndex = (pageNum - 1) * pageSize;
-          const pageOptions = question.options.slice(startIndex, startIndex + pageSize);
-          const currentPrefs = application.content_preferences || [];
-          
-          const buttons = pageOptions.map((opt: any) => {
-            const isSelected = currentPrefs.includes(opt.id);
-            return [{ 
-              text: `${isSelected ? '✅' : '⬜'} ${opt.emoji || ''} ${opt.name}`, 
-              callback_data: `app_multi_${pageStep}_${opt.id}` 
-            }];
-          });
-          
-          // Navigation buttons
-          const navButtons = [];
-          if (pageNum > 1) {
-            navButtons.push({ text: `⬅️ Стр. ${pageNum - 1}`, callback_data: `app_multi_page_${pageStep}_${pageNum - 1}` });
-          }
-          if (pageNum < totalPages) {
-            navButtons.push({ text: `Стр. ${pageNum + 1} ➡️`, callback_data: `app_multi_page_${pageStep}_${pageNum + 1}` });
-          }
-          if (navButtons.length > 0) {
-            buttons.push(navButtons);
-          }
-          buttons.push([{ text: '✅ Готово', callback_data: `app_multi_done_${pageStep}` }]);
-          
-          await editMessage(chatId, messageId, 
-            `📋 ${question.question}\n\n<b>Страница ${pageNum}/${totalPages}</b>`,
-            buttons
-          );
-        }
-      }
-      return;
-    }
-    
-    // Handle "done" for multi-select
-    if (optionId.startsWith('done_')) {
-      const doneStep = optionId.replace('done_', '');
+    // Check if it's a "done" command
+    if (fullData.startsWith('done_')) {
+      const doneStep = fullData.replace('done_', '');
       const nextStep = await getNextStep(doneStep);
       
       if (nextStep) {
@@ -766,6 +725,11 @@ async function handleApplicationCallback(callbackQuery: any) {
       return;
     }
     
+    // Parse step and optionId - optionId is the last underscore-separated part
+    const parts = fullData.split('_');
+    const optionId = parts.pop()!;
+    const step = parts.join('_');
+    
     // Toggle option selection
     const currentPrefs = application.content_preferences || [];
     let newPrefs;
@@ -778,48 +742,53 @@ async function handleApplicationCallback(callbackQuery: any) {
     await updateApplication(application.id, { content_preferences: newPrefs });
     application.content_preferences = newPrefs;
     
-    // Refresh the multi-select message
+    // Refresh the multi-select message with all options in 2 columns
     const question = await getQuestionByStep(step);
     if (question && question.options) {
       const multiOptions = question.options;
-      const pageSize = 8;
+      const prevStep = await getPreviousStep(step);
+      const backBtn = prevStep ? { text: '◀️ Назад', callback_data: `app_back_${prevStep}` } : null;
       
-      // Find which page the option is on
-      const optIndex = multiOptions.findIndex((o: any) => o.id === optionId);
-      const currentPage = Math.floor(optIndex / pageSize) + 1;
-      const totalPages = Math.ceil(multiOptions.length / pageSize);
-      const startIndex = (currentPage - 1) * pageSize;
-      const pageOptions = multiOptions.slice(startIndex, startIndex + pageSize);
-      
-      const buttons = pageOptions.map((opt: any) => {
-        const isSelected = newPrefs.includes(opt.id);
-        return [{ 
-          text: `${isSelected ? '✅' : '⬜'} ${opt.emoji || ''} ${opt.name}`, 
-          callback_data: `app_multi_${step}_${opt.id}` 
-        }];
-      });
-      
-      // Navigation buttons
-      const navButtons = [];
-      if (currentPage > 1) {
-        navButtons.push({ text: `⬅️ Стр. ${currentPage - 1}`, callback_data: `app_multi_page_${step}_${currentPage - 1}` });
+      const buttons: any[][] = [];
+      for (let i = 0; i < multiOptions.length; i += 2) {
+        const row = [];
+        const opt1 = multiOptions[i];
+        const isSelected1 = newPrefs.includes(opt1.id);
+        row.push({ 
+          text: `${isSelected1 ? '✅' : '⬜'} ${opt1.emoji || ''} ${opt1.name}`.substring(0, 32), 
+          callback_data: `app_ms_${step}_${opt1.id}` 
+        });
+        
+        if (multiOptions[i + 1]) {
+          const opt2 = multiOptions[i + 1];
+          const isSelected2 = newPrefs.includes(opt2.id);
+          row.push({ 
+            text: `${isSelected2 ? '✅' : '⬜'} ${opt2.emoji || ''} ${opt2.name}`.substring(0, 32), 
+            callback_data: `app_ms_${step}_${opt2.id}` 
+          });
+        }
+        buttons.push(row);
       }
-      if (currentPage < totalPages) {
-        navButtons.push({ text: `Стр. ${currentPage + 1} ➡️`, callback_data: `app_multi_page_${step}_${currentPage + 1}` });
-      }
-      if (navButtons.length > 0) {
-        buttons.push(navButtons);
-      }
-      buttons.push([{ text: '✅ Готово', callback_data: `app_multi_done_${step}` }]);
       
-      const pageInfo = totalPages > 1 ? `\n\n<b>Страница ${currentPage}/${totalPages}</b>` : '';
-      await editMessage(chatId, messageId, question.question + pageInfo, buttons);
+      buttons.push([{ text: '✅ Готово', callback_data: `app_ms_done_${step}` }]);
+      if (backBtn) buttons.push([backBtn]);
+      
+      await editMessage(chatId, messageId, question.question, buttons);
     }
     return;
   }
   
-  // Handle photos done/skip
-  if (data === 'app_photos_done' || data === 'app_photos_skip') {
+  // Handle photos done (no skip allowed anymore)
+  if (data === 'app_photos_done') {
+    // Check if minimum photos are uploaded
+    const currentPhotos = application.portfolio_photos || [];
+    const minPhotos = 5;
+    
+    if (currentPhotos.length < minPhotos) {
+      await answerCallbackQuery(callbackQuery.id, `❌ Нужно минимум ${minPhotos} фото! Загружено: ${currentPhotos.length}`);
+      return;
+    }
+    
     const nextStep = await getNextStep('portfolio_photos');
     if (nextStep) {
       await updateApplication(application.id, { step: nextStep });
@@ -864,12 +833,19 @@ async function handlePhotoMessage(message: any): Promise<boolean> {
     const newPhotos = [...currentPhotos, photoUrl];
     await updateApplication(application.id, { portfolio_photos: newPhotos });
     
-    await sendMessageWithButtons(chatId, 
-      `✅ Фото ${newPhotos.length} загружено!\n\nОтправьте ещё фото или нажмите "Готово":`,
-      [[{ text: '✅ Готово — у меня все фото', callback_data: 'app_photos_done' }]]
-    );
+    const minPhotos = 5;
+    const remaining = minPhotos - newPhotos.length;
+    
+    if (remaining > 0) {
+      await sendMessage(chatId, `✅ Фото ${newPhotos.length} загружено!\n\n📷 Осталось загрузить: ${remaining} фото`);
+    } else {
+      await sendMessageWithButtons(chatId, 
+        `✅ Фото ${newPhotos.length} загружено! (мин. ${minPhotos} ✓)\n\nМожете отправить ещё (макс. 10) или нажмите "Готово":`,
+        [[{ text: `✅ Готово (${newPhotos.length} фото)`, callback_data: 'app_photos_done' }]]
+      );
+    }
   } else {
-    await sendMessage(chatId, '❌ Ошибка загрузки. Попробуйте ещё раз или пропустите этот шаг.');
+    await sendMessage(chatId, '❌ Ошибка загрузки. Попробуйте ещё раз.');
   }
   
   return true;
