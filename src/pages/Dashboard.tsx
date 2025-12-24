@@ -143,6 +143,7 @@ interface ModelApplication {
   about_yourself: string | null;
   portfolio_photos: string[] | null;
   status: string;
+  step: string;
   created_at: string;
   completed_at: string | null;
 }
@@ -433,6 +434,31 @@ const Dashboard = () => {
       if (selectedApplication?.id === id) {
         setSelectedApplication(prev => prev ? { ...prev, status: newStatus } : null);
       }
+    }
+  };
+
+  const sendReminder = async (app: ModelApplication) => {
+    if (!app.chat_id) {
+      toast.error("Не найден chat_id для отправки напоминания");
+      return;
+    }
+    
+    try {
+      const reminderText = `👋 <b>Привет!</b>\n\nМы заметили, что вы не завершили заполнение анкеты.\n\n📝 Ваш прогресс сохранён — вы можете продолжить с того места, где остановились!\n\n💜 Заполните анкету до конца, чтобы мы могли рассмотреть вашу заявку.`;
+      
+      const { error } = await supabase.functions.invoke('send-model-message', {
+        body: {
+          chat_id: app.chat_id,
+          text: reminderText,
+          inline_keyboard: [[{ text: '📝 Продолжить заполнение', callback_data: 'app_start' }]]
+        }
+      });
+      
+      if (error) throw error;
+      toast.success("Напоминание отправлено!");
+    } catch (error) {
+      console.error('Reminder error:', error);
+      toast.error("Ошибка отправки напоминания");
     }
   };
 
@@ -1553,6 +1579,7 @@ const Dashboard = () => {
                                       app.status === 'pending' ? 'border-yellow-500/50 text-yellow-400' :
                                       app.status === 'approved' ? 'border-emerald-500/50 text-emerald-400' :
                                       app.status === 'rejected' ? 'border-red-500/50 text-red-400' :
+                                      app.status === 'in_progress' ? 'border-blue-500/50 text-blue-400' :
                                       'border-slate-500/50 text-slate-400'
                                     }
                                   >
@@ -1561,11 +1588,28 @@ const Dashboard = () => {
                                      app.status === 'rejected' ? '❌ Отклонена' :
                                      app.status === 'in_progress' ? '📝 Заполняется' : app.status}
                                   </Badge>
+                                  {app.status === 'in_progress' && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 px-2 text-xs text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        sendReminder(app);
+                                      }}
+                                    >
+                                      <Bell className="w-3 h-3 mr-1" />
+                                      Напомнить
+                                    </Button>
+                                  )}
                                   <Eye className="w-4 h-4 text-slate-500" />
                                 </div>
                               </div>
+                              {app.status === 'in_progress' && app.step && (
+                                <p className="text-xs text-blue-400 mt-2">📋 Текущий шаг: {app.step}</p>
+                              )}
                               {app.desired_income && (
-                                <p className="text-xs text-slate-400 mt-2">💰 Желаемый доход: {app.desired_income}</p>
+                                <p className="text-xs text-slate-400 mt-1">💰 Желаемый доход: {app.desired_income}</p>
                               )}
                             </div>
                           ))}
