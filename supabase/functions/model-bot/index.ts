@@ -390,8 +390,8 @@ async function sendApplicationQuestion(chatId: number, step: string, application
   const header = `📋 <b>Шаг ${questionNum}/${totalQuestions}</b>\n\n`;
   const questionText = header + question.question + (question.description ? `\n\n<i>${question.description}</i>` : '');
   
-  // Back button (only if not first question)
-  const backButton = prevStep ? [{ text: '⬅️ Назад', callback_data: `app_back_${prevStep}` }] : null;
+  // Back button (only if not first question) - smaller text
+  const backButton = prevStep ? [{ text: '◀️', callback_data: `app_back_${prevStep}` }] : null;
   
   switch (question.question_type) {
     case 'text':
@@ -403,13 +403,18 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       break;
       
     case 'buttons':
-      // Parse options from question
+      // Parse options from question - arrange in pairs (2 per row)
       const options = question.options || [];
-      const buttons = options.map((opt: string) => {
-        // Create callback data from option text
-        const callbackData = `app_${step}_${options.indexOf(opt)}`;
-        return [{ text: opt, callback_data: callbackData }];
-      });
+      const buttons: any[][] = [];
+      
+      for (let i = 0; i < options.length; i += 2) {
+        const row = [];
+        row.push({ text: options[i], callback_data: `app_${step}_${i}` });
+        if (options[i + 1]) {
+          row.push({ text: options[i + 1], callback_data: `app_${step}_${i + 1}` });
+        }
+        buttons.push(row);
+      }
       
       // Add "Other" option for country
       if (step === 'country') {
