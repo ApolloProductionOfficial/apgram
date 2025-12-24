@@ -108,11 +108,11 @@ const Dashboard = () => {
     }
   }, [user, isLoading, navigate]);
 
-  // Splash screen timeout
+  // Splash screen timeout - longer like APLink (5 seconds)
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 2000);
+    }, 5000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -394,7 +394,7 @@ const Dashboard = () => {
               animate={{ rotate: -360 }}
               transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
             />
-            {/* Logo container - scale-125 to fill circle edge-to-edge */}
+            {/* Logo container - scale-150 to fill circle edge-to-edge completely */}
             <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden ring-2 ring-primary/50 shadow-[0_0_40px_rgba(6,182,228,0.4)]">
               <video
                 src={apolloLogoVideo}
@@ -403,7 +403,7 @@ const Dashboard = () => {
                 muted
                 playsInline
                 preload="auto"
-                className="w-full h-full object-cover scale-125"
+                className="w-full h-full object-cover scale-150"
               />
             </div>
           </motion.div>
@@ -497,7 +497,7 @@ const Dashboard = () => {
             />
           </motion.div>
 
-          {/* Loading bar */}
+          {/* Loading bar - longer animation for 5 second splash */}
           <motion.div
             className="absolute bottom-12 w-56 h-1 bg-muted/10 rounded-full overflow-hidden"
             initial={{ opacity: 0, y: 10 }}
@@ -508,7 +508,7 @@ const Dashboard = () => {
               className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full"
               initial={{ width: "0%" }}
               animate={{ width: "100%" }}
-              transition={{ delay: 2, duration: 1.5, ease: "easeInOut" }}
+              transition={{ delay: 2, duration: 2.8, ease: "easeInOut" }}
             />
           </motion.div>
         </motion.div>
@@ -520,20 +520,19 @@ const Dashboard = () => {
     <TooltipProvider delayDuration={200}>
       <CustomCursor />
       <motion.div 
-        className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
+        className="min-h-screen bg-[#030305]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Animated background */}
+        {/* Animated background - dark subtle, no center glow */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-[#0088cc]/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#0088cc]/5 rounded-full blur-3xl" />
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
         </div>
 
-        {/* Header - APLink Style */}
-        <header className="sticky top-0 z-50 bg-gradient-to-r from-card/95 via-card/98 to-card/95 backdrop-blur-xl border-b border-primary/20 shadow-lg shadow-primary/5">
+        {/* Header - APLink Style - slightly lighter than background */}
+        <header className="sticky top-0 z-50 bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-primary/20 shadow-lg shadow-primary/5">
           <div className="container mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Logo with glow ring - APLink style */}
@@ -546,7 +545,7 @@ const Dashboard = () => {
                   animate={{ rotate: 360 }}
                   transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 />
-                {/* Logo container - scale-125 to fill circle edge-to-edge */}
+                {/* Logo container - scale-150 to fill circle edge-to-edge */}
                 <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden ring-2 ring-primary/40 shadow-lg shadow-primary/30 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:shadow-primary/50">
                   <video
                     src={apolloLogoVideo}
@@ -555,7 +554,7 @@ const Dashboard = () => {
                     muted
                     playsInline
                     preload="auto"
-                    className="w-full h-full object-cover scale-125"
+                    className="w-full h-full object-cover scale-150"
                   />
                 </div>
               </div>
