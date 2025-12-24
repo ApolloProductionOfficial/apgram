@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -8,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Edit3, Save, ChevronUp, ChevronDown, Plus, Trash2, RefreshCw, 
-  MessageSquare, ListChecks, Image, Type, GripVertical, X
+  MessageSquare, ListChecks, Image, Type, GripVertical, X, Info
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -27,6 +28,7 @@ interface Question {
   question_type: string | null;
   options: any;
   is_active: boolean;
+  description: string | null;
 }
 
 const QUESTION_TYPES = [
@@ -41,6 +43,7 @@ export function QuestionsEditor() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingDescId, setEditingDescId] = useState<string | null>(null);
   const [editingOptionsId, setEditingOptionsId] = useState<string | null>(null);
   const [newOption, setNewOption] = useState("");
 
@@ -74,7 +77,8 @@ export function QuestionsEditor() {
             question_order: q.question_order,
             question_type: q.question_type,
             options: q.options,
-            is_active: q.is_active
+            is_active: q.is_active,
+            description: q.description
           })
           .eq("id", q.id);
       }
@@ -257,12 +261,12 @@ export function QuestionsEditor() {
                     {/* Question text */}
                     {editingId === q.id ? (
                       <div className="flex gap-2">
-                        <Input
+                        <Textarea
                           defaultValue={q.question}
-                          className="bg-slate-800/50 border-pink-500/30"
+                          className="bg-slate-800/50 border-pink-500/30 min-h-[60px]"
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              updateQuestion(q.id, 'question', (e.target as HTMLInputElement).value);
+                            if (e.key === 'Enter' && e.ctrlKey) {
+                              updateQuestion(q.id, 'question', (e.target as HTMLTextAreaElement).value);
                               setEditingId(null);
                             }
                             if (e.key === 'Escape') {
@@ -274,8 +278,8 @@ export function QuestionsEditor() {
                         <Button
                           size="sm"
                           onClick={(e) => {
-                            const input = (e.currentTarget.parentElement?.firstChild as HTMLInputElement);
-                            updateQuestion(q.id, 'question', input.value);
+                            const textarea = (e.currentTarget.parentElement?.firstChild as HTMLTextAreaElement);
+                            updateQuestion(q.id, 'question', textarea.value);
                             setEditingId(null);
                           }}
                         >
@@ -300,6 +304,35 @@ export function QuestionsEditor() {
                         </Button>
                       </div>
                     )}
+
+                    {/* Description / Hint */}
+                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Info className="w-4 h-4 text-amber-400" />
+                        <span className="text-xs text-amber-400 font-medium">Подсказка для пользователя:</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 ml-auto"
+                          onClick={() => setEditingDescId(editingDescId === q.id ? null : q.id)}
+                        >
+                          <Edit3 className="w-3 h-3 mr-1" />
+                          {editingDescId === q.id ? 'Закрыть' : 'Редактировать'}
+                        </Button>
+                      </div>
+                      {editingDescId === q.id ? (
+                        <Textarea
+                          value={q.description || ''}
+                          onChange={(e) => updateQuestion(q.id, 'description', e.target.value)}
+                          placeholder="Введите подсказку или дополнительную информацию..."
+                          className="bg-slate-800/50 border-amber-500/30 text-sm min-h-[60px]"
+                        />
+                      ) : (
+                        <p className="text-xs text-slate-400">
+                          {q.description || 'Нет подсказки. Нажмите "Редактировать" чтобы добавить.'}
+                        </p>
+                      )}
+                    </div>
 
                     {/* Type and Active toggle */}
                     <div className="flex items-center gap-3 flex-wrap">
