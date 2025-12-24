@@ -183,7 +183,7 @@ async function sendMessage(chatId: number, text: string, replyToMessageId?: numb
 }
 
 // Отправка видео
-async function sendVideo(chatId: number, videoUrl: string, caption?: string) {
+async function sendVideo(chatId: number, videoUrl: string, caption?: string, buttons?: any[][]) {
   const url = `https://api.telegram.org/bot${MODEL_BOT_TOKEN}/sendVideo`;
   
   const body: any = {
@@ -193,6 +193,10 @@ async function sendVideo(chatId: number, videoUrl: string, caption?: string) {
     parse_mode: 'HTML',
   };
   
+  if (buttons) {
+    body.reply_markup = { inline_keyboard: buttons };
+  }
+  
   await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -201,7 +205,7 @@ async function sendVideo(chatId: number, videoUrl: string, caption?: string) {
 }
 
 // Отправка GIF/анимации
-async function sendAnimation(chatId: number, animationUrl: string, caption?: string) {
+async function sendAnimation(chatId: number, animationUrl: string, caption?: string, buttons?: any[][]) {
   const url = `https://api.telegram.org/bot${MODEL_BOT_TOKEN}/sendAnimation`;
   
   const body: any = {
@@ -211,6 +215,10 @@ async function sendAnimation(chatId: number, animationUrl: string, caption?: str
     parse_mode: 'HTML',
   };
   
+  if (buttons) {
+    body.reply_markup = { inline_keyboard: buttons };
+  }
+  
   await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -219,7 +227,7 @@ async function sendAnimation(chatId: number, animationUrl: string, caption?: str
 }
 
 // Отправка фото
-async function sendPhoto(chatId: number, photoUrl: string, caption?: string) {
+async function sendPhoto(chatId: number, photoUrl: string, caption?: string, buttons?: any[][]) {
   const url = `https://api.telegram.org/bot${MODEL_BOT_TOKEN}/sendPhoto`;
   
   const body: any = {
@@ -228,6 +236,10 @@ async function sendPhoto(chatId: number, photoUrl: string, caption?: string) {
     caption: caption,
     parse_mode: 'HTML',
   };
+  
+  if (buttons) {
+    body.reply_markup = { inline_keyboard: buttons };
+  }
   
   await fetch(url, {
     method: 'POST',
@@ -339,25 +351,23 @@ async function updateApplication(id: string, updates: any) {
 async function sendApplicationWelcome(chatId: number) {
   const settings = await getWelcomeSettings();
   
-  // Add button to the welcome message
+  // Add button to the welcome message (inline with media)
   const welcomeButton = [[{ text: '📝 Заполнить анкету', callback_data: 'app_start' }]];
   
   if (settings.welcome_media_url) {
     switch (settings.welcome_media_type) {
       case 'video':
-        await sendVideo(chatId, settings.welcome_media_url, settings.welcome_message);
+        await sendVideo(chatId, settings.welcome_media_url, settings.welcome_message, welcomeButton);
         break;
       case 'animation':
-        await sendAnimation(chatId, settings.welcome_media_url, settings.welcome_message);
+        await sendAnimation(chatId, settings.welcome_media_url, settings.welcome_message, welcomeButton);
         break;
       case 'photo':
-        await sendPhoto(chatId, settings.welcome_media_url, settings.welcome_message);
+        await sendPhoto(chatId, settings.welcome_media_url, settings.welcome_message, welcomeButton);
         break;
       default:
-        await sendVideo(chatId, settings.welcome_media_url, settings.welcome_message);
+        await sendVideo(chatId, settings.welcome_media_url, settings.welcome_message, welcomeButton);
     }
-    // Send button right after media
-    await sendMessageWithButtons(chatId, '👇', welcomeButton);
   } else {
     // Send welcome text with button
     await sendMessageWithButtons(chatId, settings.welcome_message, welcomeButton);
