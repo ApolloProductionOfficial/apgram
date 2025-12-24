@@ -216,6 +216,10 @@ const Dashboard = () => {
   // Send message dialog
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   
+  // Application editing state
+  const [isEditingApplication, setIsEditingApplication] = useState(false);
+  const [editedApplication, setEditedApplication] = useState<Partial<ModelApplication>>({});
+  
   // Filtered applications
   const filteredApplications = applications.filter(app => {
     const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
@@ -250,7 +254,7 @@ const Dashboard = () => {
       fetchBotSettings();
 
       // Realtime подписка на новые сообщения
-      const channel = supabase
+      const messagesChannel = supabase
         .channel('telegram-messages')
         .on(
           'postgres_changes',
@@ -261,8 +265,34 @@ const Dashboard = () => {
         )
         .subscribe();
 
+      // Realtime подписка на заявки моделей
+      const applicationsChannel = supabase
+        .channel('model-applications')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'telegram_model_applications' },
+          (payload) => {
+            console.log('Application realtime update:', payload);
+            if (payload.eventType === 'INSERT') {
+              setApplications(prev => [payload.new as ModelApplication, ...prev]);
+            } else if (payload.eventType === 'UPDATE') {
+              setApplications(prev => prev.map(app => 
+                app.id === (payload.new as ModelApplication).id ? payload.new as ModelApplication : app
+              ));
+              // Update selected application if it's the one being edited
+              if (selectedApplication?.id === (payload.new as ModelApplication).id) {
+                setSelectedApplication(payload.new as ModelApplication);
+              }
+            } else if (payload.eventType === 'DELETE') {
+              setApplications(prev => prev.filter(app => app.id !== (payload.old as any).id));
+            }
+          }
+        )
+        .subscribe();
+
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(messagesChannel);
+        supabase.removeChannel(applicationsChannel);
       };
     }
   }, [user]);
@@ -435,6 +465,51 @@ const Dashboard = () => {
         setSelectedApplication(prev => prev ? { ...prev, status: newStatus } : null);
       }
     }
+  };
+
+  const startEditingApplication = () => {
+    if (selectedApplication) {
+      setEditedApplication({
+        full_name: selectedApplication.full_name,
+        age: selectedApplication.age,
+        country: selectedApplication.country,
+        height: selectedApplication.height,
+        weight: selectedApplication.weight,
+        hair_color: selectedApplication.hair_color,
+        desired_income: selectedApplication.desired_income,
+        about_yourself: selectedApplication.about_yourself,
+        strong_points: (selectedApplication as any).strong_points,
+        language_skills: (selectedApplication as any).language_skills,
+        equipment: (selectedApplication as any).equipment,
+        time_availability: (selectedApplication as any).time_availability,
+        social_media_links: (selectedApplication as any).social_media_links,
+        body_params: (selectedApplication as any).body_params,
+      });
+      setIsEditingApplication(true);
+    }
+  };
+
+  const saveEditedApplication = async () => {
+    if (!selectedApplication) return;
+    
+    const { error } = await supabase
+      .from("telegram_model_applications")
+      .update(editedApplication)
+      .eq("id", selectedApplication.id);
+
+    if (error) {
+      toast.error("Ошибка сохранения");
+    } else {
+      toast.success("Заявка обновлена!");
+      setIsEditingApplication(false);
+      fetchApplications();
+      setSelectedApplication(prev => prev ? { ...prev, ...editedApplication } : null);
+    }
+  };
+
+  const cancelEditingApplication = () => {
+    setIsEditingApplication(false);
+    setEditedApplication({});
   };
 
   const sendReminder = async (app: ModelApplication) => {
@@ -1641,35 +1716,92 @@ const Dashboard = () => {
                             </Badge>
                           </div>
                           <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => exportApplicationToWord(selectedApplication as any)}
-                              className="border-blue-500/30 text-blue-400 hover:bg-blue-500/20"
-                            >
-                              <FileText className="w-4 h-4 mr-1" />
-                              Word
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(null)}>
+                            {isEditingApplication ? (
+                              <>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={saveEditedApplication}
+                                  className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                                >
+                                  <Save className="w-4 h-4 mr-1" />
+                                  Сохранить
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={cancelEditingApplication}
+                                >
+                                  Отмена
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={startEditingApplication}
+                                  className="border-orange-500/30 text-orange-400 hover:bg-orange-500/20"
+                                >
+                                  <Edit3 className="w-4 h-4 mr-1" />
+                                  Редактировать
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => exportApplicationToWord(selectedApplication as any)}
+                                  className="border-blue-500/30 text-blue-400 hover:bg-blue-500/20"
+                                >
+                                  <FileText className="w-4 h-4 mr-1" />
+                                  Word
+                                </Button>
+                              </>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={() => { setSelectedApplication(null); setIsEditingApplication(false); }}>
                               <XCircle className="w-4 h-4" />
                             </Button>
                           </div>
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        {/* Basic Info */}
+                        {/* Basic Info - Editable */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
                             <span className="text-slate-500 text-xs block mb-1">Имя</span>
-                            <span className="text-white font-medium">{selectedApplication.full_name || 'Не указано'}</span>
+                            {isEditingApplication ? (
+                              <Input 
+                                value={editedApplication.full_name || ''} 
+                                onChange={e => setEditedApplication(prev => ({ ...prev, full_name: e.target.value }))}
+                                className="h-7 text-sm bg-slate-700/50 border-white/10"
+                              />
+                            ) : (
+                              <span className="text-white font-medium">{selectedApplication.full_name || 'Не указано'}</span>
+                            )}
                           </div>
                           <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
                             <span className="text-slate-500 text-xs block mb-1">Возраст</span>
-                            <span className="text-white font-medium">{selectedApplication.age || '?'}</span>
+                            {isEditingApplication ? (
+                              <Input 
+                                type="number"
+                                value={editedApplication.age || ''} 
+                                onChange={e => setEditedApplication(prev => ({ ...prev, age: parseInt(e.target.value) || null }))}
+                                className="h-7 text-sm bg-slate-700/50 border-white/10"
+                              />
+                            ) : (
+                              <span className="text-white font-medium">{selectedApplication.age || '?'}</span>
+                            )}
                           </div>
                           <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
                             <span className="text-slate-500 text-xs block mb-1">Страна</span>
-                            <span className="text-white font-medium">{selectedApplication.country || 'Не указана'}</span>
+                            {isEditingApplication ? (
+                              <Input 
+                                value={editedApplication.country || ''} 
+                                onChange={e => setEditedApplication(prev => ({ ...prev, country: e.target.value }))}
+                                className="h-7 text-sm bg-slate-700/50 border-white/10"
+                              />
+                            ) : (
+                              <span className="text-white font-medium">{selectedApplication.country || 'Не указана'}</span>
+                            )}
                           </div>
                           <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
                             <span className="text-slate-500 text-xs block mb-1">Telegram</span>
@@ -1677,19 +1809,55 @@ const Dashboard = () => {
                           </div>
                         </div>
 
-                        {/* Physical */}
-                        <div className="grid grid-cols-3 gap-4 text-sm">
+                        {/* Physical - Editable */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
-                            <span className="text-slate-500 text-xs block mb-1">Рост / Вес</span>
-                            <span className="text-white font-medium">{selectedApplication.height || '?'} / {selectedApplication.weight || '?'}</span>
+                            <span className="text-slate-500 text-xs block mb-1">Рост</span>
+                            {isEditingApplication ? (
+                              <Input 
+                                value={editedApplication.height || ''} 
+                                onChange={e => setEditedApplication(prev => ({ ...prev, height: e.target.value }))}
+                                className="h-7 text-sm bg-slate-700/50 border-white/10"
+                              />
+                            ) : (
+                              <span className="text-white font-medium">{selectedApplication.height || '?'}</span>
+                            )}
                           </div>
                           <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
                             <span className="text-slate-500 text-xs block mb-1">Цвет волос</span>
-                            <span className="text-white font-medium">{selectedApplication.hair_color || 'Не указан'}</span>
+                            {isEditingApplication ? (
+                              <Input 
+                                value={editedApplication.hair_color || ''} 
+                                onChange={e => setEditedApplication(prev => ({ ...prev, hair_color: e.target.value }))}
+                                className="h-7 text-sm bg-slate-700/50 border-white/10"
+                              />
+                            ) : (
+                              <span className="text-white font-medium">{selectedApplication.hair_color || 'Не указан'}</span>
+                            )}
                           </div>
                           <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
                             <span className="text-slate-500 text-xs block mb-1">Желаемый доход</span>
-                            <span className="text-emerald-400 font-medium">{selectedApplication.desired_income || 'Не указан'}</span>
+                            {isEditingApplication ? (
+                              <Input 
+                                value={editedApplication.desired_income || ''} 
+                                onChange={e => setEditedApplication(prev => ({ ...prev, desired_income: e.target.value }))}
+                                className="h-7 text-sm bg-slate-700/50 border-white/10"
+                              />
+                            ) : (
+                              <span className="text-emerald-400 font-medium">{selectedApplication.desired_income || 'Не указан'}</span>
+                            )}
+                          </div>
+                          <div className="p-3 rounded-lg bg-slate-800/30 border border-white/5">
+                            <span className="text-slate-500 text-xs block mb-1">Параметры</span>
+                            {isEditingApplication ? (
+                              <Input 
+                                value={editedApplication.body_params || ''} 
+                                onChange={e => setEditedApplication(prev => ({ ...prev, body_params: e.target.value }))}
+                                className="h-7 text-sm bg-slate-700/50 border-white/10"
+                              />
+                            ) : (
+                              <span className="text-white font-medium">{(selectedApplication as any).body_params || '?'}</span>
+                            )}
                           </div>
                         </div>
 
