@@ -391,7 +391,7 @@ export function OnlyFansSection() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-white">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00AFF0] to-[#0088cc] flex items-center justify-center overflow-hidden p-1">
+              <div className="w-10 h-10 rounded-xl bg-[#00AFF0]/20 flex items-center justify-center border border-[#00AFF0]/40 overflow-hidden p-1.5">
                 <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
               </div>
               API OnlyFans - Управление аккаунтами
@@ -402,14 +402,14 @@ export function OnlyFansSection() {
                 size="sm"
                 onClick={fetchData}
                 disabled={isLoading}
-                className="border-teal-500/30 hover:bg-teal-500/20"
+                className="border-[#00AFF0]/30 hover:bg-[#00AFF0]/20"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                 Обновить
               </Button>
               <Button
                 size="sm"
-                className="bg-gradient-to-r from-teal-500 to-cyan-500"
+                className="bg-gradient-to-r from-[#00AFF0] to-[#0088cc]"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Добавить
