@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -13,16 +13,17 @@ import {
   TrendingUp, 
   MessageCircle, 
   RefreshCw,
-  Eye,
   Heart,
-  Image as ImageIcon,
   BarChart3,
   Settings,
   Plus,
-  ExternalLink,
   Clock,
-  Activity
+  Activity,
+  ArrowUpDown,
+  Filter,
+  Timer
 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import onlyfansLogo from "@/assets/onlyfans-logo.png";
 
 interface OnlyFansAccount {
@@ -35,6 +36,7 @@ interface OnlyFansAccount {
   messages_pending?: number;
   last_sync?: string;
   is_active: boolean;
+  earnings_history?: { date: string; amount: number }[];
 }
 
 interface OnlyFansStats {
@@ -45,19 +47,99 @@ interface OnlyFansStats {
   total_pending_messages: number;
 }
 
+const SYNC_INTERVAL = 5 * 60 * 1000; // 5 минут
+
 export function OnlyFansSection() {
   const [accounts, setAccounts] = useState<OnlyFansAccount[]>([]);
   const [stats, setStats] = useState<OnlyFansStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [apiConnected, setApiConnected] = useState(false);
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [nextSyncIn, setNextSyncIn] = useState(SYNC_INTERVAL);
+  
+  // Фильтрация и сортировка
+  const [sortBy, setSortBy] = useState<'earnings' | 'subscribers' | 'name'>('earnings');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('onlymonster-api', {
+        body: { action: 'get_accounts' }
+      });
+
+      if (error) throw error;
+
+      if (data?.accounts) {
+        // Добавляем моковые данные для графика (в реальности это придёт с API)
+        const enrichedAccounts = data.accounts.map((acc: OnlyFansAccount) => ({
+          ...acc,
+          earnings_history: generateMockEarningsHistory()
+        }));
+        setAccounts(enrichedAccounts);
+        calculateStats(enrichedAccounts);
+      }
+      
+      setLastSyncTime(new Date());
+      setNextSyncIn(SYNC_INTERVAL);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error("Ошибка загрузки данных");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Генерация mock данных для графика (до подключения реального API)
+  const generateMockEarningsHistory = () => {
+    const history = [];
+    for (let i = 13; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      history.push({
+        date: date.toISOString().split('T')[0],
+        amount: Math.floor(Math.random() * 500) + 50
+      });
+    }
+    return history;
+  };
 
   useEffect(() => {
     checkApiConnection();
   }, []);
 
+  // Автосинхронизация каждые 5 минут
+  useEffect(() => {
+    if (!autoSyncEnabled || !apiConnected) return;
+
+    const syncInterval = setInterval(() => {
+      console.log('Auto-syncing OnlyMonster accounts...');
+      fetchData();
+      toast.info("Данные обновлены автоматически", { duration: 2000 });
+    }, SYNC_INTERVAL);
+
+    return () => clearInterval(syncInterval);
+  }, [autoSyncEnabled, apiConnected, fetchData]);
+
+  // Обратный отсчёт до следующей синхронизации
+  useEffect(() => {
+    if (!autoSyncEnabled || !apiConnected) return;
+
+    const countdownInterval = setInterval(() => {
+      setNextSyncIn(prev => {
+        if (prev <= 1000) return SYNC_INTERVAL;
+        return prev - 1000;
+      });
+    }, 1000);
+
+    return () => clearInterval(countdownInterval);
+  }, [autoSyncEnabled, apiConnected]);
+
   const checkApiConnection = async () => {
-    // Check if API key is configured (by trying to fetch data)
     try {
       const { data } = await supabase.functions.invoke('onlymonster-api', {
         body: { action: 'check_connection' }
@@ -68,27 +150,6 @@ export function OnlyFansSection() {
       }
     } catch (error) {
       console.log('API not connected yet');
-    }
-  };
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('onlymonster-api', {
-        body: { action: 'get_accounts' }
-      });
-
-      if (error) throw error;
-
-      if (data?.accounts) {
-        setAccounts(data.accounts);
-        calculateStats(data.accounts);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error("Ошибка загрузки данных");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -105,6 +166,55 @@ export function OnlyFansSection() {
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  };
+
+  const formatTimeRemaining = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Фильтрация и сортировка аккаунтов
+  const filteredAndSortedAccounts = [...accounts]
+    .filter(acc => {
+      if (filterStatus === 'active') return acc.is_active;
+      if (filterStatus === 'inactive') return !acc.is_active;
+      return true;
+    })
+    .sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'earnings':
+          comparison = (a.earnings_month || 0) - (b.earnings_month || 0);
+          break;
+        case 'subscribers':
+          comparison = (a.subscribers || 0) - (b.subscribers || 0);
+          break;
+        case 'name':
+          comparison = (a.display_name || a.username).localeCompare(b.display_name || b.username);
+          break;
+      }
+      return sortOrder === 'desc' ? -comparison : comparison;
+    });
+
+  // Данные для графика всех аккаунтов
+  const getChartData = () => {
+    if (selectedAccountId) {
+      const account = accounts.find(a => a.id === selectedAccountId);
+      return account?.earnings_history || [];
+    }
+    
+    // Агрегируем данные по всем аккаунтам
+    const aggregated: { [date: string]: number } = {};
+    accounts.forEach(acc => {
+      acc.earnings_history?.forEach(({ date, amount }) => {
+        aggregated[date] = (aggregated[date] || 0) + amount;
+      });
+    });
+    
+    return Object.entries(aggregated)
+      .map(([date, amount]) => ({ date, amount }))
+      .sort((a, b) => a.date.localeCompare(b.date));
   };
 
   if (!apiConnected) {
@@ -154,6 +264,37 @@ export function OnlyFansSection() {
 
   return (
     <div className="space-y-6">
+      {/* Auto-sync indicator */}
+      <div className="flex items-center justify-between px-4 py-2 rounded-xl bg-slate-800/30 border border-white/5">
+        <div className="flex items-center gap-3">
+          <div className={`w-2 h-2 rounded-full ${autoSyncEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-500'}`} />
+          <span className="text-sm text-slate-400">
+            Автосинхронизация: {autoSyncEnabled ? 'Включена' : 'Выключена'}
+          </span>
+          {lastSyncTime && (
+            <span className="text-xs text-slate-500">
+              (последняя: {lastSyncTime.toLocaleTimeString('ru-RU')})
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {autoSyncEnabled && (
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <Timer className="w-3 h-3" />
+              <span>Следующее обновление: {formatTimeRemaining(nextSyncIn)}</span>
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setAutoSyncEnabled(!autoSyncEnabled)}
+            className={`text-xs ${autoSyncEnabled ? 'border-emerald-500/30 text-emerald-400' : 'border-slate-500/30'}`}
+          >
+            {autoSyncEnabled ? 'Отключить' : 'Включить'}
+          </Button>
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="bg-slate-900/50 border-white/5">
@@ -265,6 +406,10 @@ export function OnlyFansSection() {
                 <BarChart3 className="w-3 h-3 mr-1" />
                 Обзор
               </TabsTrigger>
+              <TabsTrigger value="chart" className="text-xs data-[state=active]:bg-teal-500">
+                <TrendingUp className="w-3 h-3 mr-1" />
+                График
+              </TabsTrigger>
               <TabsTrigger value="accounts" className="text-xs data-[state=active]:bg-teal-500">
                 <Users className="w-3 h-3 mr-1" />
                 Аккаунты
@@ -288,10 +433,14 @@ export function OnlyFansSection() {
                 </div>
               ) : (
                 <div className="grid gap-4">
-                  {accounts.slice(0, 5).map((account) => (
+                  {filteredAndSortedAccounts.slice(0, 5).map((account) => (
                     <div
                       key={account.id}
-                      className="p-4 rounded-xl bg-slate-800/30 border border-white/5 hover:border-teal-500/30 transition-all"
+                      className="p-4 rounded-xl bg-slate-800/30 border border-white/5 hover:border-teal-500/30 transition-all cursor-pointer"
+                      onClick={() => {
+                        setSelectedAccountId(account.id);
+                        setActiveTab('chart');
+                      }}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -319,13 +468,129 @@ export function OnlyFansSection() {
               )}
             </TabsContent>
 
+            <TabsContent value="chart">
+              <div className="space-y-4">
+                {/* Account selector */}
+                <div className="flex items-center gap-4">
+                  <Select 
+                    value={selectedAccountId || 'all'} 
+                    onValueChange={(v) => setSelectedAccountId(v === 'all' ? null : v)}
+                  >
+                    <SelectTrigger className="w-[250px] bg-slate-800/50 border-white/10">
+                      <SelectValue placeholder="Выберите аккаунт" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все аккаунты (сумма)</SelectItem>
+                      {accounts.map(acc => (
+                        <SelectItem key={acc.id} value={acc.id}>
+                          {acc.display_name || acc.username}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-slate-500">
+                    Доход за последние 14 дней
+                  </p>
+                </div>
+
+                {/* Chart */}
+                <div className="h-[350px] p-4 rounded-xl bg-slate-800/30 border border-white/5">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={getChartData()}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="#94a3b8"
+                        tick={{ fontSize: 11 }}
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return `${date.getDate()}.${date.getMonth() + 1}`;
+                        }}
+                      />
+                      <YAxis 
+                        stroke="#94a3b8"
+                        tick={{ fontSize: 11 }}
+                        tickFormatter={(value) => `$${value}`}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1e293b', 
+                          border: '1px solid #334155',
+                          borderRadius: '8px'
+                        }}
+                        labelFormatter={(value) => new Date(value).toLocaleDateString('ru-RU')}
+                        formatter={(value: number) => [formatCurrency(value), 'Доход']}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="amount" 
+                        name="Доход" 
+                        stroke="#14b8a6" 
+                        strokeWidth={2}
+                        dot={{ fill: '#14b8a6', strokeWidth: 2 }}
+                        activeDot={{ r: 6, fill: '#14b8a6' }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </TabsContent>
+
             <TabsContent value="accounts">
+              {/* Filter & Sort controls */}
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-slate-500" />
+                  <Select value={filterStatus} onValueChange={(v: 'all' | 'active' | 'inactive') => setFilterStatus(v)}>
+                    <SelectTrigger className="w-[140px] bg-slate-800/50 border-white/10 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все статусы</SelectItem>
+                      <SelectItem value="active">Активные</SelectItem>
+                      <SelectItem value="inactive">Неактивные</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4 text-slate-500" />
+                  <Select value={sortBy} onValueChange={(v: 'earnings' | 'subscribers' | 'name') => setSortBy(v)}>
+                    <SelectTrigger className="w-[160px] bg-slate-800/50 border-white/10 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="earnings">По доходу</SelectItem>
+                      <SelectItem value="subscribers">По подписчикам</SelectItem>
+                      <SelectItem value="name">По имени</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className="border-white/10"
+                  >
+                    {sortOrder === 'desc' ? '↓' : '↑'}
+                  </Button>
+                </div>
+
+                <span className="text-sm text-slate-500 ml-auto">
+                  Показано: {filteredAndSortedAccounts.length} из {accounts.length}
+                </span>
+              </div>
+
               <ScrollArea className="h-[400px]">
                 <div className="grid gap-3">
-                  {accounts.map((account) => (
+                  {filteredAndSortedAccounts.map((account) => (
                     <div
                       key={account.id}
-                      className="p-4 rounded-xl bg-slate-800/30 border border-white/5 hover:border-teal-500/30 transition-all"
+                      className="p-4 rounded-xl bg-slate-800/30 border border-white/5 hover:border-teal-500/30 transition-all cursor-pointer"
+                      onClick={() => {
+                        setSelectedAccountId(account.id);
+                        setActiveTab('chart');
+                      }}
                     >
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
@@ -392,6 +657,23 @@ export function OnlyFansSection() {
                   <code className="text-xs text-teal-400 bg-teal-500/10 px-2 py-1 rounded">
                     om_token_****...****a451a
                   </code>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-800/30 border border-white/5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white mb-1">Автосинхронизация</p>
+                      <p className="text-xs text-slate-500">Обновлять данные каждые 5 минут</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAutoSyncEnabled(!autoSyncEnabled)}
+                      className={autoSyncEnabled ? 'border-emerald-500/30 text-emerald-400' : 'border-slate-500/30'}
+                    >
+                      {autoSyncEnabled ? 'Включено' : 'Выключено'}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </TabsContent>
