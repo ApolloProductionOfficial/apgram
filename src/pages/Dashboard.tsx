@@ -79,6 +79,7 @@ import { exportApplicationToWord } from "@/utils/exportToWord";
 import { OnlyFansSection } from "@/components/OnlyFansSection";
 import { TeamNotificationSettings } from "@/components/TeamNotificationSettings";
 import { ModelPhotosGallery } from "@/components/ModelPhotosGallery";
+import { QuestionsEditor } from "@/components/QuestionsEditor";
 
 interface QuickPhrase {
   id: string;
@@ -974,8 +975,8 @@ const Dashboard = () => {
                 value="onlyfans" 
                 className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-teal-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/30 overflow-hidden">
-                  <img src={onlyfansLogo} alt="OnlyFans" className="w-12 h-12 object-contain drop-shadow-[0_0_8px_rgba(6,182,228,0.6)]" />
+                <div className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden">
+                  <img src={onlyfansLogo} alt="OnlyFans" className="w-16 h-16 object-contain drop-shadow-[0_0_12px_rgba(6,182,228,0.8)]" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">OnlyFans</p>
@@ -988,8 +989,8 @@ const Dashboard = () => {
                 value="pimpbunny" 
                 className="h-auto p-6 rounded-2xl bg-slate-900/50 border-l-4 border-l-transparent border border-white/5 data-[state=active]:bg-slate-900/80 data-[state=active]:border-l-pink-500 data-[state=active]:border-white/10 hover:bg-slate-800/50 transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-2xl bg-pink-500/10 flex items-center justify-center border border-pink-500/30 overflow-hidden">
-                  <img src={pimpbunnyLogo} alt="PimpBunny" className="w-12 h-12 object-contain drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]" />
+                <div className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden">
+                  <img src={pimpbunnyLogo} alt="PimpBunny" className="w-16 h-16 object-contain drop-shadow-[0_0_12px_rgba(236,72,153,0.8)]" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">PimpBunny</p>
@@ -1780,105 +1781,7 @@ const Dashboard = () => {
 
                 {/* Questions Editor */}
                 <TabsContent value="questions" className="space-y-4">
-                  <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-white">
-                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
-                          <Edit3 className="w-4 h-4 text-white" />
-                        </div>
-                        Редактор вопросов анкеты
-                        <Button
-                          onClick={saveQuestionsToDb}
-                          disabled={isSavingQuestions}
-                          className="ml-auto bg-pink-500 hover:bg-pink-600"
-                        >
-                          {isSavingQuestions ? (
-                            <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                          ) : (
-                            <Save className="w-4 h-4 mr-2" />
-                          )}
-                          Сохранить и синхронизировать
-                        </Button>
-                      </CardTitle>
-                      <CardDescription className="text-slate-400">
-                        Меняйте порядок и текст вопросов. После изменений нажмите "Сохранить" для синхронизации с ботом.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {questions.sort((a, b) => a.order - b.order).map((q, index) => (
-                          <div
-                            key={q.id}
-                            className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-white/5 hover:border-pink-500/30 transition-all"
-                          >
-                            <div className="flex flex-col gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => moveQuestion(index, 'up')}
-                                disabled={index === 0}
-                              >
-                                <ChevronUp className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => moveQuestion(index, 'down')}
-                                disabled={index === questions.length - 1}
-                              >
-                                <ChevronDown className="w-4 h-4" />
-                              </Button>
-                            </div>
-                            <div className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400 font-bold text-sm">
-                              {q.order}
-                            </div>
-                            {editingQuestion === q.id ? (
-                              <div className="flex-1 flex gap-2">
-                                <Input
-                                  defaultValue={q.question}
-                                  className="bg-slate-800/50 border-pink-500/30"
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      updateQuestionText(q.id, (e.target as HTMLInputElement).value);
-                                    }
-                                    if (e.key === 'Escape') {
-                                      setEditingQuestion(null);
-                                    }
-                                  }}
-                                  autoFocus
-                                />
-                                <Button
-                                  size="sm"
-                                  onClick={(e) => {
-                                    const input = (e.currentTarget.previousSibling as HTMLInputElement);
-                                    updateQuestionText(q.id, input.value);
-                                  }}
-                                >
-                                  <Save className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="flex-1 flex items-center justify-between">
-                                <div>
-                                  <p className="text-sm text-white">{q.question}</p>
-                                  <p className="text-xs text-slate-500">{q.step}</p>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setEditingQuestion(q.id)}
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <QuestionsEditor />
                 </TabsContent>
 
                 {/* Webhook Setup */}
