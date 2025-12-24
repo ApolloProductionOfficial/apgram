@@ -444,8 +444,14 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       
     case 'multi_select':
       // Multi-select with checkboxes - ALL options in 2 columns, no pagination
+      // Map step to database field
+      const multiFieldMap: Record<string, string> = {
+        'content_preferences': 'content_preferences',
+        'tabu': 'tabu_preferences'
+      };
+      const multiField = multiFieldMap[step] || 'content_preferences';
       const multiOptions = question.options || [];
-      const currentPrefs = application.content_preferences || [];
+      const currentPrefs = (application as any)[multiField] || [];
       
       // Build buttons in 2 columns
       const multiButtons: any[][] = [];
@@ -617,6 +623,22 @@ async function handleApplicationCallback(callbackQuery: any) {
   let application = await getOrCreateApplication(chatId, userId, username);
   const questions = await getQuestions();
   
+  // Continue application from current step
+  if (data === 'app_continue') {
+    const currentStep = application.step;
+    if (currentStep && currentStep !== 'welcome' && currentStep !== 'complete') {
+      await sendApplicationQuestion(chatId, currentStep, application);
+    } else {
+      // If no valid step, start from first question
+      const firstQuestion = questions[0];
+      if (firstQuestion) {
+        await updateApplication(application.id, { step: firstQuestion.step });
+        await sendApplicationQuestion(chatId, firstQuestion.step, application);
+      }
+    }
+    return;
+  }
+  
   // Start application
   if (data === 'app_start' || data === 'app_restart') {
     const firstQuestion = questions[0];
@@ -730,8 +752,15 @@ async function handleApplicationCallback(callbackQuery: any) {
     const optionId = parts.pop()!;
     const step = parts.join('_');
     
+    // Map step to database field
+    const msFieldMap: Record<string, string> = {
+      'content_preferences': 'content_preferences',
+      'tabu': 'tabu_preferences'
+    };
+    const dbField = msFieldMap[step] || 'content_preferences';
+    
     // Toggle option selection
-    const currentPrefs = application.content_preferences || [];
+    const currentPrefs = (application as any)[dbField] || [];
     let newPrefs;
     if (currentPrefs.includes(optionId)) {
       newPrefs = currentPrefs.filter((c: string) => c !== optionId);
@@ -739,8 +768,8 @@ async function handleApplicationCallback(callbackQuery: any) {
       newPrefs = [...currentPrefs, optionId];
     }
     
-    await updateApplication(application.id, { content_preferences: newPrefs });
-    application.content_preferences = newPrefs;
+    await updateApplication(application.id, { [dbField]: newPrefs });
+    (application as any)[dbField] = newPrefs;
     
     // Refresh the multi-select message with all options in 2 columns
     const question = await getQuestionByStep(step);
