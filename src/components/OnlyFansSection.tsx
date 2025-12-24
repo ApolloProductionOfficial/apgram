@@ -240,36 +240,36 @@ export function OnlyFansSection() {
       <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-white">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center overflow-hidden p-1">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00AFF0] to-[#0088cc] flex items-center justify-center overflow-hidden p-1">
               <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
             </div>
-            OnlyFans Management
+            API OnlyFans
           </CardTitle>
           <CardDescription className="text-slate-400">
-            Интеграция с OnlyMonster API для управления аккаунтами
+            Интеграция с OnlyFans API для управления аккаунтами
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center py-8">
-            <div className="w-16 h-16 rounded-2xl bg-teal-500/20 flex items-center justify-center mx-auto mb-4 overflow-hidden p-2">
+            <div className="w-16 h-16 rounded-2xl bg-[#00AFF0]/20 flex items-center justify-center mx-auto mb-4 overflow-hidden p-2">
               <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
             </div>
             <h3 className="text-lg font-medium text-white mb-2">API подключено</h3>
             <p className="text-slate-400 text-sm mb-4">
-              OnlyMonster API ключ сохранён. Нажмите кнопку ниже для загрузки данных.
+              OnlyFans API ключ сохранён. Нажмите кнопку ниже для загрузки данных.
             </p>
             <Button 
               onClick={() => { setApiConnected(true); fetchData(); }}
-              className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+              className="bg-gradient-to-r from-[#00AFF0] to-[#0088cc] hover:from-[#0099dd] hover:to-[#0077bb]"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               Загрузить данные
             </Button>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-800/30 border border-teal-500/20">
+          <div className="p-4 rounded-xl bg-slate-800/30 border border-[#00AFF0]/20">
             <p className="text-xs text-slate-500">
-              <strong className="text-teal-400">API ключ:</strong> om_token_****...****a451a
+              <strong className="text-[#00AFF0]">API ключ:</strong> ofapi_****...****
             </p>
             <p className="text-xs text-slate-500 mt-1">
               Edge Function: onlymonster-api
@@ -391,10 +391,10 @@ export function OnlyFansSection() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-white">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center overflow-hidden p-1">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00AFF0] to-[#0088cc] flex items-center justify-center overflow-hidden p-1">
                 <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
               </div>
-              Управление аккаунтами
+              API OnlyFans - Управление аккаунтами
             </div>
             <div className="flex gap-2">
               <Button
