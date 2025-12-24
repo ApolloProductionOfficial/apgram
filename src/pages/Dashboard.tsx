@@ -975,8 +975,8 @@ const Dashboard = () => {
                 value="onlyfans" 
                 className="group h-auto p-6 rounded-2xl bg-slate-900/50 border-2 border-transparent data-[state=active]:bg-slate-900/80 data-[state=active]:border-[#00AFF0] hover:border-[#00AFF0]/50 hover:shadow-[0_0_30px_rgba(0,175,240,0.3)] transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-xl bg-[#00AFF0]/20 flex items-center justify-center border border-[#00AFF0]/40 group-hover:bg-[#00AFF0]/30 group-hover:shadow-[0_0_20px_rgba(0,175,240,0.5)] transition-all duration-300 p-2">
-                  <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
+                <div className="w-16 h-16 rounded-xl bg-[#00AFF0]/20 flex items-center justify-center border border-[#00AFF0]/40 group-hover:bg-[#00AFF0]/30 group-hover:shadow-[0_0_20px_rgba(0,175,240,0.5)] transition-all duration-300">
+                  <Camera className="w-8 h-8 text-[#00AFF0]" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-lg text-white">OnlyFans</p>
