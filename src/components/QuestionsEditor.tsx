@@ -245,11 +245,11 @@ export function QuestionsEditor() {
   return (
     <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
-            <Edit3 className="w-4 h-4 text-white" />
+        <CardTitle className="flex items-center gap-3 text-white">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center flex-shrink-0">
+            <Edit3 className="w-5 h-5 text-white" />
           </div>
-          Редактор вопросов анкеты
+          <span>Редактор вопросов анкеты</span>
           <div className="ml-auto flex gap-2">
             <Button
               variant="outline"
