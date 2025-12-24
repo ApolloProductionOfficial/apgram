@@ -975,11 +975,11 @@ const Dashboard = () => {
                 value="onlyfans" 
                 className="group h-auto p-6 rounded-2xl bg-slate-900/50 border-2 border-transparent data-[state=active]:bg-slate-900/80 data-[state=active]:border-[#00AFF0] hover:border-[#00AFF0]/50 hover:shadow-[0_0_30px_rgba(0,175,240,0.3)] transition-all duration-300 flex flex-col items-center gap-3"
               >
-                <div className="w-16 h-16 rounded-xl bg-[#00AFF0]/20 flex items-center justify-center border border-[#00AFF0]/40 group-hover:bg-[#00AFF0]/30 group-hover:shadow-[0_0_20px_rgba(0,175,240,0.5)] transition-all duration-300">
-                  <Camera className="w-8 h-8 text-[#00AFF0]" />
+                <div className="w-16 h-16 rounded-xl bg-[#00AFF0]/20 flex items-center justify-center border border-[#00AFF0]/40 group-hover:bg-[#00AFF0]/30 group-hover:shadow-[0_0_20px_rgba(0,175,240,0.5)] transition-all duration-300 overflow-hidden p-2">
+                  <img src={onlyfansLogo} alt="OnlyFans" className="w-full h-full object-contain" />
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-lg text-white">OnlyFans</p>
+                  <p className="font-bold text-lg text-white">API OnlyFans</p>
                   <p className="text-xs text-slate-400 mt-1">Управление аккаунтами</p>
                 </div>
                 <Badge variant="outline" className="text-xs border-[#00AFF0]/30 text-[#00AFF0] mt-2">Новое</Badge>
@@ -1890,8 +1890,8 @@ const Dashboard = () => {
               <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-white">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
-                      <Rabbit className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center overflow-hidden p-1">
+                      <img src={pimpbunnyLogo} alt="PimpBunny" className="w-full h-full object-contain" />
                     </div>
                     PimpBunny
                   </CardTitle>
@@ -1901,7 +1901,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-12 text-slate-500">
-                    <Rabbit className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <img src={pimpbunnyLogo} alt="PimpBunny" className="w-12 h-12 mx-auto mb-4 opacity-30" />
                     <p>Раздел PimpBunny</p>
                     <p className="text-xs mt-2">Функционал будет добавлен позже</p>
                   </div>
