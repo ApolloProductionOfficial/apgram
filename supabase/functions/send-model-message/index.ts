@@ -17,7 +17,7 @@ serve(async (req) => {
       throw new Error('MODEL_BOT_TOKEN not configured');
     }
 
-    const { chat_id, message, media_url, media_type } = await req.json();
+    const { chat_id, message, media_url, media_type, inline_keyboard } = await req.json();
 
     if (!chat_id) {
       throw new Error('chat_id is required');
@@ -43,15 +43,21 @@ serve(async (req) => {
 
       console.log(`Using endpoint: ${endpoint}, field: ${mediaField}`);
 
+      const body: any = {
+        chat_id: chat_id,
+        [mediaField]: media_url,
+        caption: message || '',
+        parse_mode: 'HTML',
+      };
+
+      if (inline_keyboard) {
+        body.reply_markup = { inline_keyboard };
+      }
+
       response = await fetch(`https://api.telegram.org/bot${botToken}/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chat_id,
-          [mediaField]: media_url,
-          caption: message || '',
-          parse_mode: 'HTML',
-        }),
+        body: JSON.stringify(body),
       });
 
       result = await response.json();
@@ -62,14 +68,20 @@ serve(async (req) => {
       }
     } else if (message) {
       // Text only
+      const body: any = {
+        chat_id: chat_id,
+        text: message,
+        parse_mode: 'HTML',
+      };
+
+      if (inline_keyboard) {
+        body.reply_markup = { inline_keyboard };
+      }
+
       response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chat_id,
-          text: message,
-          parse_mode: 'HTML',
-        }),
+        body: JSON.stringify(body),
       });
 
       result = await response.json();

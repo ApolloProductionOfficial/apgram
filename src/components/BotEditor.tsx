@@ -168,6 +168,9 @@ export function BotEditor() {
 
     setIsTesting(true);
     try {
+      // Inline keyboard with "Заполнить анкету" button
+      const inlineKeyboard = [[{ text: '📝 Заполнить анкету', callback_data: 'app_start' }]];
+
       // Send media if exists
       if (welcomeMediaUrl) {
         const { error: mediaError } = await supabase.functions.invoke('send-model-message', {
@@ -175,7 +178,8 @@ export function BotEditor() {
             chat_id: ownerChatId,
             message: welcomeMessage || "Тестовое приветствие",
             media_url: welcomeMediaUrl,
-            media_type: welcomeMediaType
+            media_type: welcomeMediaType,
+            inline_keyboard: inlineKeyboard
           }
         });
         if (mediaError) throw mediaError;
@@ -184,7 +188,8 @@ export function BotEditor() {
         const { error } = await supabase.functions.invoke('send-model-message', {
           body: {
             chat_id: ownerChatId,
-            message: `🧪 <b>ТЕСТ ПРИВЕТСТВИЯ</b>\n\n${welcomeMessage || "Текст приветствия не настроен"}`
+            message: `🧪 <b>ТЕСТ ПРИВЕТСТВИЯ</b>\n\n${welcomeMessage || "Текст приветствия не настроен"}`,
+            inline_keyboard: inlineKeyboard
           }
         });
         if (error) throw error;
