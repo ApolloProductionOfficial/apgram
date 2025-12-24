@@ -54,20 +54,60 @@ async function ensureChatSettings(chatId: number, chatTitle?: string) {
   }
 }
 
+// Парсинг текста с маркерами эмодзи: [emoji:ID] -> custom_emoji entity
+function parseTextWithEmojis(text: string): { text: string; entities: any[] } {
+  const emojiRegex = /\[emoji:(\d+)\]/g;
+  const entities: any[] = [];
+  let processedText = '';
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = emojiRegex.exec(text)) !== null) {
+    // Добавляем текст до эмодзи
+    processedText += text.slice(lastIndex, match.index);
+    
+    // Позиция эмодзи в обработанном тексте (в UTF-16 code units)
+    const offset = [...processedText].length;
+    
+    // Добавляем placeholder для эмодзи (любой символ, заменится)
+    processedText += '⭐';
+    
+    entities.push({
+      type: 'custom_emoji',
+      offset: offset,
+      length: 1,
+      custom_emoji_id: match[1]
+    });
+    
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // Добавляем остаток текста
+  processedText += text.slice(lastIndex);
+  
+  return { text: processedText, entities };
+}
+
 // Отправка сообщения в Telegram
 async function sendMessage(chatId: number, text: string, replyToMessageId?: number, customEmojiId?: string) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
   
+  // Парсим текст с маркерами эмодзи [emoji:ID]
+  const parsed = parseTextWithEmojis(text);
+  
   const body: any = {
     chat_id: chatId,
-    text,
+    text: parsed.text,
     reply_to_message_id: replyToMessageId,
     parse_mode: 'HTML',
   };
   
-  // Если есть кастомный эмодзи, добавляем его как entity
-  if (customEmojiId) {
-    body.text = `⭐ ${text}`;
+  // Если есть эмодзи в тексте или отдельный customEmojiId
+  if (parsed.entities.length > 0) {
+    body.entities = parsed.entities;
+  } else if (customEmojiId) {
+    // Устаревший способ (один эмодзи в начале)
+    body.text = `⭐ ${parsed.text}`;
     body.entities = [{
       type: 'custom_emoji',
       offset: 0,
@@ -76,26 +116,35 @@ async function sendMessage(chatId: number, text: string, replyToMessageId?: numb
     }];
   }
   
-  await fetch(url, {
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
+  
+  const result = await response.json();
+  if (!result.ok) {
+    console.error('sendMessage error:', result);
+  }
 }
 
 // Отправка фото
 async function sendPhoto(chatId: number, photoUrl: string, caption?: string, customEmojiId?: string) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`;
   
+  const parsed = caption ? parseTextWithEmojis(caption) : { text: caption, entities: [] };
+  
   const body: any = {
     chat_id: chatId,
     photo: photoUrl,
-    caption,
+    caption: parsed.text,
     parse_mode: 'HTML',
   };
   
-  if (customEmojiId && caption) {
-    body.caption = `⭐ ${caption}`;
+  if (parsed.entities.length > 0) {
+    body.caption_entities = parsed.entities;
+  } else if (customEmojiId && caption) {
+    body.caption = `⭐ ${parsed.text}`;
     body.caption_entities = [{
       type: 'custom_emoji',
       offset: 0,
@@ -115,15 +164,19 @@ async function sendPhoto(chatId: number, photoUrl: string, caption?: string, cus
 async function sendVideo(chatId: number, videoUrl: string, caption?: string, customEmojiId?: string) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo`;
   
+  const parsed = caption ? parseTextWithEmojis(caption) : { text: caption, entities: [] };
+  
   const body: any = {
     chat_id: chatId,
     video: videoUrl,
-    caption,
+    caption: parsed.text,
     parse_mode: 'HTML',
   };
   
-  if (customEmojiId && caption) {
-    body.caption = `⭐ ${caption}`;
+  if (parsed.entities.length > 0) {
+    body.caption_entities = parsed.entities;
+  } else if (customEmojiId && caption) {
+    body.caption = `⭐ ${parsed.text}`;
     body.caption_entities = [{
       type: 'custom_emoji',
       offset: 0,
@@ -143,15 +196,19 @@ async function sendVideo(chatId: number, videoUrl: string, caption?: string, cus
 async function sendAnimation(chatId: number, animationUrl: string, caption?: string, customEmojiId?: string) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendAnimation`;
   
+  const parsed = caption ? parseTextWithEmojis(caption) : { text: caption, entities: [] };
+  
   const body: any = {
     chat_id: chatId,
     animation: animationUrl,
-    caption,
+    caption: parsed.text,
     parse_mode: 'HTML',
   };
   
-  if (customEmojiId && caption) {
-    body.caption = `⭐ ${caption}`;
+  if (parsed.entities.length > 0) {
+    body.caption_entities = parsed.entities;
+  } else if (customEmojiId && caption) {
+    body.caption = `⭐ ${parsed.text}`;
     body.caption_entities = [{
       type: 'custom_emoji',
       offset: 0,
