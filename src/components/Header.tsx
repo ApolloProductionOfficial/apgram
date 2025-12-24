@@ -85,7 +85,7 @@ const Header = () => {
                 animate={{ rotate: -360 }}
                 transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
               />
-              {/* Logo container */}
+              {/* Logo container - scale-125 to fill circle */}
               <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-2 ring-primary/40 shadow-lg shadow-primary/30 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:shadow-primary/50">
                 <video 
                   src={apolloLogo} 
@@ -94,7 +94,7 @@ const Header = () => {
                   muted 
                   playsInline
                   preload="auto"
-                  className="w-full h-full object-cover scale-110"
+                  className="w-full h-full object-cover scale-125"
                 />
               </div>
             </div>
