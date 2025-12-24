@@ -13,7 +13,9 @@ import {
   Users,
   CheckCircle,
   User,
-  AtSign
+  AtSign,
+  Send,
+  Loader2
 } from "lucide-react";
 
 interface TeamMember {
@@ -37,6 +39,7 @@ export function TeamNotificationSettings({
   const [newTeamUsername, setNewTeamUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
     fetchTeamMembers();
@@ -192,6 +195,31 @@ export function TeamNotificationSettings({
     }
   };
 
+  const sendTestNotification = async () => {
+    if (!ownerChatId.trim()) {
+      toast.error("Сначала сохраните Chat ID");
+      return;
+    }
+    
+    setIsTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-model-message', {
+        body: {
+          chatId: parseInt(ownerChatId),
+          message: `🔔 <b>Тестовое уведомление!</b>\n\n✅ Уведомления работают корректно.\n\n⏰ ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}\n\n<i>Это сообщение отправлено из панели администратора Apollo Production.</i>`
+        }
+      });
+
+      if (error) throw error;
+      toast.success("Тестовое уведомление отправлено! Проверьте Telegram.");
+    } catch (err) {
+      console.error('Test notification error:', err);
+      toast.error("Ошибка отправки уведомления");
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   return (
     <Card className="bg-slate-900/50 border-white/5 backdrop-blur-xl">
       <CardHeader>
@@ -234,9 +262,25 @@ export function TeamNotificationSettings({
             </Button>
           </div>
           {ownerChatId && (
-            <div className="flex items-center gap-2 text-yellow-400 text-sm">
-              <CheckCircle className="w-4 h-4" />
-              Chat ID настроен
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-yellow-400 text-sm">
+                <CheckCircle className="w-4 h-4" />
+                Chat ID настроен
+              </div>
+              <Button
+                onClick={sendTestNotification}
+                disabled={isTesting}
+                variant="outline"
+                size="sm"
+                className="border-green-500/30 text-green-400 hover:bg-green-500/10"
+              >
+                {isTesting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
+                Тест
+              </Button>
             </div>
           )}
         </div>
