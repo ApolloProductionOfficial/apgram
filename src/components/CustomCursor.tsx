@@ -48,14 +48,14 @@ const CustomCursor = () => {
         *, *::before, *::after { cursor: none !important; }
       `}</style>
 
-      {/* Static spotlight (small) */}
+      {/* Static spotlight (small) - dimmed */}
       <div
         ref={spotlightRef}
         className="fixed inset-0 pointer-events-none z-[9998]"
         style={{
           willChange: 'background',
           background:
-            'radial-gradient(calc(var(--spotlight-size, 180px)) circle at var(--cursor-x, 50%) var(--cursor-y, 50%), hsla(0, 0%, 100%, 0.15) 0%, hsla(199, 89%, 55%, 0.08) 30%, hsla(199, 89%, 55%, 0.03) 50%, transparent 70%)',
+            'radial-gradient(calc(var(--spotlight-size, 180px)) circle at var(--cursor-x, 50%) var(--cursor-y, 50%), hsla(0, 0%, 100%, 0.06) 0%, hsla(199, 89%, 55%, 0.03) 30%, hsla(199, 89%, 55%, 0.01) 50%, transparent 70%)',
           mixBlendMode: 'screen',
         }}
       />
@@ -70,19 +70,19 @@ const CustomCursor = () => {
           <div
             className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
             style={{
-              width: 24,
-              height: 24,
+              width: 20,
+              height: 20,
               background:
-                'radial-gradient(circle, hsla(199, 89%, 55%, 0.2) 0%, hsla(199, 89%, 55%, 0.08) 45%, transparent 70%)',
+                'radial-gradient(circle, hsla(199, 89%, 55%, 0.1) 0%, hsla(199, 89%, 55%, 0.04) 45%, transparent 70%)',
             }}
           />
           <div
             className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
             style={{
-              width: 5,
-              height: 5,
-              background: 'hsla(199, 89%, 65%, 0.5)',
-              boxShadow: '0 0 10px hsla(199, 89%, 55%, 0.3)',
+              width: 4,
+              height: 4,
+              background: 'hsla(199, 89%, 65%, 0.35)',
+              boxShadow: '0 0 6px hsla(199, 89%, 55%, 0.15)',
             }}
           />
         </div>
