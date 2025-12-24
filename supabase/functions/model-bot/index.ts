@@ -390,13 +390,13 @@ async function sendApplicationQuestion(chatId: number, step: string, application
   const header = `📋 <b>Шаг ${questionNum}/${totalQuestions}</b>\n\n`;
   const questionText = header + question.question + (question.description ? `\n\n<i>${question.description}</i>` : '');
   
-  // Back button (only if not first question) - smaller text
-  const backButton = prevStep ? [{ text: '◀️', callback_data: `app_back_${prevStep}` }] : null;
+  // Back button (only if not first question)
+  const backButtonData = prevStep ? { text: '◀️ Назад', callback_data: `app_back_${prevStep}` } : null;
   
   switch (question.question_type) {
     case 'text':
-      if (backButton) {
-        await sendMessageWithButtons(chatId, questionText, [backButton]);
+      if (backButtonData) {
+        await sendMessageWithButtons(chatId, questionText, [[backButtonData]]);
       } else {
         await sendMessage(chatId, questionText);
       }
@@ -416,14 +416,27 @@ async function sendApplicationQuestion(chatId: number, step: string, application
         buttons.push(row);
       }
       
-      // Add "Other" option for country
+      // Add "Other" option for country (only if not already in options)
       if (step === 'country') {
-        buttons.push([{ text: '🌐 Другая страна', callback_data: 'app_country_other' }]);
-      }
-      
-      // Add back button
-      if (backButton) {
-        buttons.push(backButton);
+        const hasOther = options.some((opt: string) => opt.toLowerCase().includes('друг'));
+        if (!hasOther) {
+          // Put "Другая страна" and back button in same row to make them smaller
+          if (backButtonData) {
+            buttons.push([
+              { text: '🌐 Другая', callback_data: 'app_country_other' },
+              backButtonData
+            ]);
+          } else {
+            buttons.push([{ text: '🌐 Другая страна', callback_data: 'app_country_other' }]);
+          }
+        } else if (backButtonData) {
+          buttons.push([backButtonData]);
+        }
+      } else {
+        // Add back button for other button questions
+        if (backButtonData) {
+          buttons.push([backButtonData]);
+        }
       }
       
       await sendMessageWithButtons(chatId, questionText, buttons);
@@ -450,7 +463,7 @@ async function sendApplicationQuestion(chatId: number, step: string, application
         });
         multiButtons.push([{ text: `➡️ Далее (стр. 2/${totalPages})`, callback_data: `app_multi_page_${step}_2` }]);
         multiButtons.push([{ text: '✅ Готово', callback_data: `app_multi_done_${step}` }]);
-        if (backButton) multiButtons.push(backButton);
+        if (backButtonData) multiButtons.push([backButtonData]);
         
         await sendMessageWithButtons(chatId, questionText + '\n\n<b>Страница 1/' + totalPages + '</b>', multiButtons);
       } else {
@@ -462,7 +475,7 @@ async function sendApplicationQuestion(chatId: number, step: string, application
           }];
         });
         multiButtons.push([{ text: '✅ Готово', callback_data: `app_multi_done_${step}` }]);
-        if (backButton) multiButtons.push(backButton);
+        if (backButtonData) multiButtons.push([backButtonData]);
         
         await sendMessageWithButtons(chatId, questionText, multiButtons);
       }
@@ -473,15 +486,15 @@ async function sendApplicationQuestion(chatId: number, step: string, application
         [{ text: '✅ Готово — у меня все фото', callback_data: 'app_photos_done' }],
         [{ text: '⏭️ Пропустить фото', callback_data: 'app_photos_skip' }]
       ];
-      if (backButton) photoButtons.push(backButton);
+      if (backButtonData) photoButtons.push([backButtonData]);
       
       await sendMessage(chatId, questionText + '\n\n📷 <b>Отправляйте фото по одному.</b> Когда закончите — нажмите кнопку ниже:');
       await sendMessageWithButtons(chatId, '👇 Отправьте фото или нажмите, когда закончите:', photoButtons);
       break;
       
     default:
-      if (backButton) {
-        await sendMessageWithButtons(chatId, questionText, [backButton]);
+      if (backButtonData) {
+        await sendMessageWithButtons(chatId, questionText, [[backButtonData]]);
       } else {
         await sendMessage(chatId, questionText);
       }
