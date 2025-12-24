@@ -134,6 +134,93 @@ export type Database = {
         }
         Relationships: []
       }
+      model_applications: {
+        Row: {
+          about_yourself: string
+          age: number
+          body_params: string
+          citizenship: string | null
+          content_preferences: string[]
+          created_at: string
+          desired_income: string
+          equipment: string
+          full_name: string
+          hair_color: string
+          height: string
+          id: string
+          income_screenshots: string[] | null
+          language_skills: string
+          notes: string | null
+          platforms: string[]
+          portfolio_photos: string[]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          social_media_experience: string[]
+          social_media_links: string | null
+          status: string
+          strong_points: string | null
+          telegram_username: string
+          time_availability: string
+          weight: string
+        }
+        Insert: {
+          about_yourself: string
+          age: number
+          body_params: string
+          citizenship?: string | null
+          content_preferences?: string[]
+          created_at?: string
+          desired_income: string
+          equipment: string
+          full_name: string
+          hair_color: string
+          height: string
+          id?: string
+          income_screenshots?: string[] | null
+          language_skills: string
+          notes?: string | null
+          platforms?: string[]
+          portfolio_photos?: string[]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          social_media_experience?: string[]
+          social_media_links?: string | null
+          status?: string
+          strong_points?: string | null
+          telegram_username: string
+          time_availability: string
+          weight: string
+        }
+        Update: {
+          about_yourself?: string
+          age?: number
+          body_params?: string
+          citizenship?: string | null
+          content_preferences?: string[]
+          created_at?: string
+          desired_income?: string
+          equipment?: string
+          full_name?: string
+          hair_color?: string
+          height?: string
+          id?: string
+          income_screenshots?: string[] | null
+          language_skills?: string
+          notes?: string | null
+          platforms?: string[]
+          portfolio_photos?: string[]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          social_media_experience?: string[]
+          social_media_links?: string | null
+          status?: string
+          strong_points?: string | null
+          telegram_username?: string
+          time_availability?: string
+          weight?: string
+        }
+        Relationships: []
+      }
       news: {
         Row: {
           created_at: string
