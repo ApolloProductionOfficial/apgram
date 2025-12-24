@@ -17,29 +17,69 @@ serve(async (req) => {
       throw new Error('MODEL_BOT_TOKEN not configured');
     }
 
-    const { chat_id, message } = await req.json();
+    const { chat_id, message, media_url, media_type } = await req.json();
 
-    if (!chat_id || !message) {
-      throw new Error('chat_id and message are required');
+    if (!chat_id) {
+      throw new Error('chat_id is required');
     }
 
-    console.log(`Sending message to chat_id: ${chat_id}`);
+    console.log(`Sending to chat_id: ${chat_id}, media_type: ${media_type}, media_url: ${media_url}`);
 
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chat_id,
-        text: message,
-        parse_mode: 'HTML',
-      }),
-    });
+    let response;
+    let result;
 
-    const result = await response.json();
-    console.log('Telegram response:', result);
+    // If media is provided, send media with caption
+    if (media_url && media_type) {
+      let endpoint = 'sendPhoto';
+      let mediaField = 'photo';
+      
+      if (media_type === 'video') {
+        endpoint = 'sendVideo';
+        mediaField = 'video';
+      } else if (media_type === 'animation') {
+        endpoint = 'sendAnimation';
+        mediaField = 'animation';
+      }
 
-    if (!result.ok) {
-      throw new Error(result.description || 'Failed to send message');
+      console.log(`Using endpoint: ${endpoint}, field: ${mediaField}`);
+
+      response = await fetch(`https://api.telegram.org/bot${botToken}/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chat_id,
+          [mediaField]: media_url,
+          caption: message || '',
+          parse_mode: 'HTML',
+        }),
+      });
+
+      result = await response.json();
+      console.log('Telegram media response:', result);
+
+      if (!result.ok) {
+        throw new Error(result.description || 'Failed to send media');
+      }
+    } else if (message) {
+      // Text only
+      response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chat_id,
+          text: message,
+          parse_mode: 'HTML',
+        }),
+      });
+
+      result = await response.json();
+      console.log('Telegram text response:', result);
+
+      if (!result.ok) {
+        throw new Error(result.description || 'Failed to send message');
+      }
+    } else {
+      throw new Error('Either message or media_url is required');
     }
 
     return new Response(
