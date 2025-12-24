@@ -938,7 +938,14 @@ const AdminPanel = () => {
                               <p className="font-medium">{app.full_name || 'Без имени'}</p>
                               <p className="text-xs text-muted-foreground">@{app.telegram_username || 'нет username'}</p>
                             </div>
-                            {getStatusBadge(app.status)}
+                            <div className="flex items-center gap-2">
+                              {getStatusBadge(app.status)}
+                              {app.status === 'in_progress' && app.step && (
+                                <Badge variant="outline" className="text-xs">
+                                  Шаг: {app.step}
+                                </Badge>
+                              )}
+                            </div>
                             <span className="text-xs text-muted-foreground ml-auto mr-4">
                               {formatDate(app.created_at)}
                             </span>
