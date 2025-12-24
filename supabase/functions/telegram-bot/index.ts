@@ -14,21 +14,6 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// URL для приветственного видео
-const WELCOME_VIDEO_URL = 'https://ykwiqymksnndugphhgmc.supabase.co/storage/v1/object/public/bot-media/welcome-model.mp4';
-
-// Платформы которые предлагаем
-const PLATFORMS = [
-  { id: 'onlyfans', name: 'OnlyFans', emoji: '🔥' },
-  { id: 'fansly', name: 'Fansly', emoji: '💎' },
-  { id: 'stripchat', name: 'Stripchat', emoji: '🎥' },
-  { id: 'chaturbate', name: 'Chaturbate', emoji: '📹' },
-  { id: 'bongacams', name: 'BongaCams', emoji: '🌐' },
-  { id: 'livejasmin', name: 'LiveJasmin', emoji: '💋' },
-  { id: 'cam4', name: 'CAM4', emoji: '🎬' },
-  { id: 'myfreecams', name: 'MyFreeCams', emoji: '✨' },
-];
-
 // Типы контента
 const CONTENT_TYPES = [
   { id: 'solo', name: 'Соло контент', emoji: '👤' },
@@ -60,6 +45,22 @@ const APPLICATION_STEPS = [
   'strong_points',
   'complete'
 ];
+
+// Получение настроек приветствия
+async function getWelcomeSettings() {
+  const { data } = await supabase
+    .from('bot_welcome_settings')
+    .select('*')
+    .limit(1)
+    .single();
+  
+  return data || {
+    welcome_message: '🌟 <b>Добро пожаловать в Apollo Production!</b>',
+    welcome_media_url: null,
+    welcome_media_type: 'video',
+    owner_contact: '@ApolloProductionOwner'
+  };
+}
 
 // Получение настроек чата
 async function getChatSettings(chatId: number) {
@@ -530,25 +531,26 @@ async function updateApplication(id: string, updates: any) {
 
 // Отправить приветствие анкеты
 async function sendApplicationWelcome(chatId: number) {
-  const platformsList = PLATFORMS.map(p => `${p.emoji} <b>${p.name}</b>`).join('\n');
+  const settings = await getWelcomeSettings();
   
-  const welcomeText = `🌟 <b>Добро пожаловать в Apollo Production!</b>
-
-Мы — ведущее агентство по работе с моделями на топовых платформах:
-
-${platformsList}
-
-💰 <b>Что мы предлагаем:</b>
-• Доход от $3,000 до $50,000+ в месяц
-• Полное обучение и поддержка 24/7
-• Продвижение и раскрутка аккаунтов
-• Помощь с контентом и стратегией
-• Выгодные условия сотрудничества
-
-📋 Заполните анкету, чтобы мы могли предложить вам лучшие условия!`;
-
-  // Сначала отправляем видео
-  await sendVideo(chatId, WELCOME_VIDEO_URL, welcomeText);
+  // Отправляем медиа с приветствием
+  if (settings.welcome_media_url) {
+    switch (settings.welcome_media_type) {
+      case 'video':
+        await sendVideo(chatId, settings.welcome_media_url, settings.welcome_message);
+        break;
+      case 'animation':
+        await sendAnimation(chatId, settings.welcome_media_url, settings.welcome_message);
+        break;
+      case 'photo':
+        await sendPhoto(chatId, settings.welcome_media_url, settings.welcome_message);
+        break;
+      default:
+        await sendVideo(chatId, settings.welcome_media_url, settings.welcome_message);
+    }
+  } else {
+    await sendMessage(chatId, settings.welcome_message);
+  }
   
   // Затем кнопку для начала анкеты
   await sendMessageWithButtons(chatId, 
@@ -607,17 +609,13 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       break;
       
     case 'platforms':
-      const platformButtons = PLATFORMS.map(p => [{ 
-        text: `${application.platforms?.includes(p.id) ? '✅' : ''} ${p.emoji} ${p.name}`, 
-        callback_data: `app_platform_${p.id}` 
-      }]);
-      platformButtons.push([{ text: '✅ Готово', callback_data: 'app_platforms_done' }]);
-      
-      await sendMessageWithButtons(chatId,
-        '🎯 <b>Шаг 8/15</b>\n\nВыберите <b>платформы</b>, на которых хотите работать (можно выбрать несколько):\n\n' +
-        (application.platforms?.length > 0 ? `Выбрано: ${application.platforms.join(', ')}` : 'Пока ничего не выбрано'),
-        platformButtons
-      );
+      await sendMessage(chatId, `🎯 <b>Шаг 8/15</b>
+
+<b>Есть ли у вас уже платформы, где вы работаете?</b>
+
+Напишите названия платформ, если есть. Например: OnlyFans, Fansly, Instagram и т.д.
+
+Если платформ пока нет — напишите "нет" и мы подберём для вас лучшие варианты! 💎`);
       break;
       
     case 'content_types':
@@ -635,7 +633,7 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       
     case 'experience':
       await sendMessageWithButtons(chatId,
-        '⭐ <b>Шаг 10/15</b>\n\nУ вас есть <b>опыт</b> работы моделью или в сфере взрослого контента?',
+        '⭐ <b>Шаг 10/15</b>\n\nУ вас есть <b>опыт</b> работы моделью или в сфере контента?',
         [
           [{ text: '🆕 Нет опыта', callback_data: 'app_exp_none' }],
           [{ text: '📱 Есть соцсети', callback_data: 'app_exp_social' }],
@@ -651,7 +649,11 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       
     case 'equipment':
       await sendMessageWithButtons(chatId,
-        '📷 <b>Шаг 12/15</b>\n\nКакое <b>оборудование</b> у вас есть для работы?',
+        `📷 <b>Шаг 12/15</b>
+
+<b>Какое оборудование у вас есть для работы?</b>
+
+Выберите вариант ниже, а затем <b>уточните модель телефона или другого оборудования</b> в следующем сообщении:`,
         [
           [{ text: '📱 Только телефон', callback_data: 'app_equip_phone' }],
           [{ text: '💻 Телефон + ноутбук', callback_data: 'app_equip_laptop' }],
@@ -659,6 +661,12 @@ async function sendApplicationQuestion(chatId: number, step: string, application
           [{ text: '🎬 Полная студия', callback_data: 'app_equip_studio' }]
         ]
       );
+      break;
+      
+    case 'equipment_details':
+      await sendMessage(chatId, `📱 <b>Уточните модель вашего оборудования:</b>
+
+Напишите модель телефона (iPhone 15 Pro, Samsung S24 Ultra и т.д.) и другое оборудование, которое у вас есть (камера, свет, микрофон и т.д.)`);
       break;
       
     case 'time_availability':
@@ -686,17 +694,38 @@ async function sendApplicationQuestion(chatId: number, step: string, application
       break;
       
     case 'about_yourself':
-      await sendMessage(chatId, '✨ <b>Шаг 15/15</b>\n\nРасскажите немного <b>о себе</b>: ваши увлечения, почему хотите работать моделью, что вас мотивирует.');
+      await sendMessage(chatId, `✨ <b>Шаг 15/15 — САМЫЙ ВАЖНЫЙ!</b>
+
+🌟 <b>Расскажите о себе максимально подробно!</b>
+
+Это ваш шанс показать себя с лучшей стороны. Мы раскрываем весь потенциал модели!
+
+<b>Что важно рассказать:</b>
+• Ваши хобби и увлечения
+• Таланты (пение, танцы, игра на инструментах и т.д.)
+• Интересные факты о себе
+• Что вас мотивирует
+• Ваши фишки и особенности
+
+💡 <i>Например: если вы умеете петь, играть на гитаре, танцевать — это станет вашими сильными сторонами! Расскажите о своих уникальных качествах.</i>
+
+Чем подробнее вы расскажете, тем лучше мы сможем вам помочь! 🚀`);
       break;
       
     case 'strong_points':
-      await sendMessage(chatId, '💪 <b>Последний вопрос!</b>\n\nВ чём ваши <b>сильные стороны</b>? Чем вы можете выделиться среди других моделей?');
+      await sendMessage(chatId, `💪 <b>Последний вопрос!</b>
+
+В чём ваши <b>сильные стороны</b>? Чем вы можете выделиться среди других моделей?
+
+<i>Опишите всё, что может стать вашим преимуществом!</i>`);
       break;
   }
 }
 
 // Завершить анкету
 async function completeApplication(chatId: number, application: any) {
+  const settings = await getWelcomeSettings();
+  
   await updateApplication(application.id, {
     status: 'pending',
     completed_at: new Date().toISOString()
@@ -710,12 +739,13 @@ async function completeApplication(chatId: number, application: any) {
 🌍 Страна: ${application.country || 'Не указана'}
 📏 Рост/вес: ${application.height || 'Не указано'} / ${application.weight || 'Не указан'}
 💇 Волосы: ${application.hair_color || 'Не указано'}
-🎯 Платформы: ${application.platforms?.join(', ') || 'Не выбраны'}
+🎯 Платформы: ${application.platforms?.join(', ') || 'Подберём для вас'}
 💰 Желаемый доход: ${application.desired_income || 'Не указан'}
 
-⏳ Наш менеджер свяжется с вами в течение 24 часов!
+⏳ <b>Владелец агентства</b> рассмотрит вашу анкету и свяжется с вами в течение 24 часов!
 
-📞 Если у вас есть вопросы — напишите нам: @Apollo_Production
+📞 <b>Если вам не ответили или есть вопросы — пишите напрямую владельцу:</b> ${settings.owner_contact}
+Он решит любой вопрос!
 `;
 
   await sendMessage(chatId, summary);
@@ -724,7 +754,7 @@ async function completeApplication(chatId: number, application: any) {
     '🎉 <b>Спасибо за заполнение анкеты!</b>\n\nЧто бы вы хотели сделать дальше?',
     [
       [{ text: '📝 Заполнить заново', callback_data: 'app_restart' }],
-      [{ text: '💬 Связаться с менеджером', url: 'https://t.me/Apollo_Production' }]
+      [{ text: '👤 Связаться с владельцем', url: `https://t.me/${settings.owner_contact.replace('@', '')}` }]
     ]
   );
 }
@@ -810,44 +840,6 @@ async function handleApplicationCallback(callbackQuery: any) {
     return;
   }
   
-  // Обработка выбора платформ
-  if (data.startsWith('app_platform_')) {
-    const platformId = data.replace('app_platform_', '');
-    const currentPlatforms = application.platforms || [];
-    
-    let newPlatforms;
-    if (currentPlatforms.includes(platformId)) {
-      newPlatforms = currentPlatforms.filter((p: string) => p !== platformId);
-    } else {
-      newPlatforms = [...currentPlatforms, platformId];
-    }
-    
-    await updateApplication(application.id, { platforms: newPlatforms });
-    
-    // Обновляем application для отображения
-    application.platforms = newPlatforms;
-    
-    // Редактируем сообщение с кнопками
-    const platformButtons = PLATFORMS.map(p => [{ 
-      text: `${newPlatforms.includes(p.id) ? '✅' : ''} ${p.emoji} ${p.name}`, 
-      callback_data: `app_platform_${p.id}` 
-    }]);
-    platformButtons.push([{ text: '✅ Готово', callback_data: 'app_platforms_done' }]);
-    
-    await editMessage(chatId, messageId,
-      '🎯 <b>Шаг 8/15</b>\n\nВыберите <b>платформы</b>, на которых хотите работать (можно выбрать несколько):\n\n' +
-      (newPlatforms.length > 0 ? `Выбрано: ${newPlatforms.join(', ')}` : 'Пока ничего не выбрано'),
-      platformButtons
-    );
-    return;
-  }
-  
-  if (data === 'app_platforms_done') {
-    await updateApplication(application.id, { step: 'content_types' });
-    await sendApplicationQuestion(chatId, 'content_types', application);
-    return;
-  }
-  
   // Обработка выбора типов контента
   if (data.startsWith('app_content_')) {
     if (data === 'app_content_done') {
@@ -910,9 +902,9 @@ async function handleApplicationCallback(callbackQuery: any) {
     
     await updateApplication(application.id, { 
       equipment: equipMap[data] || 'Не указано',
-      step: 'time_availability' 
+      step: 'equipment_details' 
     });
-    await sendApplicationQuestion(chatId, 'time_availability', application);
+    await sendApplicationQuestion(chatId, 'equipment_details', application);
     return;
   }
   
@@ -1008,9 +1000,26 @@ async function handleApplicationTextInput(message: any) {
       await sendApplicationQuestion(chatId, 'platforms', application);
       return true;
       
+    case 'platforms':
+      // Теперь это текстовый ввод
+      const platformsArray = text.toLowerCase() === 'нет' ? [] : [text];
+      await updateApplication(application.id, { platforms: platformsArray, step: 'content_types' });
+      await sendApplicationQuestion(chatId, 'content_types', application);
+      return true;
+      
     case 'social_links':
       await updateApplication(application.id, { social_media_links: text, step: 'equipment' });
       await sendApplicationQuestion(chatId, 'equipment', application);
+      return true;
+      
+    case 'equipment_details':
+      // Добавляем детали оборудования к существующему
+      const currentEquipment = application.equipment || '';
+      await updateApplication(application.id, { 
+        equipment: `${currentEquipment} — ${text}`,
+        step: 'time_availability' 
+      });
+      await sendApplicationQuestion(chatId, 'time_availability', application);
       return true;
       
     case 'about_yourself':

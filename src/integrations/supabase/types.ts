@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_welcome_settings: {
+        Row: {
+          created_at: string
+          id: string
+          owner_contact: string | null
+          updated_at: string
+          welcome_media_type: string | null
+          welcome_media_url: string | null
+          welcome_message: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_contact?: string | null
+          updated_at?: string
+          welcome_media_type?: string | null
+          welcome_media_url?: string | null
+          welcome_message?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_contact?: string | null
+          updated_at?: string
+          welcome_media_type?: string | null
+          welcome_media_url?: string | null
+          welcome_message?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           contact_user_id: string

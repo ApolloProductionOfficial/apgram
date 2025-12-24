@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Users, Calendar, Clock, MapPin, Globe, Shield, User, Camera, Save, Trash2, Loader2, BarChart3, Languages, MousePointer, TrendingUp, Eye } from 'lucide-react';
+import { ArrowLeft, FileText, Users, Calendar, Clock, MapPin, Globe, Shield, User, Camera, Save, Trash2, Loader2, BarChart3, Languages, MousePointer, TrendingUp, Eye, Sparkles, Upload, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -10,7 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import CustomCursor from '@/components/CustomCursor';
 import AnimatedBackground from '@/components/AnimatedBackground';
@@ -81,6 +83,41 @@ interface RegisteredUser {
   created_at: string;
 }
 
+interface ModelApplication {
+  id: string;
+  telegram_user_id: number;
+  telegram_username: string | null;
+  full_name: string | null;
+  age: number | null;
+  country: string | null;
+  height: string | null;
+  weight: string | null;
+  body_params: string | null;
+  hair_color: string | null;
+  language_skills: string | null;
+  platforms: string[] | null;
+  content_preferences: string[] | null;
+  social_media_experience: string[] | null;
+  social_media_links: string | null;
+  equipment: string | null;
+  time_availability: string | null;
+  desired_income: string | null;
+  about_yourself: string | null;
+  strong_points: string | null;
+  status: string;
+  step: string;
+  created_at: string;
+  completed_at: string | null;
+}
+
+interface BotWelcomeSettings {
+  id: string;
+  welcome_message: string;
+  welcome_media_url: string | null;
+  welcome_media_type: string;
+  owner_contact: string;
+}
+
 const AdminPanel = () => {
   const navigate = useNavigate();
   const { user, isAdmin, isLoading } = useAuth();
@@ -90,7 +127,7 @@ const AdminPanel = () => {
   const [participants, setParticipants] = useState<MeetingParticipant[]>([]);
   const [geoData, setGeoData] = useState<Map<string, ParticipantGeoData>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'transcripts' | 'participants' | 'profile' | 'analytics' | 'users'>('analytics');
+  const [activeTab, setActiveTab] = useState<'transcripts' | 'participants' | 'profile' | 'analytics' | 'users' | 'models'>('analytics');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
@@ -104,6 +141,14 @@ const AdminPanel = () => {
   const [usersLoading, setUsersLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Models tab state
+  const [modelApplications, setModelApplications] = useState<ModelApplication[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [botWelcomeSettings, setBotWelcomeSettings] = useState<BotWelcomeSettings | null>(null);
+  const [savingWelcome, setSavingWelcome] = useState(false);
+  const [uploadingWelcomeMedia, setUploadingWelcomeMedia] = useState(false);
+  const welcomeMediaInputRef = useRef<HTMLInputElement>(null);
 
   // Redirect if not admin
   useEffect(() => {
@@ -191,7 +236,6 @@ const AdminPanel = () => {
     const loadAnalytics = async () => {
       setAnalyticsLoading(true);
       try {
-        // Fetch all analytics data
         const { data: analyticsData, error } = await supabase
           .from('site_analytics')
           .select('*')
@@ -200,21 +244,18 @@ const AdminPanel = () => {
 
         if (error) throw error;
 
-        // Also get translation history count
         const { count: translationCount } = await supabase
           .from('translation_history')
           .select('*', { count: 'exact', head: true });
 
         const events = analyticsData || [];
         
-        // Calculate stats
         const totalPageViews = events.filter(e => e.event_type === 'page_view').length;
         const totalTranslations = (translationCount || 0) + events.filter(e => e.event_type === 'translation_completed').length;
         const totalClicks = events.filter(e => e.event_type === 'button_click').length;
         const totalRoomJoins = events.filter(e => e.event_type === 'room_joined').length;
         const uniqueSessions = new Set(events.map(e => e.session_id)).size;
 
-        // Top pages
         const pageCount = new Map<string, number>();
         events.filter(e => e.event_type === 'page_view').forEach(e => {
           const path = e.page_path || '/';
@@ -225,7 +266,6 @@ const AdminPanel = () => {
           .slice(0, 10)
           .map(([path, count]) => ({ path, count }));
 
-        // Translations by language
         const langCount = new Map<string, number>();
         events.filter(e => e.event_type === 'translation_completed').forEach(e => {
           const data = e.event_data as Record<string, unknown>;
@@ -236,7 +276,6 @@ const AdminPanel = () => {
           .sort((a, b) => b[1] - a[1])
           .map(([language, count]) => ({ language, count }));
 
-        // Recent events
         const recentEvents = events.slice(0, 50).map(e => ({
           event_type: e.event_type,
           created_at: e.created_at,
@@ -288,6 +327,41 @@ const AdminPanel = () => {
     };
 
     loadUsers();
+  }, [user, isAdmin, activeTab]);
+
+  // Load model applications and welcome settings
+  useEffect(() => {
+    if (!user || !isAdmin || activeTab !== 'models') return;
+    
+    const loadModelsData = async () => {
+      setModelsLoading(true);
+      try {
+        const [applicationsRes, welcomeRes] = await Promise.all([
+          supabase
+            .from('telegram_model_applications')
+            .select('*')
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('bot_welcome_settings')
+            .select('*')
+            .limit(1)
+            .single()
+        ]);
+
+        if (applicationsRes.data) {
+          setModelApplications(applicationsRes.data as ModelApplication[]);
+        }
+        if (welcomeRes.data) {
+          setBotWelcomeSettings(welcomeRes.data as BotWelcomeSettings);
+        }
+      } catch (error) {
+        console.error('Error loading models data:', error);
+      } finally {
+        setModelsLoading(false);
+      }
+    };
+
+    loadModelsData();
   }, [user, isAdmin, activeTab]);
 
   // Check if user has 2FA enabled
@@ -418,6 +492,97 @@ const AdminPanel = () => {
     setUploadingAvatar(false);
   };
 
+  const handleSaveWelcomeSettings = async () => {
+    if (!botWelcomeSettings) return;
+    setSavingWelcome(true);
+    
+    try {
+      const { error } = await supabase
+        .from('bot_welcome_settings')
+        .update({
+          welcome_message: botWelcomeSettings.welcome_message,
+          welcome_media_url: botWelcomeSettings.welcome_media_url,
+          welcome_media_type: botWelcomeSettings.welcome_media_type,
+          owner_contact: botWelcomeSettings.owner_contact
+        })
+        .eq('id', botWelcomeSettings.id);
+      
+      if (error) throw error;
+      toast.success('Настройки приветствия сохранены');
+    } catch (error: any) {
+      toast.error('Ошибка сохранения: ' + error.message);
+    } finally {
+      setSavingWelcome(false);
+    }
+  };
+
+  const handleWelcomeMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
+    const isGif = file.type === 'image/gif';
+    
+    if (!isVideo && !isImage) {
+      toast.error('Пожалуйста, выберите видео или изображение');
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('Максимальный размер файла 50MB');
+      return;
+    }
+
+    setUploadingWelcomeMedia(true);
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `welcome-media.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('bot-media')
+      .upload(fileName, file, { upsert: true });
+
+    if (uploadError) {
+      toast.error('Не удалось загрузить медиа');
+      setUploadingWelcomeMedia(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('bot-media')
+      .getPublicUrl(fileName);
+
+    const mediaType = isGif ? 'animation' : isVideo ? 'video' : 'photo';
+    
+    setBotWelcomeSettings(prev => prev ? {
+      ...prev,
+      welcome_media_url: `${urlData.publicUrl}?t=${Date.now()}`,
+      welcome_media_type: mediaType
+    } : null);
+
+    toast.success('Медиа загружено');
+    setUploadingWelcomeMedia(false);
+  };
+
+  const updateApplicationStatus = async (id: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('telegram_model_applications')
+        .update({ status })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setModelApplications(prev => 
+        prev.map(app => app.id === id ? { ...app, status } : app)
+      );
+      toast.success(`Статус изменён на: ${status}`);
+    } catch (error: any) {
+      toast.error('Ошибка: ' + error.message);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('ru-RU', {
       day: '2-digit',
@@ -435,6 +600,21 @@ const AdminPanel = () => {
       .split('')
       .map(char => 127397 + char.charCodeAt(0));
     return String.fromCodePoint(...codePoints);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-500"><AlertCircle className="w-3 h-3 mr-1" />На рассмотрении</Badge>;
+      case 'approved':
+        return <Badge variant="secondary" className="bg-green-500/20 text-green-500"><CheckCircle className="w-3 h-3 mr-1" />Одобрена</Badge>;
+      case 'rejected':
+        return <Badge variant="secondary" className="bg-red-500/20 text-red-500"><XCircle className="w-3 h-3 mr-1" />Отклонена</Badge>;
+      case 'in_progress':
+        return <Badge variant="secondary" className="bg-blue-500/20 text-blue-500"><Loader2 className="w-3 h-3 mr-1 animate-spin" />Заполняется</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
   if (isLoading || !user || !isAdmin) {
@@ -488,6 +668,15 @@ const AdminPanel = () => {
               {admin.analytics || 'Статистика'}
             </Button>
             <Button
+              variant={activeTab === 'models' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('models')}
+              className="gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              Модели
+            </Button>
+            <Button
               variant={activeTab === 'transcripts' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setActiveTab('transcripts')}
@@ -531,6 +720,227 @@ const AdminPanel = () => {
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-12 h-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+          </div>
+        ) : activeTab === 'models' ? (
+          <div className="space-y-6">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-primary" />
+              Управление моделями
+            </h1>
+            
+            {modelsLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Welcome Settings */}
+                <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Globe className="w-5 h-5 text-primary" />
+                      Приветственное сообщение бота
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {botWelcomeSettings && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Приветственный текст (HTML)</Label>
+                          <Textarea
+                            value={botWelcomeSettings.welcome_message}
+                            onChange={(e) => setBotWelcomeSettings(prev => prev ? { ...prev, welcome_message: e.target.value } : null)}
+                            className="min-h-[200px] font-mono text-sm"
+                            placeholder="Приветственное сообщение..."
+                          />
+                          <p className="text-xs text-muted-foreground">Поддерживается HTML: &lt;b&gt;жирный&lt;/b&gt;, &lt;i&gt;курсив&lt;/i&gt;</p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Медиа (видео/GIF/фото)</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              value={botWelcomeSettings.welcome_media_url || ''}
+                              onChange={(e) => setBotWelcomeSettings(prev => prev ? { ...prev, welcome_media_url: e.target.value } : null)}
+                              placeholder="URL медиа..."
+                              className="flex-1"
+                            />
+                            <input
+                              type="file"
+                              accept="video/*,image/*"
+                              className="hidden"
+                              ref={welcomeMediaInputRef}
+                              onChange={handleWelcomeMediaUpload}
+                            />
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => welcomeMediaInputRef.current?.click()}
+                              disabled={uploadingWelcomeMedia}
+                            >
+                              {uploadingWelcomeMedia ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Тип медиа</Label>
+                          <Select
+                            value={botWelcomeSettings.welcome_media_type}
+                            onValueChange={(value) => setBotWelcomeSettings(prev => prev ? { ...prev, welcome_media_type: value } : null)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="video">Видео</SelectItem>
+                              <SelectItem value="animation">GIF/Анимация</SelectItem>
+                              <SelectItem value="photo">Фото</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Контакт владельца</Label>
+                          <Input
+                            value={botWelcomeSettings.owner_contact}
+                            onChange={(e) => setBotWelcomeSettings(prev => prev ? { ...prev, owner_contact: e.target.value } : null)}
+                            placeholder="@username или ссылка"
+                          />
+                          <p className="text-xs text-muted-foreground">Отображается как контакт для связи</p>
+                        </div>
+                        
+                        <Button 
+                          onClick={handleSaveWelcomeSettings}
+                          disabled={savingWelcome}
+                          className="w-full"
+                        >
+                          {savingWelcome ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                          Сохранить настройки
+                        </Button>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                {/* Applications Stats */}
+                <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5 text-primary" />
+                      Статистика анкет
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                        <p className="text-2xl font-bold text-blue-500">{modelApplications.filter(a => a.status === 'in_progress').length}</p>
+                        <p className="text-sm text-muted-foreground">Заполняются</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                        <p className="text-2xl font-bold text-yellow-500">{modelApplications.filter(a => a.status === 'pending').length}</p>
+                        <p className="text-sm text-muted-foreground">На рассмотрении</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                        <p className="text-2xl font-bold text-green-500">{modelApplications.filter(a => a.status === 'approved').length}</p>
+                        <p className="text-sm text-muted-foreground">Одобрено</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                        <p className="text-2xl font-bold text-red-500">{modelApplications.filter(a => a.status === 'rejected').length}</p>
+                        <p className="text-sm text-muted-foreground">Отклонено</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+            
+            {/* Applications List */}
+            <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Все анкеты ({modelApplications.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {modelApplications.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">Анкет пока нет</p>
+                ) : (
+                  <Accordion type="single" collapsible className="space-y-2">
+                    {modelApplications.map((app) => (
+                      <AccordionItem key={app.id} value={app.id} className="border border-border/50 rounded-lg px-4">
+                        <AccordionTrigger className="hover:no-underline">
+                          <div className="flex items-center gap-4 flex-1">
+                            <div className="text-left">
+                              <p className="font-medium">{app.full_name || 'Без имени'}</p>
+                              <p className="text-xs text-muted-foreground">@{app.telegram_username || 'нет username'}</p>
+                            </div>
+                            {getStatusBadge(app.status)}
+                            <span className="text-xs text-muted-foreground ml-auto mr-4">
+                              {formatDate(app.created_at)}
+                            </span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="grid md:grid-cols-2 gap-4 pt-4">
+                            <div className="space-y-2 text-sm">
+                              <p><strong>Возраст:</strong> {app.age || 'Не указан'}</p>
+                              <p><strong>Страна:</strong> {app.country || 'Не указана'}</p>
+                              <p><strong>Рост/Вес:</strong> {app.height || '-'} / {app.weight || '-'}</p>
+                              <p><strong>Параметры:</strong> {app.body_params || '-'}</p>
+                              <p><strong>Волосы:</strong> {app.hair_color || '-'}</p>
+                              <p><strong>Языки:</strong> {app.language_skills || '-'}</p>
+                            </div>
+                            <div className="space-y-2 text-sm">
+                              <p><strong>Платформы:</strong> {app.platforms?.join(', ') || '-'}</p>
+                              <p><strong>Контент:</strong> {app.content_preferences?.join(', ') || '-'}</p>
+                              <p><strong>Опыт:</strong> {app.social_media_experience?.join(', ') || '-'}</p>
+                              <p><strong>Оборудование:</strong> {app.equipment || '-'}</p>
+                              <p><strong>Время:</strong> {app.time_availability || '-'}</p>
+                              <p><strong>Желаемый доход:</strong> {app.desired_income || '-'}</p>
+                            </div>
+                            <div className="md:col-span-2 space-y-2 text-sm">
+                              <p><strong>Соцсети:</strong> {app.social_media_links || '-'}</p>
+                              <p><strong>О себе:</strong> {app.about_yourself || '-'}</p>
+                              <p><strong>Сильные стороны:</strong> {app.strong_points || '-'}</p>
+                            </div>
+                            <div className="md:col-span-2 flex gap-2 pt-4 border-t border-border/50">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20"
+                                onClick={() => updateApplicationStatus(app.id, 'approved')}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Одобрить
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-red-500/10 border-red-500/50 text-red-500 hover:bg-red-500/20"
+                                onClick={() => updateApplicationStatus(app.id, 'rejected')}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Отклонить
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(`https://t.me/${app.telegram_username}`, '_blank')}
+                                disabled={!app.telegram_username}
+                              >
+                                Написать в Telegram
+                              </Button>
+                            </div>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </CardContent>
+            </Card>
           </div>
         ) : activeTab === 'analytics' ? (
           <div className="space-y-6">
@@ -706,126 +1116,84 @@ const AdminPanel = () => {
           <div className="space-y-6">
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FileText className="w-6 h-6 text-primary" />
-              Все созвоны ({transcripts.length})
+              {admin.meetingRecords || 'Записи встреч'}
             </h1>
             
             {transcripts.length === 0 ? (
               <Card className="bg-card/50 backdrop-blur-sm border-border/50">
                 <CardContent className="py-12 text-center text-muted-foreground">
                   <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Пока нет записей созвонов</p>
+                  <p>{admin.noRecords || 'Записей пока нет'}</p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4">
+              <Accordion type="single" collapsible className="space-y-4">
                 {transcripts.map((transcript) => (
-                  <Card key={transcript.id} className="bg-card/50 backdrop-blur-sm border-border/50">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <Users className="w-5 h-5 text-primary" />
-                            {transcript.room_name}
-                          </CardTitle>
-                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              {formatDate(transcript.started_at)}
-                            </span>
-                            {transcript.participants && (
-                              <span className="flex items-center gap-1">
-                                <Users className="w-4 h-4" />
-                                {transcript.participants.length} участников
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {transcript.ended_at && (
-                          <Badge variant="secondary">Завершён</Badge>
+                  <AccordionItem key={transcript.id} value={transcript.id} className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg px-4">
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-4 flex-1">
+                        <Badge variant="outline">{transcript.room_name}</Badge>
+                        <span className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(transcript.started_at)}
+                        </span>
+                        {transcript.summary && (
+                          <Badge variant="secondary" className="bg-green-500/20 text-green-500">
+                            AI Summary
+                          </Badge>
                         )}
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      {transcript.summary && (
-                        <div className="mb-4">
-                          <h4 className="font-medium mb-2">Краткое содержание</h4>
-                          <p className="text-muted-foreground">{transcript.summary}</p>
-                        </div>
-                      )}
-                      
-                      {transcript.key_points && (
-                        <Accordion type="single" collapsible className="w-full">
-                          {transcript.key_points.keyPoints && transcript.key_points.keyPoints.length > 0 && (
-                            <AccordionItem value="key-points">
-                              <AccordionTrigger>Ключевые моменты</AccordionTrigger>
-                              <AccordionContent>
-                                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                  {transcript.key_points.keyPoints.map((point, i) => (
-                                    <li key={i}>{point}</li>
-                                  ))}
-                                </ul>
-                              </AccordionContent>
-                            </AccordionItem>
-                          )}
-                          
-                          {transcript.key_points.actionItems && transcript.key_points.actionItems.length > 0 && (
-                            <AccordionItem value="actions">
-                              <AccordionTrigger>Задачи к выполнению</AccordionTrigger>
-                              <AccordionContent>
-                                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                  {transcript.key_points.actionItems.map((item, i) => (
-                                    <li key={i}>{item}</li>
-                                  ))}
-                                </ul>
-                              </AccordionContent>
-                            </AccordionItem>
-                          )}
-                          
-                          {transcript.key_points.decisions && transcript.key_points.decisions.length > 0 && (
-                            <AccordionItem value="decisions">
-                              <AccordionTrigger>Принятые решения</AccordionTrigger>
-                              <AccordionContent>
-                                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                  {transcript.key_points.decisions.map((decision, i) => (
-                                    <li key={i}>{decision}</li>
-                                  ))}
-                                </ul>
-                              </AccordionContent>
-                            </AccordionItem>
-                          )}
-                          
-                          {transcript.transcript && (
-                            <AccordionItem value="transcript">
-                              <AccordionTrigger>Полная транскрипция</AccordionTrigger>
-                              <AccordionContent>
-                                <div className="bg-muted/30 rounded-lg p-4 max-h-96 overflow-y-auto">
-                                  <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-mono">
-                                    {transcript.transcript}
-                                  </pre>
-                                </div>
-                              </AccordionContent>
-                            </AccordionItem>
-                          )}
-                        </Accordion>
-                      )}
-                    </CardContent>
-                  </Card>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-4 pt-4">
+                        {transcript.summary && (
+                          <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
+                            <h4 className="font-semibold mb-2 flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-primary" />
+                              {admin.summary || 'Краткое содержание'}
+                            </h4>
+                            <p className="text-sm">{transcript.summary}</p>
+                          </div>
+                        )}
+                        
+                        {transcript.key_points?.keyPoints && transcript.key_points.keyPoints.length > 0 && (
+                          <div className="p-4 rounded-lg bg-secondary/50">
+                            <h4 className="font-semibold mb-2">{admin.keyPoints || 'Ключевые моменты'}</h4>
+                            <ul className="list-disc list-inside text-sm space-y-1">
+                              {transcript.key_points.keyPoints.map((point, i) => (
+                                <li key={i}>{point}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        {transcript.transcript && (
+                          <div className="p-4 rounded-lg bg-muted/50">
+                            <h4 className="font-semibold mb-2">{admin.transcript || 'Транскрипт'}</h4>
+                            <p className="text-sm whitespace-pre-wrap max-h-[300px] overflow-y-auto">
+                              {transcript.transcript}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
                 ))}
-              </div>
+              </Accordion>
             )}
           </div>
         ) : activeTab === 'participants' ? (
           <div className="space-y-6">
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Users className="w-6 h-6 text-primary" />
-              IP-чекер участников ({participants.length})
+              <Globe className="w-6 h-6 text-primary" />
+              {admin.ipChecker || 'IP-чекер участников'}
             </h1>
             
             {participants.length === 0 ? (
               <Card className="bg-card/50 backdrop-blur-sm border-border/50">
                 <CardContent className="py-12 text-center text-muted-foreground">
-                  <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Пока нет данных об участниках</p>
+                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>{admin.noParticipants || 'Участников пока нет'}</p>
                 </CardContent>
               </Card>
             ) : (
@@ -835,45 +1203,43 @@ const AdminPanel = () => {
                   return (
                     <Card key={participant.id} className="bg-card/50 backdrop-blur-sm border-border/50">
                       <CardContent className="py-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="text-3xl">
-                              {getCountryFlag(geo?.country_code || null)}
-                            </div>
+                        <div className="flex items-center justify-between flex-wrap gap-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {participant.user_name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
                             <div>
-                              <h3 className="font-medium">{participant.user_name}</h3>
-                              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <MapPin className="w-3 h-3" />
-                                  {geo?.city || 'Unknown'}, {geo?.country || 'Unknown'}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Globe className="w-3 h-3" />
-                                  {geo?.ip_address || 'Unknown'}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  Вошёл: {formatDate(participant.joined_at)}
-                                </span>
-                                {participant.left_at && (
-                                  <span>Вышел: {formatDate(participant.left_at)}</span>
-                                )}
-                              </div>
+                              <p className="font-medium">{participant.user_name}</p>
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {formatDate(participant.joined_at)}
+                              </p>
                             </div>
                           </div>
-                        <div className="text-right">
-                          <Badge variant="outline">{participant.room_id.replace(/-/g, ' ')}</Badge>
-                          {!participant.left_at && (
-                            <Badge className="ml-2 bg-green-500/20 text-green-400 border-green-500/50">
-                              Онлайн
-                            </Badge>
-                          )}
+                          
+                          <div className="flex items-center gap-4">
+                            <Badge variant="outline">{participant.room_id}</Badge>
+                            
+                            {geo ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-lg">{getCountryFlag(geo.country_code)}</span>
+                                <div>
+                                  <p className="font-medium">{geo.city}, {geo.country}</p>
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <MapPin className="w-3 h-3" />
+                                    {geo.ip_address}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">{admin.noGeoData || 'Нет гео-данных'}</span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
                   );
                 })}
               </div>
@@ -883,7 +1249,7 @@ const AdminPanel = () => {
           <div className="space-y-6">
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Users className="w-6 h-6 text-primary" />
-              Зарегистрированные пользователи ({registeredUsers.length})
+              {admin.registeredUsers || 'Зарегистрированные пользователи'}
             </h1>
             
             {usersLoading ? (
@@ -894,36 +1260,31 @@ const AdminPanel = () => {
               <Card className="bg-card/50 backdrop-blur-sm border-border/50">
                 <CardContent className="py-12 text-center text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Пока нет зарегистрированных пользователей</p>
+                  <p>{admin.noUsers || 'Пользователей пока нет'}</p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4">
-                {registeredUsers.map((u) => (
-                  <Card key={u.id} className="bg-card/50 backdrop-blur-sm border-border/50">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {registeredUsers.map((regUser) => (
+                  <Card key={regUser.id} className="bg-card/50 backdrop-blur-sm border-border/50">
                     <CardContent className="py-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="w-12 h-12">
-                            <AvatarImage src={u.avatar_url || ''} />
-                            <AvatarFallback className="bg-primary/20 text-primary">
-                              {u.display_name?.[0]?.toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-medium">{u.display_name || 'Без имени'}</h3>
-                            {u.username && (
-                              <span className="text-sm text-muted-foreground">@{u.username}</span>
-                            )}
-                            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              Регистрация: {formatDate(u.created_at)}
-                            </div>
-                          </div>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={regUser.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {(regUser.display_name || regUser.username || 'U').charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium">{regUser.display_name || 'Без имени'}</p>
+                          {regUser.username && (
+                            <p className="text-sm text-muted-foreground">@{regUser.username}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {formatDate(regUser.created_at)}
+                          </p>
                         </div>
-                        <Badge variant="outline" className="text-xs">
-                          ID: {u.user_id.slice(0, 8)}...
-                        </Badge>
                       </div>
                     </CardContent>
                   </Card>
@@ -931,146 +1292,143 @@ const AdminPanel = () => {
               </div>
             )}
           </div>
-        ) : activeTab === 'profile' ? (
-          <div className="max-w-md mx-auto">
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-primary" />
-                  Редактирование профиля
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex justify-center">
-                  <div
-                    onClick={handleAvatarClick}
-                    className="relative w-24 h-24 cursor-pointer group"
-                  >
-                    <Avatar className="w-24 h-24">
-                      <AvatarImage src={profile?.avatar_url || ''} />
-                      <AvatarFallback className="text-2xl bg-primary/20 text-primary">
-                        {displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      {uploadingAvatar ? (
-                        <Loader2 className="w-6 h-6 animate-spin text-white" />
+        ) : (
+          <div className="space-y-6">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <User className="w-6 h-6 text-primary" />
+              {admin.profileSettings || 'Настройки профиля'}
+            </h1>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                <CardHeader>
+                  <CardTitle className="text-lg">{admin.personalInfo || 'Личная информация'}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex justify-center">
+                    <div className="relative">
+                      <Avatar 
+                        className="h-24 w-24 cursor-pointer ring-2 ring-primary/20 ring-offset-2 ring-offset-background transition-all hover:ring-primary/50"
+                        onClick={handleAvatarClick}
+                      >
+                        <AvatarImage src={profile?.avatar_url || undefined} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                          {(displayName || username || 'U').charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <Button
+                        size="icon"
+                        className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full"
+                        onClick={handleAvatarClick}
+                        disabled={uploadingAvatar}
+                      >
+                        {uploadingAvatar ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Camera className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        ref={fileInputRef}
+                        onChange={handleAvatarChange}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="displayName">{admin.displayName || 'Отображаемое имя'}</Label>
+                      <Input
+                        id="displayName"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder={admin.enterName || 'Введите имя'}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="username">{admin.username || 'Username'}</Label>
+                      <Input
+                        id="username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder={admin.enterUsername || 'Введите username'}
+                      />
+                    </div>
+                    
+                    <Button 
+                      onClick={handleSaveProfile}
+                      disabled={savingProfile}
+                      className="w-full"
+                    >
+                      {savingProfile ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       ) : (
-                        <Camera className="w-6 h-6 text-white" />
+                        <Save className="h-4 w-4 mr-2" />
                       )}
-                    </div>
+                      {admin.save || 'Сохранить'}
+                    </Button>
                   </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="hidden"
-                  />
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="displayName">Отображаемое имя</Label>
-                    <Input
-                      id="displayName"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Введите имя"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="@username"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input
-                      value={user?.email || ''}
-                      disabled
-                      className="opacity-50"
-                    />
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={handleSaveProfile} 
-                  className="w-full gap-2"
-                  disabled={savingProfile}
-                >
-                  <Save className="w-4 h-4" />
-                  {savingProfile ? 'Сохранение...' : 'Сохранить'}
-                </Button>
-                
-                {/* 2FA Section */}
-                <div className="pt-4 border-t border-border/50 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-5 h-5 text-primary" />
-                      <span className="font-medium">Двухфакторная аутентификация</span>
-                    </div>
-                    {has2FA ? (
-                      <Badge className="bg-green-500/20 text-green-500 border-green-500/30">
-                        Включена
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-muted-foreground">
-                        Выключена
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground">
-                    {has2FA 
-                      ? 'Ваш аккаунт защищён двухфакторной аутентификацией'
-                      : 'Добавьте дополнительный уровень защиты вашего аккаунта'
-                    }
-                  </p>
-                  
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-primary" />
+                    {admin.twoFactorAuth || 'Двухфакторная аутентификация'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   {has2FA ? (
-                    <Button
-                      variant="outline"
-                      onClick={disable2FA}
-                      disabled={disabling2FA}
-                      className="w-full border-destructive/50 text-destructive hover:bg-destructive/10"
-                    >
-                      {disabling2FA ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-4 h-4 mr-2" />
-                      )}
-                      Отключить 2FA
-                    </Button>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 text-green-500">
+                        <Shield className="w-5 h-5" />
+                        <span>{admin.twoFAEnabled || '2FA включена'}</span>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        onClick={disable2FA}
+                        disabled={disabling2FA}
+                        className="w-full"
+                      >
+                        {disabling2FA ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 mr-2" />
+                        )}
+                        {admin.disable2FA || 'Отключить 2FA'}
+                      </Button>
+                    </div>
+                  ) : show2FASetup ? (
+                    <TwoFactorSetup 
+                      isOpen={show2FASetup}
+                      onClose={() => setShow2FASetup(false)}
+                      onSuccess={() => {
+                        setShow2FASetup(false);
+                        setHas2FA(true);
+                      }} 
+                    />
                   ) : (
-                    <Button
-                      variant="outline"
-                      onClick={() => setShow2FASetup(true)}
-                      className="w-full border-primary/50 hover:bg-primary/10"
-                    >
-                      <Shield className="w-4 h-4 mr-2" />
-                      Настроить 2FA
-                    </Button>
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        {admin.twoFADescription || 'Добавьте дополнительный уровень безопасности к вашему аккаунту'}
+                      </p>
+                      <Button onClick={() => setShow2FASetup(true)} className="w-full">
+                        <Shield className="h-4 w-4 mr-2" />
+                        {admin.enable2FA || 'Настроить 2FA'}
+                      </Button>
+                    </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        ) : null}
+        )}
       </main>
-      
-      {/* 2FA Setup Dialog */}
-      <TwoFactorSetup
-        isOpen={show2FASetup}
-        onClose={() => setShow2FASetup(false)}
-        onSuccess={() => setHas2FA(true)}
-      />
     </div>
   );
 };
