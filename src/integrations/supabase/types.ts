@@ -87,6 +87,7 @@ export type Database = {
           notification_chat_ids: number[] | null
           owner_contact: string | null
           owner_telegram_chat_id: number | null
+          team_usernames: Json | null
           updated_at: string
           welcome_media_type: string | null
           welcome_media_url: string | null
@@ -98,6 +99,7 @@ export type Database = {
           notification_chat_ids?: number[] | null
           owner_contact?: string | null
           owner_telegram_chat_id?: number | null
+          team_usernames?: Json | null
           updated_at?: string
           welcome_media_type?: string | null
           welcome_media_url?: string | null
@@ -109,6 +111,7 @@ export type Database = {
           notification_chat_ids?: number[] | null
           owner_contact?: string | null
           owner_telegram_chat_id?: number | null
+          team_usernames?: Json | null
           updated_at?: string
           welcome_media_type?: string | null
           welcome_media_url?: string | null
