@@ -47,6 +47,8 @@ import {
   Command
 } from "lucide-react";
 import apolloLogo from "@/assets/cf-logo-final.png";
+import apolloLogoVideo from "@/assets/apollo-logo.mp4";
+import backgroundVideo from "@/assets/background-video-new.mp4";
 import CustomCursor from "@/components/CustomCursor";
 
 interface QuickPhrase {
@@ -304,105 +306,171 @@ const Dashboard = () => {
     return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Splash Screen - APLink Style
+  // Splash Screen - Full APLink Style with video background
   if (showSplash || isLoading || isLoadingData) {
     return (
       <AnimatePresence>
         <motion.div 
-          className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center relative overflow-hidden"
+          className="fixed inset-0 z-[9999] bg-background flex flex-col items-center justify-center overflow-hidden"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
         >
-          {/* Background grid pattern */}
-          <div 
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage: `linear-gradient(rgba(0, 180, 216, 0.1) 1px, transparent 1px),
-                               linear-gradient(90deg, rgba(0, 180, 216, 0.1) 1px, transparent 1px)`,
-              backgroundSize: '50px 50px'
-            }}
-          />
-          
-          {/* Ambient glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#00b4d8]/10 rounded-full blur-[100px]" />
-          
-          <div className="flex flex-col items-center gap-8 z-10">
-            {/* Logo with glow ring */}
-            <motion.div 
-              className="relative"
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+          {/* Video background */}
+          <motion.div
+            className="absolute inset-0 overflow-hidden"
+            initial={{ scale: 1.2, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.4 }}
+            transition={{ duration: 2, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
             >
-              {/* Outer glow ring */}
-              <motion.div 
-                className="absolute -inset-6 rounded-full"
+              <source src={backgroundVideo} type="video/mp4" />
+            </video>
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
+          </motion.div>
+          
+          {/* Animated particles */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {[...Array(25)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1 h-1 bg-primary/50 rounded-full"
                 style={{
-                  background: 'radial-gradient(circle, rgba(0, 180, 216, 0.4) 0%, rgba(0, 180, 216, 0.1) 50%, transparent 70%)',
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
                 }}
+                initial={{ opacity: 0, scale: 0 }}
                 animate={{ 
-                  scale: [1, 1.1, 1],
-                  opacity: [0.5, 0.8, 0.5]
+                  opacity: [0, 0.8, 0],
+                  scale: [0, 1.5, 0],
                 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                transition={{
+                  duration: 2.5 + Math.random() * 2,
+                  repeat: Infinity,
+                  delay: Math.random() * 3,
+                  ease: "easeInOut",
+                }}
               />
-              
-              {/* Rotating border ring */}
-              <motion.div 
-                className="absolute -inset-3 rounded-full border-2 border-[#00b4d8]/30"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              />
-              
-              {/* Second rotating ring */}
-              <motion.div 
-                className="absolute -inset-5 rounded-full border border-[#00b4d8]/20"
-                animate={{ rotate: -360 }}
-                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-              />
-              
-              {/* Logo container */}
-              <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-[#00b4d8]/50 shadow-[0_0_40px_rgba(0,180,216,0.5)]">
-                <img src={apolloLogo} alt="APLink" className="w-full h-full object-cover" />
-              </div>
-            </motion.div>
+            ))}
+          </div>
+          
+          {/* Central glow */}
+          <motion.div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-primary/20 blur-[100px]"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: [0, 1.3, 1], opacity: [0, 0.6, 0.4] }}
+            transition={{ duration: 2.5, ease: "easeOut" }}
+          />
+
+          {/* Text content */}
+          <motion.div
+            className="relative z-10 text-center px-4"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+          >
+            {/* Decorative line top */}
+            <motion.div
+              className="w-20 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mb-8"
+              initial={{ scaleX: 0, opacity: 0 }}
+              animate={{ scaleX: 1, opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+            />
             
-            {/* Text */}
-            <motion.div 
-              className="text-center"
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
+            <motion.p
+              className="text-sm sm:text-base text-primary/80 mb-4 tracking-[0.3em] uppercase font-medium"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
             >
-              <h1 className="text-5xl font-bold tracking-tight">
-                <span className="text-slate-300">AP</span>
-                <span className="text-[#00b4d8]">Link</span>
-              </h1>
-              <motion.p 
-                className="text-slate-500 text-lg mt-2 tracking-wide"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                by Apollo Production
-              </motion.p>
-            </motion.div>
+              Apollo Production
+            </motion.p>
             
-            {/* Loading indicator */}
-            <motion.div 
-              className="flex items-center gap-3 mt-4"
+            <motion.p
+              className="text-sm text-muted-foreground/70 mb-10 italic"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
             >
-              <motion.div 
-                className="w-8 h-0.5 bg-gradient-to-r from-transparent via-[#00b4d8] to-transparent"
-                animate={{ scaleX: [0, 1, 0], opacity: [0, 1, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
+              представляет
+            </motion.p>
+            
+            {/* Logo letter by letter */}
+            <div className="relative mb-6">
+              <motion.div
+                className="absolute inset-0 blur-3xl bg-primary/50 rounded-full"
+                initial={{ x: "-100%", opacity: 0 }}
+                animate={{ x: "100%", opacity: [0, 0.8, 0] }}
+                transition={{ delay: 0.8, duration: 2, ease: "easeInOut" }}
               />
-            </motion.div>
-          </div>
+              <h1 className="text-6xl sm:text-8xl font-bold relative z-10 flex justify-center">
+                {"Apollo".split("").map((letter, index) => (
+                  <motion.span
+                    key={index}
+                    className="inline-block relative bg-gradient-to-r from-primary via-foreground to-primary bg-clip-text text-transparent bg-[length:200%_auto]"
+                    initial={{ 
+                      opacity: 0, 
+                      x: -30,
+                      filter: "blur(8px)",
+                    }}
+                    animate={{ 
+                      opacity: 1, 
+                      x: 0,
+                      filter: "blur(0px)",
+                      backgroundPosition: ["200% 0", "-200% 0"],
+                    }}
+                    transition={{ 
+                      opacity: { delay: 0.8 + index * 0.15, duration: 0.5 },
+                      x: { delay: 0.8 + index * 0.15, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+                      filter: { delay: 0.8 + index * 0.15, duration: 0.5 },
+                      backgroundPosition: { delay: 1.5, duration: 3, repeat: Infinity, ease: "linear" },
+                    }}
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+              </h1>
+            </div>
+            
+            <motion.p
+              className="text-xl sm:text-2xl text-foreground/80 font-light tracking-wide"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.1, duration: 0.5 }}
+            >
+              Bot Manager
+            </motion.p>
+
+            {/* Decorative line bottom */}
+            <motion.div
+              className="w-20 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mt-8"
+              initial={{ scaleX: 0, opacity: 0 }}
+              animate={{ scaleX: 1, opacity: 1 }}
+              transition={{ delay: 1.3, duration: 0.6 }}
+            />
+          </motion.div>
+
+          {/* Loading bar */}
+          <motion.div
+            className="absolute bottom-16 w-48 h-1 bg-muted/20 rounded-full overflow-hidden"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.5, duration: 0.3 }}
+          >
+            <motion.div
+              className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full"
+              initial={{ width: "0%" }}
+              animate={{ width: "100%" }}
+              transition={{ delay: 1.5, duration: 1.5, ease: "easeInOut" }}
+            />
+          </motion.div>
         </motion.div>
       </AnimatePresence>
     );
@@ -424,41 +492,55 @@ const Dashboard = () => {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#0088cc]/5 rounded-full blur-3xl" />
         </div>
 
-        {/* Header */}
-        <header className="sticky top-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-2xl">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-xl shadow-primary/30 transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:shadow-primary/50">
-                <img
-                  src={apolloLogo}
-                  alt="Apollo Production logo"
-                  className="w-full h-full object-cover"
-                  loading="eager"
+        {/* Header - APLink Style */}
+        <header className="sticky top-0 z-50 bg-gradient-to-r from-card/95 via-card/98 to-card/95 backdrop-blur-xl border-b border-primary/20 shadow-lg shadow-primary/5">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {/* Logo with glow ring - APLink style */}
+              <div className="relative">
+                {/* Outer glow */}
+                <div className="absolute -inset-1 rounded-full bg-primary/30 blur-md animate-pulse-glow" />
+                {/* Rotating ring */}
+                <motion.div 
+                  className="absolute -inset-1.5 rounded-full border border-primary/30"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 />
+                {/* Logo container */}
+                <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden ring-2 ring-primary/40 shadow-lg shadow-primary/30 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:shadow-primary/50">
+                  <video
+                    src={apolloLogoVideo}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
+                    className="w-full h-full object-cover scale-110"
+                  />
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-transparent">
+              <div className="flex flex-col">
+                <span className="text-base sm:text-lg font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
                   Apollo Bot Manager
-                </h1>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-primary" />
-                  Telegram Bot Manager · Apollo Production
-                </p>
+                </span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">
+                  Telegram Bot · Apollo Production
+                </span>
               </div>
             </div>
             
             <div className="flex items-center gap-3">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 cursor-help">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 cursor-help animate-pulse-glow" style={{ animationDuration: '4s' }}>
                     <div className="relative">
                       <div className="w-2 h-2 rounded-full bg-emerald-400" />
                       <div className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-400 animate-ping opacity-75" />
                     </div>
-                    <span className="text-xs text-emerald-400 font-medium">Online</span>
+                    <span className="text-xs text-emerald-400 font-medium hidden sm:inline">Online</span>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="bg-slate-800 border-slate-700 text-white">
+                <TooltipContent side="bottom" className="bg-card border-primary/20 text-foreground">
                   <p>Бот активен и обрабатывает сообщения</p>
                 </TooltipContent>
               </Tooltip>
@@ -467,10 +549,10 @@ const Dashboard = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleSignOut}
-                className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-300"
               >
                 <LogOut className="w-4 h-4 mr-2" />
-                Выйти
+                <span className="hidden sm:inline">Выйти</span>
               </Button>
             </div>
           </div>
