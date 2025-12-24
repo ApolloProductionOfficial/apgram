@@ -449,7 +449,7 @@ const Dashboard = () => {
       const { error } = await supabase.functions.invoke('send-model-message', {
         body: {
           chat_id: app.chat_id,
-          text: reminderText,
+          message: reminderText,
           inline_keyboard: [[{ text: '📝 Продолжить заполнение', callback_data: 'app_start' }]]
         }
       });
