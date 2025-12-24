@@ -463,11 +463,11 @@ const Dashboard = () => {
                       <Textarea
                         value={newPhrase}
                         onChange={(e) => setNewPhrase(e.target.value)}
-                        placeholder="Введите текст, можете вставить премиум эмодзи сюда..."
-                        className="bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 min-h-[100px] focus:border-[#0088cc] focus:ring-[#0088cc]/20"
+                        placeholder="Текст [emoji:5368742036629364794] с эмодзи [emoji:123456789]"
+                        className="bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 min-h-[100px] focus:border-[#0088cc] focus:ring-[#0088cc]/20 font-mono text-sm"
                       />
                       <p className="text-xs text-slate-500">
-                        💡 Совет: Скопируйте премиум эмодзи из Telegram и вставьте прямо в текст
+                        💎 Формат: <code className="text-purple-400 bg-purple-500/10 px-1 rounded">[emoji:ID]</code> — вставляй в любое место текста
                       </p>
                     </div>
                   </div>
@@ -523,20 +523,40 @@ const Dashboard = () => {
                     )}
                   </div>
 
-                  {/* Custom Emoji */}
+                  {/* Fragment Info */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 space-y-3">
+                    <div className="flex items-center gap-2 text-sm text-amber-300">
+                      <Sparkles className="w-4 h-4" />
+                      <span>Как включить Premium Emoji для бота</span>
+                    </div>
+                    <ol className="text-xs text-slate-400 space-y-1 list-decimal list-inside">
+                      <li>Зайди на <a href="https://fragment.com" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline">fragment.com</a></li>
+                      <li>Купи дополнительный username для бота (~5000 TON)</li>
+                      <li>Привяжи username к боту через BotFather</li>
+                      <li>После этого бот сможет отправлять custom emoji!</li>
+                    </ol>
+                    <p className="text-xs text-slate-500">
+                      ⚠️ Без Fragment-username бот показывает обычные эмодзи вместо premium
+                    </p>
+                  </div>
+
+                  {/* Custom Emoji ID (legacy single) */}
                   <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 space-y-3">
                     <div className="flex items-center gap-2 text-sm text-purple-300">
                       <Smile className="w-4 h-4" />
-                      <span>Premium эмодзи ID (опционально)</span>
+                      <span>Как получить ID эмодзи</span>
                     </div>
+                    <p className="text-xs text-slate-400">
+                      Отправь премиум эмодзи боту <a href="https://t.me/GetCustomEmojiBot" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">@GetCustomEmojiBot</a> — он вернёт ID
+                    </p>
                     <Input
                       value={newCustomEmojiId}
                       onChange={(e) => setNewCustomEmojiId(e.target.value)}
-                      placeholder="ID эмодзи (напр. 5368742036629364794)"
+                      placeholder="ID для одного эмодзи в начале (устаревший способ)"
                       className="bg-slate-800/50 border-purple-500/20 text-white text-xs placeholder:text-slate-500 focus:border-purple-500"
                     />
-                    <p className="text-xs text-slate-400">
-                      Отправь эмодзи боту <span className="text-purple-400">@GetCustomEmojiBot</span> чтобы получить ID
+                    <p className="text-xs text-emerald-400">
+                      ✨ Лучше: используй <code className="bg-emerald-500/10 px-1 rounded">[emoji:ID]</code> прямо в тексте — можно несколько!
                     </p>
                   </div>
 
