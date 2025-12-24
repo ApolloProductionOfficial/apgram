@@ -650,7 +650,8 @@ async function handleApplicationCallback(callbackQuery: any) {
   }
   
   // Handle button selection for any step (app_{step}_{optionIndex})
-  const buttonMatch = data.match(/^app_([^_]+)_(\d+)$/);
+  // Note: step can contain underscores (e.g., hair_color), so we match greedily up to the last _\d+
+  const buttonMatch = data.match(/^app_(.+)_(\d+)$/);
   if (buttonMatch) {
     const step = buttonMatch[1];
     const optionIndex = parseInt(buttonMatch[2]);
