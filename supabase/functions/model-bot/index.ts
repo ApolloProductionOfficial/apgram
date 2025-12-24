@@ -550,6 +550,32 @@ ${application.about_yourself ? application.about_yourself.substring(0, 500) + (a
 
   for (const chatId of chatIds) {
     try {
+      // Сначала отправляем фотографии как медиагруппу (до 10 фото)
+      const photos = application.portfolio_photos || [];
+      if (photos.length > 0) {
+        const mediaGroup = photos.slice(0, 10).map((photoUrl: string, index: number) => ({
+          type: 'photo',
+          media: photoUrl,
+          caption: index === 0 ? `📸 Фото модели: ${application.full_name || 'Без имени'}` : undefined,
+          parse_mode: index === 0 ? 'HTML' : undefined
+        }));
+        
+        try {
+          await fetch(`https://api.telegram.org/bot${MODEL_BOT_TOKEN}/sendMediaGroup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              media: mediaGroup
+            }),
+          });
+          console.log(`Photos sent to ${chatId}`);
+        } catch (photoErr) {
+          console.error(`Failed to send photos to ${chatId}:`, photoErr);
+        }
+      }
+      
+      // Затем отправляем текстовое уведомление с кнопками
       await sendMessageWithButtons(chatId, ownerNotification, [
         [
           { text: '✅ Одобрить', callback_data: `admin_approve_${application.id}` },
