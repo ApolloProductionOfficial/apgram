@@ -428,16 +428,20 @@ const Dashboard = () => {
         <header className="sticky top-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-2xl">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-xl shadow-[#0088cc]/30 transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:shadow-[#0088cc]/50">
-                <img src={apolloLogo} alt="Apollo" className="w-full h-full object-cover" />
+              <div className="relative">
+                {/* Glow effect */}
+                <div className="absolute -inset-1 rounded-full bg-[#00b4d8]/30 blur-md" />
+                <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-[#00b4d8]/50 shadow-[0_0_20px_rgba(0,180,216,0.4)] transition-all duration-300 hover:scale-110 hover:shadow-[0_0_30px_rgba(0,180,216,0.6)]">
+                  <img src={apolloLogo} alt="APLink" className="w-full h-full object-cover" />
+                </div>
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-white via-white to-[#0088cc] bg-clip-text text-transparent">
-                  Apollo Bot Manager
+                <h1 className="text-xl font-bold tracking-tight">
+                  <span className="text-slate-300">AP</span>
+                  <span className="text-[#00b4d8]">Link</span>
                 </h1>
-                <p className="text-xs text-slate-400 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-[#0088cc]" />
-                  Telegram Automation
+                <p className="text-xs text-slate-500">
+                  by Apollo Production
                 </p>
               </div>
             </div>
