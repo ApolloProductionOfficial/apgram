@@ -65,7 +65,8 @@ import {
   Bell,
   BarChart3,
   Camera,
-  DollarSign
+  DollarSign,
+  TrendingUp
 } from "lucide-react";
 import apolloLogo from "@/assets/cf-logo-final.png";
 import apolloLogoVideo from "@/assets/apollo-logo.mp4";
@@ -81,6 +82,7 @@ import { TeamNotificationSettings } from "@/components/TeamNotificationSettings"
 import { ModelPhotosGallery } from "@/components/ModelPhotosGallery";
 import { QuestionsEditor } from "@/components/QuestionsEditor";
 import { QuestionnairePreview } from "@/components/QuestionnairePreview";
+import { ApplicationFunnel } from "@/components/ApplicationFunnel";
 
 interface QuickPhrase {
   id: string;
@@ -1440,6 +1442,13 @@ const Dashboard = () => {
                     Статистика
                   </TabsTrigger>
                   <TabsTrigger 
+                    value="funnel" 
+                    className="text-xs data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+                  >
+                    <TrendingUp className="w-3 h-3 mr-1" />
+                    Воронка
+                  </TabsTrigger>
+                  <TabsTrigger 
                     value="applications" 
                     className="text-xs data-[state=active]:bg-purple-500 data-[state=active]:text-white"
                   >
@@ -1465,6 +1474,11 @@ const Dashboard = () => {
                 {/* Stats Tab */}
                 <TabsContent value="stats" className="space-y-4">
                   <ApplicationStats applications={applications} />
+                </TabsContent>
+
+                {/* Funnel Tab */}
+                <TabsContent value="funnel" className="space-y-4">
+                  <ApplicationFunnel />
                 </TabsContent>
 
                 {/* Applications List */}
