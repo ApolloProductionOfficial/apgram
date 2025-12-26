@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apollo Production Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --bg-primary: #030305;
+      --bg-secondary: #0a0a0f;
+      --bg-card: rgba(15, 23, 42, 0.5);
+      --border-color: rgba(255, 255, 255, 0.05);
+      --text-primary: #ffffff;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --primary: #06b6e4;
+      --primary-hover: #0ea5e9;
+      --telegram: #0088cc;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #a855f7;
+      --pink: #ec4899;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+    
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(10, 10, 15, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(6, 182, 228, 0.2);
+      padding: 0.75rem 1rem;
+    }
+    
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .logo-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .logo-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      box-shadow: 0 0 20px rgba(6, 182, 228, 0.4);
+    }
+    
+    .logo-text {
+      font-size: 1rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--primary), var(--text-primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    /* Buttons */
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--telegram), #00a8e8);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+    
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-secondary);
+    }
+    
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+    
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+    
+    .btn-icon {
+      padding: 0.5rem;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Main Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+    }
+    
+    /* Tabs */
+    .tabs-container {
+      margin-bottom: 1.5rem;
+    }
+    
+    .tabs-list {
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.25rem;
+      background: var(--bg-card);
+      border-radius: 0.75rem;
+      border: 1px solid var(--border-color);
+      flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .tab-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .tab-btn.active {
+      background: var(--telegram);
+      color: white;
+    }
+    
+    .tab-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      backdrop-filter: blur(20px);
+      margin-bottom: 1rem;
+    }
+    
+    .card-header {
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .card-title-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    
+    .card-description {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+    
+    .card-content {
+      padding: 1.25rem;
+    }
+    
+    /* Form Elements */
+    .input {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(30, 41, 59, 0.5);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+    
+    .input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(6, 182, 228, 0.1);
+    }
+    
+    .input::placeholder {
+      color: var(--text-muted);
+    }
+    
+    .textarea {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(30, 41, 59, 0.5);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      min-height: 100px;
+      resize: vertical;
+    }
+    
+    .select {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(30, 41, 59, 0.5);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    
+    /* Switch Toggle */
+    .switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .switch.active {
+      background: var(--telegram);
+    }
+    
+    .switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    
+    .switch.active::after {
+      transform: translateX(20px);
+    }
+    
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .badge-success {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .badge-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .badge-info {
+      background: rgba(6, 182, 228, 0.2);
+      color: #06b6e4;
+      border: 1px solid rgba(6, 182, 228, 0.3);
+    }
+    
+    .badge-purple {
+      background: rgba(168, 85, 247, 0.2);
+      color: #a855f7;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    
+    /* Grid */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* Phrase Item */
+    .phrase-item {
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid var(--border-color);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    
+    .phrase-item:hover {
+      border-color: rgba(0, 136, 204, 0.4);
+      background: rgba(30, 41, 59, 0.5);
+    }
+    
+    .phrase-command {
+      font-family: monospace;
+      font-size: 0.875rem;
+      color: var(--telegram);
+      background: rgba(0, 136, 204, 0.1);
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      border: 1px solid rgba(0, 136, 204, 0.2);
+    }
+    
+    .phrase-text {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+      line-height: 1.5;
+    }
+    
+    /* Chat Settings Item */
+    .chat-item {
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid var(--border-color);
+    }
+    
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    
+    .chat-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .chat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 0.75rem;
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      color: var(--purple);
+    }
+    
+    .chat-toggles {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .chat-toggles {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .toggle-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid var(--border-color);
+    }
+    
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    /* Application Card */
+    .app-card {
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .app-card:hover {
+      border-color: rgba(6, 182, 228, 0.4);
+      background: rgba(30, 41, 59, 0.5);
+    }
+    
+    .app-card.active {
+      border-color: var(--primary);
+      background: rgba(6, 182, 228, 0.1);
+    }
+    
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    
+    .app-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .app-info {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    .stat-card {
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+    }
+    
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    /* Message Item */
+    .message-item {
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid var(--border-color);
+      margin-bottom: 0.75rem;
+    }
+    
+    .message-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    
+    .message-user {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .message-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    
+    .message-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .message-text {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+    
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+    
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Sub-tabs */
+    .sub-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .sub-tab {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .sub-tab:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      color: var(--text-primary);
+    }
+    
+    .sub-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    /* Scroll Area */
+    .scroll-area {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .scroll-area::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .scroll-area::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .scroll-area::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    
+    /* Webhook URL Box */
+    .webhook-box {
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: rgba(168, 85, 247, 0.1);
+      border: 1px solid rgba(168, 85, 247, 0.2);
+    }
+    
+    .webhook-url {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: var(--purple);
+      background: rgba(168, 85, 247, 0.1);
+      padding: 0.5rem;
+      border-radius: 0.375rem;
+      word-break: break-all;
+      margin-top: 0.75rem;
+    }
+    
+    /* Flex utilities */
+    .flex {
+      display: flex;
+    }
+    
+    .items-center {
+      align-items: center;
+    }
+    
+    .justify-between {
+      justify-content: space-between;
+    }
+    
+    .gap-2 {
+      gap: 0.5rem;
+    }
+    
+    .gap-4 {
+      gap: 1rem;
+    }
+    
+    .space-y-4 > * + * {
+      margin-top: 1rem;
+    }
+    
+    .text-sm {
+      font-size: 0.875rem;
+    }
+    
+    .text-xs {
+      font-size: 0.75rem;
+    }
+    
+    .mb-4 {
+      margin-bottom: 1rem;
+    }
+    
+    .mt-2 {
+      margin-top: 0.5rem;
+    }
+    
+    /* Placeholder section */
+    .placeholder-section {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+    
+    .placeholder-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1rem;
+      border-radius: 0.75rem;
+      background: rgba(168, 85, 247, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo-wrapper">
+        <div class="logo-circle">AP</div>
+        <span class="logo-text">APOLLO PRODUCTION</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline btn-icon" title="Настройки">⚙️</button>
+        <button class="btn btn-outline btn-icon" title="Выйти">🚪</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    <!-- Main Tabs -->
+    <div class="tabs-container">
+      <div class="tabs-list">
+        <button class="tab-btn active" onclick="switchMainTab('telegram-help')" id="tab-telegram-help">
+          <span class="tab-icon" style="background: linear-gradient(135deg, #0088cc, #00a8e8); color: white;">🤖</span>
+          Telegram Bot HELP
+        </button>
+        <button class="tab-btn" onclick="switchMainTab('model-app')" id="tab-model-app">
+          <span class="tab-icon" style="background: linear-gradient(135deg, #a855f7, #ec4899); color: white;">📋</span>
+          Анкета моделей
+        </button>
+        <button class="tab-btn" onclick="switchMainTab('onlyfans')" id="tab-onlyfans">
+          <span class="tab-icon" style="background: #00aff0; color: white;">💙</span>
+          API OnlyMonster
+        </button>
+        <button class="tab-btn" onclick="switchMainTab('pimpbunny')" id="tab-pimpbunny">
+          <span class="tab-icon" style="background: rgba(236, 72, 153, 0.2); color: #ec4899;">🐰</span>
+          PimpBunny
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Contents -->
+    <!-- Telegram Bot HELP Tab -->
+    <div class="tab-content active" id="content-telegram-help">
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="switchSubTab('help', 'telegram')">📚 Справка</button>
+        <button class="sub-tab" onclick="switchSubTab('phrases', 'telegram')">💬 Фразы</button>
+        <button class="sub-tab" onclick="switchSubTab('chats', 'telegram')">⚙️ Чаты</button>
+        <button class="sub-tab" onclick="switchSubTab('history', 'telegram')">📜 История</button>
+      </div>
+
+      <!-- Help Sub-Tab -->
+      <div class="sub-content active" id="sub-help">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon" style="background: linear-gradient(135deg, #0088cc, #00a8e8);">📖</span>
+              Команды бота
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="space-y-4">
+              <div class="phrase-item">
+                <span class="phrase-command">/start</span>
+                <p class="phrase-text">Запустить бота и получить приветственное сообщение</p>
+              </div>
+              <div class="phrase-item">
+                <span class="phrase-command">/help</span>
+                <p class="phrase-text">Показать список доступных команд</p>
+              </div>
+              <div class="phrase-item">
+                <span class="phrase-command">/p_команда</span>
+                <p class="phrase-text">Отправить быструю фразу (например, /p_привет)</p>
+              </div>
+              <div class="phrase-item">
+                <span class="phrase-command">/translate текст</span>
+                <p class="phrase-text">Перевести текст с русского на английский или наоборот</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phrases Sub-Tab -->
+      <div class="sub-content" id="sub-phrases">
+        <div class="grid-2">
+          <!-- Add Phrase Form -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="card-title-icon" style="background: linear-gradient(135deg, #10b981, #059669);">➕</span>
+                Добавить фразу
+              </div>
+              <p class="card-description">Создайте шаблон для быстрого ответа</p>
+            </div>
+            <div class="card-content">
+              <div class="space-y-4">
+                <input type="text" class="input" placeholder="Команда (например: привет)">
+                <textarea class="textarea" placeholder="Текст сообщения..."></textarea>
+                <div class="grid-2">
+                  <select class="select">
+                    <option value="">Тип медиа</option>
+                    <option value="photo">📷 Фото</option>
+                    <option value="animation">🎬 GIF</option>
+                    <option value="video">🎥 Видео</option>
+                  </select>
+                  <input type="text" class="input" placeholder="URL медиа файла">
+                </div>
+                <button class="btn btn-primary" style="width: 100%;">
+                  ✉️ Добавить фразу
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Phrases List -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="card-title-icon" style="background: linear-gradient(135deg, #0088cc, #00a8e8);">💬</span>
+                Ваши фразы
+              </div>
+              <p class="card-description">Нажмите на фразу, чтобы скопировать команду</p>
+            </div>
+            <div class="card-content">
+              <div class="scroll-area space-y-4">
+                <div class="phrase-item">
+                  <div class="flex items-center gap-2">
+                    <span class="phrase-command">/p_привет</span>
+                    <span class="badge badge-info">📷 Фото</span>
+                  </div>
+                  <p class="phrase-text">Привет! Рада тебя видеть 💕 Как дела?</p>
+                </div>
+                <div class="phrase-item">
+                  <div class="flex items-center gap-2">
+                    <span class="phrase-command">/p_цена</span>
+                  </div>
+                  <p class="phrase-text">💰 Наши цены: Подписка $15/месяц, PPV от $5</p>
+                </div>
+                <div class="phrase-item">
+                  <div class="flex items-center gap-2">
+                    <span class="phrase-command">/p_спасибо</span>
+                    <span class="badge badge-purple">✨ Premium</span>
+                  </div>
+                  <p class="phrase-text">Спасибо за поддержку! 💜 Ты лучший!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chats Sub-Tab -->
+      <div class="sub-content" id="sub-chats">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon" style="background: linear-gradient(135deg, #a855f7, #ec4899);">⚙️</span>
+              Настройки по чатам
+            </div>
+            <p class="card-description">Включайте и выключайте функции бота для каждого чата</p>
+          </div>
+          <div class="card-content">
+            <div class="space-y-4">
+              <!-- Chat 1 -->
+              <div class="chat-item">
+                <div class="chat-header">
+                  <div class="chat-info">
+                    <div class="chat-icon">#</div>
+                    <div>
+                      <p style="font-weight: 600; color: white;">Основной чат моделей</p>
+                      <p class="text-xs" style="color: var(--text-muted);">ID: -1001234567890</p>
+                    </div>
+                  </div>
+                  <button class="btn btn-outline btn-icon" style="color: var(--danger);">🗑️</button>
+                </div>
+                <div class="chat-toggles">
+                  <div class="toggle-item">
+                    <span class="toggle-label">🌐 Переводчик</span>
+                    <div class="switch active"></div>
+                  </div>
+                  <div class="toggle-item">
+                    <span class="toggle-label">🎤 Голосовые</span>
+                    <div class="switch active"></div>
+                  </div>
+                  <div class="toggle-item">
+                    <span class="toggle-label">⚡ Быстрые фразы</span>
+                    <div class="switch active"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chat 2 -->
+              <div class="chat-item">
+                <div class="chat-header">
+                  <div class="chat-info">
+                    <div class="chat-icon">#</div>
+                    <div>
+                      <p style="font-weight: 600; color: white;">Тестовый чат</p>
+                      <p class="text-xs" style="color: var(--text-muted);">ID: -1009876543210</p>
+                    </div>
+                  </div>
+                  <button class="btn btn-outline btn-icon" style="color: var(--danger);">🗑️</button>
+                </div>
+                <div class="chat-toggles">
+                  <div class="toggle-item">
+                    <span class="toggle-label">🌐 Переводчик</span>
+                    <div class="switch"></div>
+                  </div>
+                  <div class="toggle-item">
+                    <span class="toggle-label">🎤 Голосовые</span>
+                    <div class="switch active"></div>
+                  </div>
+                  <div class="toggle-item">
+                    <span class="toggle-label">⚡ Быстрые фразы</span>
+                    <div class="switch"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Sub-Tab -->
+      <div class="sub-content" id="sub-history">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon" style="background: linear-gradient(135deg, #10b981, #059669);">📜</span>
+              История сообщений
+              <span class="badge badge-success" style="margin-left: auto;">🟢 Realtime</span>
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="scroll-area">
+              <div class="message-item">
+                <div class="message-header">
+                  <div class="message-user">
+                    <div class="message-avatar" style="background: rgba(0, 136, 204, 0.2); color: var(--telegram);">👤</div>
+                    <span style="font-weight: 500; color: white;">@model_anna</span>
+                  </div>
+                  <span class="message-time">14:32</span>
+                </div>
+                <p class="message-text">Привет! Есть вопрос по работе с платформой</p>
+              </div>
+              <div class="message-item">
+                <div class="message-header">
+                  <div class="message-user">
+                    <div class="message-avatar" style="background: rgba(245, 158, 11, 0.2); color: var(--warning);">🎤</div>
+                    <span style="font-weight: 500; color: white;">@client_123</span>
+                  </div>
+                  <span class="message-time">14:28</span>
+                </div>
+                <p class="text-xs" style="color: var(--warning); opacity: 0.7;">🎤 Транскрипция:</p>
+                <p class="message-text">Здравствуйте, хотел узнать про цены на подписку</p>
+                <p class="text-xs mt-2" style="color: var(--telegram);">🌐 Перевод: Hello, I wanted to know about subscription prices</p>
+              </div>
+              <div class="message-item">
+                <div class="message-header">
+                  <div class="message-user">
+                    <div class="message-avatar" style="background: rgba(0, 136, 204, 0.2); color: var(--telegram);">👤</div>
+                    <span style="font-weight: 500; color: white;">@model_kate</span>
+                  </div>
+                  <span class="message-time">14:15</span>
+                </div>
+                <p class="message-text">Спасибо за помощь! 💜</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Model Application Tab -->
+    <div class="tab-content" id="content-model-app">
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="switchSubTab('stats', 'model')">📊 Статистика</button>
+        <button class="sub-tab" onclick="switchSubTab('funnel', 'model')">📈 Воронка</button>
+        <button class="sub-tab" onclick="switchSubTab('applications', 'model')">📋 Заявки</button>
+        <button class="sub-tab" onclick="switchSubTab('bot-editor', 'model')">✏️ Редактор бота</button>
+        <button class="sub-tab" onclick="switchSubTab('webhook', 'model')">🔗 Webhook</button>
+      </div>
+
+      <!-- Stats Sub-Tab -->
+      <div class="sub-content active" id="sub-stats">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <p class="stat-label">Всего заявок</p>
+            <p class="stat-value" style="color: var(--primary);">47</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">На рассмотрении</p>
+            <p class="stat-value" style="color: var(--warning);">12</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Одобрено</p>
+            <p class="stat-value" style="color: var(--success);">28</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Отклонено</p>
+            <p class="stat-value" style="color: var(--danger);">7</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon" style="background: linear-gradient(135deg, #a855f7, #ec4899);">📊</span>
+              Статистика заявок
+            </div>
+          </div>
+          <div class="card-content">
+            <p style="color: var(--text-muted); text-align: center; padding: 2rem;">
+              Графики и детальная аналитика по заявкам моделей
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Funnel Sub-Tab -->
+      <div class="sub-content" id="sub-funnel">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon" style="background: linear-gradient(135deg, #8b5cf6, #d946ef);">📈</span>
+              Воронка конверсий
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="space-y-4">
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="flex: 1; height: 40px; background: var(--primary); border-radius: 0.5rem; display: flex; align-items: center; padding: 0 1rem;">
+                  <span style="color: white; font-weight: 600;">Начали заполнение — 156</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="flex: 0.7; height: 40px; background: var(--purple); border-radius: 0.5rem; display: flex; align-items: center; padding: 0 1rem;">
+                  <span style="color: white; font-weight: 600;">Прошли половину — 89</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="flex: 0.4; height: 40px; background: var(--success); border-radius: 0.5rem; display: flex; align-items: center; padding: 0 1rem;">
+                  <span style="color: white; font-weight: 600;">Завершили — 47</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Applications Sub-Tab -->
+      <div class="sub-content" id="sub-applications">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon" style="background: linear-gradient(135deg, #0088cc, #00a8e8);">📋</span>
+              Заявки моделей
+            </div>
+          </div>
+          <div class="card-content">
+            <!-- Filters -->
+            <div class="flex gap-4 mb-4" style="flex-wrap: wrap;">
+              <input type="text" class="input" placeholder="🔍 Поиск по имени или @username" style="max-width: 300px;">
+              <select class="select" style="max-width: 200px;">
+                <option value="all">Все статусы</option>
+                <option value="pending">На рассмотрении</option>
+                <option value="approved">Одобренные</option>
+                <option value="rejected">Отклонённые</option>
+              </select>
+              <button class="btn btn-outline">📥 Экспорт в Word</button>
+            </div>
+
+            <!-- Applications List -->
+            <div class="scroll-area space-y-4">
+              <div class="app-card active">
+                <div class="app-header">
+                  <span class="app-name">Анна Иванова</span>
+                  <span class="badge badge-warning">На рассмотрении</span>
+                </div>
+                <p class="app-info">@anna_model • 23 года • Россия • 170 см</p>
+              </div>
+              <div class="app-card">
+                <div class="app-header">
+                  <span class="app-name">Мария Петрова</span>
+                  <span class="badge badge-success">Одобрена</span>
+                </div>
+                <p class="app-info">@maria_of • 25 лет • Украина • 168 см</p>
+              </div>
+              <div class="app-card">
+                <div class="app-header">
+                  <span class="app-name">Екатерина Смирнова</span>
+                  <span class="badge badge-danger">Отклонена</span>
+                </div>
+                <p class="app-info">@kate_sm • 19 лет • Беларусь • 175 см</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bot Editor Sub-Tab -->
+      <div class="sub-content" id="sub-bot-editor">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">✏️</span>
+              Редактор бота
+            </div>
+            <p class="card-description">Настройте приветственное сообщение и вопросы анкеты</p>
+          </div>
+          <div class="card-content">
+            <div class="space-y-4">
+              <div>
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">Приветственное сообщение</label>
+                <textarea class="textarea" style="min-height: 150px;">👋 Привет! Добро пожаловать в Apollo Production!
+
+Мы — ведущее модельное агентство, которое помогает моделям выйти на новый уровень дохода.
+
+💜 Заполни анкету, чтобы начать сотрудничество с нами!</textarea>
+              </div>
+              <div>
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">Вопросы анкеты</label>
+                <div class="space-y-4">
+                  <div class="phrase-item">
+                    <div class="flex items-center justify-between">
+                      <span style="color: var(--text-muted);">1. Имя</span>
+                      <div class="flex gap-2">
+                        <button class="btn btn-outline btn-icon">⬆️</button>
+                        <button class="btn btn-outline btn-icon">⬇️</button>
+                        <button class="btn btn-outline btn-icon">✏️</button>
+                      </div>
+                    </div>
+                    <p class="phrase-text">Как вас зовут? Напишите ваше полное имя:</p>
+                  </div>
+                  <div class="phrase-item">
+                    <div class="flex items-center justify-between">
+                      <span style="color: var(--text-muted);">2. Возраст</span>
+                      <div class="flex gap-2">
+                        <button class="btn btn-outline btn-icon">⬆️</button>
+                        <button class="btn btn-outline btn-icon">⬇️</button>
+                        <button class="btn btn-outline btn-icon">✏️</button>
+                      </div>
+                    </div>
+                    <p class="phrase-text">Сколько вам полных лет? (только число)</p>
+                  </div>
+                  <div class="phrase-item">
+                    <div class="flex items-center justify-between">
+                      <span style="color: var(--text-muted);">3. Страна</span>
+                      <div class="flex gap-2">
+                        <button class="btn btn-outline btn-icon">⬆️</button>
+                        <button class="btn btn-outline btn-icon">⬇️</button>
+                        <button class="btn btn-outline btn-icon">✏️</button>
+                      </div>
+                    </div>
+                    <p class="phrase-text">Выберите вашу страну проживания:</p>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-success" style="width: 100%;">💾 Сохранить изменения</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Webhook Sub-Tab -->
+      <div class="sub-content" id="sub-webhook">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-title-icon" style="background: linear-gradient(135deg, #10b981, #059669);">🔗</span>
+              Настройка Webhook
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="space-y-4">
+              <!-- Owner Chat ID -->
+              <div>
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">Chat ID владельца (для уведомлений)</label>
+                <div class="flex gap-2">
+                  <input type="text" class="input" placeholder="Ваш Telegram Chat ID" value="123456789">
+                  <button class="btn btn-primary">💾 Сохранить</button>
+                </div>
+              </div>
+
+              <!-- Webhook URL -->
+              <div class="webhook-box">
+                <div class="flex items-center justify-between">
+                  <span style="color: var(--purple); font-size: 0.875rem;">🤖 Webhook URL</span>
+                  <button class="btn btn-outline text-sm">📋 Копировать</button>
+                </div>
+                <code class="webhook-url">https://ykwiqymksnndugphhgmc.supabase.co/functions/v1/model-bot</code>
+              </div>
+
+              <!-- Auto Setup -->
+              <div style="padding: 1rem; border-radius: 0.75rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);">
+                <p style="color: var(--success); font-size: 0.875rem; margin-bottom: 0.75rem;">⚡ Автоматическая настройка Webhook</p>
+                <p class="text-xs" style="color: var(--text-muted); margin-bottom: 0.75rem;">Вставьте токен бота от @BotFather и нажмите кнопку</p>
+                <div class="flex gap-2">
+                  <input type="password" class="input" placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz">
+                  <button class="btn btn-success">🔗 Настроить</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OnlyFans Tab -->
+    <div class="tab-content" id="content-onlyfans">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon" style="background: #00aff0;">💙</span>
+            API OnlyMonster
+          </div>
+          <p class="card-description">Управление аккаунтами OnlyFans через API</p>
+        </div>
+        <div class="card-content">
+          <div class="placeholder-section">
+            <div class="placeholder-icon">💙</div>
+            <p>Раздел API OnlyMonster</p>
+            <p class="text-xs mt-2" style="color: var(--text-muted);">Интеграция с OnlyFans API</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PimpBunny Tab -->
+    <div class="tab-content" id="content-pimpbunny">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon" style="background: rgba(236, 72, 153, 0.2); border: 1px solid rgba(236, 72, 153, 0.4);">🐰</span>
+            PimpBunny
+          </div>
+          <p class="card-description">Настройки и управление PimpBunny</p>
+        </div>
+        <div class="card-content">
+          <div class="placeholder-section">
+            <div class="placeholder-icon" style="background: rgba(236, 72, 153, 0.2);">🐰</div>
+            <p>Раздел PimpBunny</p>
+            <p class="text-xs mt-2" style="color: var(--text-muted);">Функционал будет добавлен позже</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Main Tabs
+    function switchMainTab(tabId) {
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Remove active from all tabs
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Show selected content
+      document.getElementById('content-' + tabId).classList.add('active');
+      
+      // Set active tab
+      document.getElementById('tab-' + tabId).classList.add('active');
+    }
+    
+    // Sub Tabs
+    function switchSubTab(subTabId, parentTab) {
+      // Get parent content
+      const parentContent = parentTab === 'telegram' ? 
+        document.getElementById('content-telegram-help') : 
+        document.getElementById('content-model-app');
+      
+      // Hide all sub-contents in parent
+      parentContent.querySelectorAll('.sub-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Remove active from all sub-tabs in parent
+      parentContent.querySelectorAll('.sub-tab').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Show selected sub-content
+      document.getElementById('sub-' + subTabId).classList.add('active');
+      
+      // Set active sub-tab (find by onclick attribute)
+      parentContent.querySelectorAll('.sub-tab').forEach(btn => {
+        if (btn.onclick.toString().includes(subTabId)) {
+          btn.classList.add('active');
+        }
+      });
+    }
+    
+    // Switch toggles
+    document.querySelectorAll('.switch').forEach(toggle => {
+      toggle.addEventListener('click', function() {
+        this.classList.toggle('active');
+      });
+    });
+  </script>
+</body>
+</html>
